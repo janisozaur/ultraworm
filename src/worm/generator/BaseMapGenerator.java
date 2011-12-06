@@ -31,7 +31,12 @@
  */
 package worm.generator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import net.puppygames.applet.Game;
@@ -39,14 +44,20 @@ import net.puppygames.applet.Game;
 import org.lwjgl.util.Point;
 import org.lwjgl.util.ReadablePoint;
 
-import worm.*;
+import worm.IntGrid;
+import worm.MapRenderer;
+import worm.Worm;
+import worm.WormGameState;
 import worm.features.LevelFeature;
 import worm.path.Topology;
 import worm.tiles.Crystal;
 import worm.tiles.Ruin;
 
 import com.shavenpuppy.jglib.algorithms.Bresenham;
-import com.shavenpuppy.jglib.interpolators.*;
+import com.shavenpuppy.jglib.interpolators.CosineInterpolator;
+import com.shavenpuppy.jglib.interpolators.Interpolator;
+import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
+import com.shavenpuppy.jglib.interpolators.SineInterpolator;
 import com.shavenpuppy.jglib.util.IntList;
 import com.shavenpuppy.jglib.util.Util;
 
@@ -528,12 +539,6 @@ public abstract class BaseMapGenerator extends AbstractMapGenerator {
 				} else {
 					return SineInterpolator.instance.interpolate(b, a, (ratio - 0.5f) * 2.0f);
 				}
-			}
-
-			@Override
-			public int interpolate(int a, int b, int ratio) {
-				// Not implemented, don't need it
-				return 0;
 			}
 		};
 	}

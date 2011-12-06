@@ -39,7 +39,9 @@ import net.puppygames.applet.screens.DialogScreen;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 
-import worm.features.*;
+import worm.features.GidrahFeature;
+import worm.features.LayersFeature;
+import worm.features.TileSetFeature;
 import worm.generator.MapTemplate;
 import worm.tiles.FloorTile;
 import worm.tiles.SpawnPoint;
@@ -88,7 +90,8 @@ public class Res extends net.puppygames.applet.Res {
 
 	private String
 		beam = "beam.01.texture",
-		range = "range.texture"
+		range = "range.texture",
+		laserTexture = "laser.texture"
 		;
 
 	private String
@@ -132,7 +135,8 @@ public class Res extends net.puppygames.applet.Res {
 		capacitorStart = "capacitorStart.buffer",
 		freezeSound = "freeze.buffer",
 		shieldSound = "shields.buffer",
-		bezerkSound = "bezerk.buffer"
+		bezerkSound = "bezerk.buffer",
+		repairZapSound = "repairZap.buffer"
 		;
 
 	// Smartbomb effect
@@ -175,7 +179,9 @@ public class Res extends net.puppygames.applet.Res {
 		survivalBosses = "survival.bosses.array"
 		;
 
-	private String researchNagDialog = "research-nag.dialog";
+	private String
+		researchNagDialog = "research-nag.dialog",
+		modeLockedDialog = "mode-locked.dialog";
 
 	private String factoryMining = "factoryMining.buffer";
 
@@ -186,7 +192,8 @@ public class Res extends net.puppygames.applet.Res {
 	private transient GLBaseTexture
 		smartBombTextureResource,
 		explosionTextureResource,
-		rangeTextureResource
+		rangeTextureResource,
+		laserTextureResource
 		;
 	private transient ALBuffer
 		saucerSoundBuffer,
@@ -197,7 +204,8 @@ public class Res extends net.puppygames.applet.Res {
 		capacitorStartBuffer,
 		freezeSoundBuffer,
 		bezerkSoundBuffer,
-		shieldSoundBuffer
+		shieldSoundBuffer,
+		repairZapSoundBuffer
 		;
 	private transient EmitterFeature
 		buildingDamageEmitterFeature,
@@ -296,7 +304,7 @@ public class Res extends net.puppygames.applet.Res {
 
 	private transient TileSetFeature floorEdgeTransitionResource;
 
-	private transient DialogScreen researchNagDialogResource;
+	private transient DialogScreen researchNagDialogResource, modeLockedDialogResource;
 
 	private transient Animation[] quicklaunchCountOff, quicklaunchCountOn, quicklaunchCount10Off, quicklaunchCount10On;
 
@@ -306,27 +314,18 @@ public class Res extends net.puppygames.applet.Res {
 	public Res() {
 	}
 
-	/* (non-Javadoc)
-	 * @see net.puppygames.applet.effects.SFX#doRegister()
-	 */
 	@Override
 	protected void doRegister() {
 		super.doRegister();
 		instance = this;
 	}
 
-	/* (non-Javadoc)
-	 * @see net.puppygames.applet.effects.SFX#doDeregister()
-	 */
 	@Override
 	protected void doDeregister() {
 		instance = null;
 		super.doDeregister();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.shavenpuppy.jglib.resources.Feature#doCreate()
-	 */
 	@Override
 	protected void doCreate() {
 		super.doCreate();
@@ -635,6 +634,9 @@ public class Res extends net.puppygames.applet.Res {
 	public static DialogScreen getResearchNagDialog() {
 		return instance.researchNagDialogResource;
 	}
+	public static DialogScreen getModeLockedDialog() {
+		return instance.modeLockedDialogResource;
+	}
 	public static ALBuffer getFactoryMiningBuffer() {
 		return instance.factoryMiningBuffer;
 	}
@@ -678,4 +680,11 @@ public class Res extends net.puppygames.applet.Res {
 	public static ALBuffer getShieldSound() {
 		return instance.shieldSoundBuffer;
 	}
+	public static ALBuffer getRepairZapSound() {
+		return instance.repairZapSoundBuffer;
+	}
+	public static GLBaseTexture getLaserTexture() {
+	    return instance.laserTextureResource;
+    }
+
 }

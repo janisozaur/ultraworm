@@ -31,21 +31,27 @@
  */
 package worm.features;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 import net.puppygames.applet.Game;
 
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
 import org.w3c.dom.Element;
 
-import worm.*;
+import worm.MapRenderer;
+import worm.Res;
+import worm.SurvivalParams;
+import worm.Worm;
+import worm.WormGameState;
 import worm.generator.BaseMapGenerator;
 import worm.generator.MapTemplate;
 
 import com.shavenpuppy.jglib.Resources;
 import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
-import com.shavenpuppy.jglib.resources.*;
+import com.shavenpuppy.jglib.resources.Data;
+import com.shavenpuppy.jglib.resources.Feature;
+import com.shavenpuppy.jglib.resources.ResourceArray;
 import com.shavenpuppy.jglib.util.Util;
 import com.shavenpuppy.jglib.util.XMLUtil;
 
@@ -300,15 +306,8 @@ public class LevelFeature extends Feature {
 	}
 
 	private static int getMinWidth() {
-		DisplayMode dm;
-		if (Game.isCustomDisplayMode()) {
-			dm = Display.getDisplayMode();
-		} else {
-			dm = Display.getDesktopDisplayMode();
-		}
-
-		int displayWidth = dm.getWidth();
-		int displayHeight = dm.getHeight();
+		int displayWidth = Game.getWidth();
+		int displayHeight = Game.getHeight();
 		int smallerDimension = Math.min(displayWidth, displayHeight);
 		int res = smallerDimension / Game.getScale();
 		int fits = displayWidth / res; // This is the largest number of pixels
@@ -316,15 +315,8 @@ public class LevelFeature extends Feature {
 	}
 
 	private static int getMinHeight() {
-		DisplayMode dm;
-		if (Game.isCustomDisplayMode()) {
-			dm = Display.getDisplayMode();
-		} else {
-			dm = Display.getDesktopDisplayMode();
-		}
-
-		int displayWidth = dm.getWidth();
-		int displayHeight = dm.getHeight();
+		int displayWidth = Game.getWidth();
+		int displayHeight = Game.getHeight();
 		int smallerDimension = Math.min(displayWidth, displayHeight);
 		int res = smallerDimension / Game.getScale();
 		int fits = displayHeight / res; // This is the largest number of pixels

@@ -31,6 +31,7 @@
  */
 package worm.features;
 
+import net.puppygames.applet.PrizeFeature;
 import worm.Worm;
 import worm.WormGameState;
 import worm.powerups.PowerupFeature;
@@ -41,6 +42,8 @@ import com.shavenpuppy.jglib.Resources;
  * Give the player some powerups
  */
 public class MultiPrizeFeature extends PrizeFeature {
+
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * C'tor

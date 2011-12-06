@@ -41,6 +41,7 @@ import org.lwjgl.util.vector.ReadableVector3f;
 import org.lwjgl.util.vector.Vector3f;
 
 import com.shavenpuppy.jglib.opengl.GLBaseTexture;
+import com.shavenpuppy.jglib.resources.ResourceArray;
 import com.shavenpuppy.jglib.util.FPMath;
 import com.shavenpuppy.jglib.util.Util;
 
@@ -48,7 +49,7 @@ import com.shavenpuppy.jglib.util.Util;
  * A Sprite has associated with it an Animation and frame counter OR a single SpriteImage, and has a position
  * and offset.
  */
-public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored {
+public class Sprite implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -61,11 +62,41 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/** The sprite engine */
 	private final SpriteEngine engine;
 
+	/** The sprite allocator (used for serialization purposes - make sure this is SMALL! */
+	private SpriteAllocator allocator;
+
 	/** The sprite's current owner - used for debugging more than anything else */
 	private Serializable owner;
 
 	/** Are we allocated? */
 	private boolean allocated;
+
+	/** The Animation if any */
+	private Animation animation;
+
+	/** Framelist, if any */
+	private ResourceArray frameList;
+
+	/** Index into framelist */
+	private int frame;
+
+	/** Loop counter */
+	private int loop;
+
+	/** Current frame tick */
+	private int tick;
+
+	/** Animation sequence */
+	private int sequence;
+
+	/** The current "event" state */
+	private int event;
+
+	/** Pause animation */
+	private boolean paused;
+
+	/** Current child x and y offsets */
+	private float childXOffset, childYOffset;
 
 	/** The current image */
 	private SpriteImage image;
@@ -165,6 +196,14 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 		return engine;
 	}
 
+	public void setAllocator(SpriteAllocator allocator) {
+	    this.allocator = allocator;
+    }
+
+	public SpriteAllocator getAllocator() {
+	    return allocator;
+    }
+
 	/**
 	 * Copy a source sprite. Only information required for rendering is copied.
 	 * @param src
@@ -252,7 +291,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * @return the x coordinate
 	 */
-	@Override
+
 	public float getX() {
 		return x;
 	}
@@ -261,7 +300,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Sets the x coordinate.
 	 * @param x The x to set
 	 */
-	@Override
+
 	public void setX(float x) {
 		this.x = x;
 	}
@@ -270,7 +309,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Gets the y coordinate.
 	 * @return the y coordinate
 	 */
-	@Override
+
 	public float getY() {
 		return y;
 	}
@@ -279,7 +318,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Sets the y.
 	 * @param y The y to set
 	 */
-	@Override
+
 	public void setY(float y) {
 		this.y = y;
 	}
@@ -288,7 +327,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Gets the z coordinate
 	 * @return the z coordinate
 	 */
-	@Override
+
 	public float getZ() {
 		return z;
 	}
@@ -297,7 +336,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Sets the z.
 	 * @param z The z to set
 	 */
-	@Override
+
 	public void setZ(float z) {
 		this.z = z;
 	}
@@ -305,7 +344,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * Convenience accessor
 	 */
-	@Override
+
 	public Vector3f getLocation(Vector3f ret) {
 		if (ret == null) {
 			ret = new Vector3f(x, y, z);
@@ -318,7 +357,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * Convenience accessor
 	 */
-	@Override
+
 	public void setLocation(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
@@ -328,7 +367,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Positioned#setLocation(com.shavenpuppy.jglib.vector.ReadableVector3i)
 	 */
-	@Override
+
 	public void setLocation(ReadableVector3f newLocation) {
 		this.x = newLocation.getX();
 		this.y = newLocation.getY();
@@ -338,7 +377,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * Convenience accessor
 	 */
-	@Override
+
 	public Vector3f getOffset(Vector3f ret) {
 		if (ret == null) {
 			ret = new Vector3f(ox, oy, oz);
@@ -351,7 +390,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * Convenience accessor
 	 */
-	@Override
+
 	public void setOffset(float ox, float oy, float oz) {
 		this.ox = ox;
 		this.oy = oy;
@@ -361,7 +400,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * Convenience accessor
 	 */
-	@Override
+
 	public void setOffset(ReadableVector3f location) {
 		this.ox = location.getX();
 		this.oy = location.getY();
@@ -371,7 +410,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * Frame ticker. Call this every frame.
 	 */
-	@Override
+
 	public void tick() {
 
 		// If the sprite is not active, don't do anything
@@ -382,7 +421,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 
 		// Get the animation to animate us if we're not paused
 		if (!isPaused()) {
-			getAnimation().animate(this, engine.getTickRate());
+			getAnimation().animate(this);
 		}
 	}
 
@@ -390,7 +429,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Set flash mode on or off. This renders the sprite more brightly.
 	 * @param flash
 	 */
-	@Override
+
 	public void setFlash(boolean flash) {
 		this.flash = flash;
 	}
@@ -399,7 +438,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Is the sprite visible
 	 * @return true if the sprite is visible
 	 */
-	@Override
+
 	public boolean isVisible() {
 		return visible;
 	}
@@ -408,7 +447,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Sets whether the sprite is visible or not
 	 * @param visible Sprite visibility
 	 */
-	@Override
+
 	public void setVisible(boolean visible) {
 		this.visible = visible;
 	}
@@ -417,7 +456,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Gets the alpha transparency of the whole sprite.
 	 * @return int between 0 and 255
 	 */
-	@Override
+
 	public int getAlpha() {
 		return alpha;
 	}
@@ -426,7 +465,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Sets the alpha transparency of the whole sprite.
 	 * @param alpha The alpha to set, which should be between 0 and 255
 	 */
-	@Override
+
 	public void setAlpha(int alpha) {
 		this.alpha = alpha;
 	}
@@ -435,7 +474,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Gets the scale. Scale is 16:16 fixed point.
 	 * @return Returns a float
 	 */
-	@Override
+
 	public int getXScale() {
 		return xscale;
 	}
@@ -444,7 +483,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Gets the scale. Scale is 16:16 fixed point.
 	 * @return Returns a float
 	 */
-	@Override
+
 	public int getYScale() {
 		return yscale;
 	}
@@ -461,7 +500,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Animated#setScale(int, int)
 	 */
-	@Override
+
 	public void setScale(int xscale, int yscale) {
 		this.xscale = xscale;
 		this.yscale = yscale;
@@ -470,7 +509,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Scaled#adjustScale(int, int)
 	 */
-	@Override
+
 	public void adjustScale(int xscale, int yscale) {
 		this.xscale += xscale;
 		this.yscale += yscale;
@@ -479,7 +518,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Transparent#adjustAlpha(int)
 	 */
-	@Override
+
 	public void adjustAlpha(int delta) {
 		alpha = Math.max(0, Math.min(255, alpha + delta));
 	}
@@ -518,7 +557,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * @param b The new blue value
 	 * @param a The new alpha value
 	 */
-	@Override
+
 	public void setColor(int index, ReadableColor color) {
 		this.color[index] = color;
 	}
@@ -526,7 +565,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Animated#setColors(org.lwjgl.util.ReadableColor)
 	 */
-	@Override
+
 	public void setColors(ReadableColor src) {
 		color[0] = src;
 		color[1] = src;
@@ -537,7 +576,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Animated#setAngle(int)
 	 */
-	@Override
+
 	public void setAngle(int angle) {
 		this.angle = angle % 0xFFFF;
 	}
@@ -545,7 +584,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Animated#getAngle()
 	 */
-	@Override
+
 	public int getAngle() {
 		return angle;
 	}
@@ -553,7 +592,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Animated#adjustAngle(int)
 	 */
-	@Override
+
 	public void adjustAngle(int delta) {
 		angle = (angle + delta) % 0xFFFF;
 	}
@@ -564,7 +603,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * @param color The color to store the values in, or null to create a new one
 	 * @return a color
 	 */
-	@Override
+
 	public ReadableColor getColor(int index) {
 		return color[index];
 	}
@@ -572,7 +611,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * @see com.shavenpuppy.jglib.sprites.Animated#setCurrentImage(com.shavenpuppy.jglib.sprites.SpriteImage)
 	 */
-	@Override
+
 	public void setImage(SpriteImage image) {
 		this.image = image;
 		if (image == null) {
@@ -585,7 +624,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * @see com.shavenpuppy.jglib.sprites.Animated#deactivate()
 	 */
-	@Override
+
 	public void deactivate() {
 		setActive(false);
 	}
@@ -593,7 +632,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * @see com.shavenpuppy.jglib.sprites.Animated#getCurrentImage()
 	 */
-	@Override
+
 	public SpriteImage getImage() {
 		return image;//image == null ? missingImage : image;
 	}
@@ -635,7 +674,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Returns the layer.
 	 * @return int
 	 */
-	@Override
+
 	public int getLayer() {
 		return layer;
 	}
@@ -644,7 +683,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Sets the layer.
 	 * @param layer The layer to set
 	 */
-	@Override
+
 	public void setLayer(int layer) {
 		this.layer = layer;
 	}
@@ -652,7 +691,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * Deallocate this sprite and return it to the sprite engine
 	 */
-	@Override
+
 	public void deallocate() {
 		if (!allocated) {
 			assert false;
@@ -676,15 +715,16 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
+
 	@Override
-	public String toString() {
+    public String toString() {
 		return "Sprite[idx="+index+", owner="+owner+", image="+image+", active="+active+", visible="+visible+", position="+x+","+y+","+z+", "+getAnimation()+", "+getStyle()+"]";
 	}
 
 	/**
 	 * @return true if the sprite is "flashing"
 	 */
-	@Override
+
 	public boolean isFlashing() {
 		return flash;
 	}
@@ -693,13 +733,13 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	 * Sets the sprite's appearance.
 	 * @param appearance
 	 */
-	public void setAppearance(AnimatedAppearance appearance) {
+	public void setAppearance(Appearance appearance) {
 		if (appearance == null) {
 			image = null;
 			setAnimation(null);
 			rewind();
 		} else{
-			appearance.toAnimated(this);
+			appearance.toSprite(this);
 		}
 	}
 
@@ -710,7 +750,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * @return Returns the flipped.
 	 */
-	@Override
+
 	public boolean isFlipped() {
 		return flipped;
 	}
@@ -718,7 +758,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * @param flipped The flipped to set.
 	 */
-	@Override
+
 	public void setFlipped(boolean flipped) {
 		this.flipped = flipped;
 	}
@@ -726,7 +766,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * @return Returns the mirrored.
 	 */
-	@Override
+
 	public boolean isMirrored() {
 		return mirrored;
 	}
@@ -734,7 +774,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/**
 	 * @param mirrored The mirrored to set.
 	 */
-	@Override
+
 	public void setMirrored(boolean mirrored) {
 		this.mirrored = mirrored;
 	}
@@ -869,7 +909,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Layered#getSubLayer()
 	 */
-	@Override
+
 	public int getSubLayer() {
 		return subLayer;
 	}
@@ -877,7 +917,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Layered#setSubLayer(int)
 	 */
-	@Override
+
 	public void setSubLayer(int newSubLayer) {
 		this.subLayer = newSubLayer;
 	}
@@ -885,7 +925,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Animated#pushSequence()
 	 */
-	@Override
+
 	public void pushSequence() {
 		if (stack == null) {
 			stack = new Stack<StackEntry>();
@@ -901,7 +941,7 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 	/* (non-Javadoc)
 	 * @see com.shavenpuppy.jglib.sprites.Animated#popSequence()
 	 */
-	@Override
+
 	public void popSequence() {
 		if (stack == null) {
 			return;
@@ -931,4 +971,216 @@ public class Sprite extends AbstractAnimated implements ISprite, Imaged, Colored
 		this.stack = stack;
 	}
 
+
+	public void reset() {
+		animation = null;
+		frameList = null;
+		sequence = 0;
+		frame = 0;
+		tick = 0;
+		event = 0;
+		paused = false;
+		childXOffset = 0;
+		childYOffset = 0;
+	}
+
+	/**
+	 * Gets the animation.
+	 * @return Returns a Animation
+	 */
+
+	public Animation getAnimation() {
+		return animation;
+	}
+
+	/**
+	 * Sets the animation.
+	 * @param animation The animation to set
+	 */
+
+	public void setAnimation(Animation animation) {
+		if (animation != null) {
+			assert animation.isCreated();
+		}
+		this.animation = animation;
+		rewind();
+	}
+
+	/**
+	 * Sets the animation, without rewinding
+	 * @param animation
+	 */
+	void setAnimationNoRewind(Animation animation) {
+		this.animation = animation;
+		tick = -1;
+	}
+
+	/**
+	 * Rewind the animation
+	 */
+
+	public void rewind() {
+		sequence = 0;
+		tick = -1;
+		tick();
+	}
+
+	/**
+	 * @see com.shavenpuppy.jglib.sprites.Animation.Animated#getCurrentSequence()
+	 */
+
+	public int getSequence() {
+		return sequence;
+	}
+	/**
+	 * @see com.shavenpuppy.jglib.sprites.Animation.Animated#getCurrentTick()
+	 */
+
+	public int getTick() {
+		return tick;
+	}
+
+	/**
+	 * @see com.shavenpuppy.jglib.sprites.Animation.Animated#eventReceived(int)
+	 */
+
+	public void eventReceived(int event) {
+	}
+
+	/**
+	 * @see com.shavenpuppy.jglib.sprites.Animated#setCurrentSequence(int)
+	 */
+
+	public void setSequence(int newSeq) {
+		sequence = newSeq;
+	}
+
+	/**
+	 * @see com.shavenpuppy.jglib.sprites.Animated#setCurrentTick(int)
+	 */
+
+	public void setTick(int newTick) {
+		tick = newTick;
+	}
+
+	/**
+	 * @return int
+	 */
+
+	public int getEvent() {
+		return event;
+	}
+
+	/**
+	 * Sets the event.
+	 * @param event The event to set
+	 */
+
+	public void setEvent(int event) {
+		this.event = event;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.shavenpuppy.jglib.sprites.Animated#isPaused()
+	 */
+
+	public final boolean isPaused() {
+		return paused;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.shavenpuppy.jglib.sprites.Animated#setPaused(boolean)
+	 */
+
+	public final void setPaused(boolean paused) {
+		this.paused = paused;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.shavenpuppy.jglib.sprites.Animated#addLoop(int)
+	 */
+
+	public final void addLoop(int d) {
+		loop += d;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.shavenpuppy.jglib.sprites.Animated#getLoop()
+	 */
+
+	public final int getLoop() {
+		return loop;
+	}
+
+
+	public final void setLoop(int i) {
+		loop = i;
+	}
+
+
+	public float getChildXOffset(){
+		return childXOffset;
+	}
+
+
+	public void setChildXOffset(float childXOffset) {
+		this.childXOffset = childXOffset;
+	}
+
+
+	public float getChildYOffset(){
+		return childYOffset;
+	}
+
+
+	public void setChildYOffset(float childYOffset) {
+		this.childYOffset = childYOffset;
+	}
+
+
+	public void setFrameList(ResourceArray frameList) {
+		this.frameList = frameList;
+		if (frameList != null) {
+			updateFrame();
+		}
+	}
+
+
+	public ResourceArray getFrameList() {
+		return frameList;
+	}
+
+	/**
+	 * @return the frame
+	 */
+
+	public int getFrame() {
+		return frame;
+	}
+
+	/**
+	 * @param frame the frame to set
+	 */
+
+	public boolean setFrame(int frame) {
+		this.frame = frame;
+		if (frameList != null) {
+			return updateFrame();
+		} else {
+			return false;
+		}
+	}
+
+	private boolean updateFrame() {
+		if (frame < 0 || frame >= frameList.getNumResources()) {
+			return false;
+		}
+		Appearance newAppearance = (Appearance) frameList.getResource(frame);
+		if ((animation != null && newAppearance != animation) || animation == null) {
+			return newAppearance.toSprite(this);
+		} else {
+			return false;
+		}
+
+	}
 }

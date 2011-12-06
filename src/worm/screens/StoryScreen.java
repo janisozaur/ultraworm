@@ -31,25 +31,34 @@
  */
 package worm.screens;
 
-import net.puppygames.applet.*;
+import net.puppygames.applet.Area;
+import net.puppygames.applet.Game;
+import net.puppygames.applet.Screen;
+import net.puppygames.applet.TickableObject;
 import net.puppygames.applet.effects.FadeEffect;
 
 import org.lwjgl.util.ReadableRectangle;
 import org.lwjgl.util.Rectangle;
 
-import worm.*;
+import worm.GameMap;
 import worm.Res;
+import worm.Worm;
+import worm.WormGameState;
 import worm.features.Setting;
 import worm.features.StoryFeature;
 import worm.generator.MapGenerator;
 
 import com.shavenpuppy.jglib.Resources;
-import com.shavenpuppy.jglib.resources.*;
+import com.shavenpuppy.jglib.resources.Background;
+import com.shavenpuppy.jglib.resources.ColorMapFeature;
+import com.shavenpuppy.jglib.resources.Data;
 
 /**
  * Shows story stuff
  */
 public class StoryScreen extends Screen {
+
+	private static final long serialVersionUID = 1L;
 
 	private static final String ID_OK = "ok";
 	private static final String ID_BACK = "back";
@@ -227,7 +236,7 @@ public class StoryScreen extends Screen {
 				progressBarInstance.setBounds(b);
 				new FadeEffect(0, 60) {
 					@Override
-					protected void doRender() {
+                    protected void onTicked() {
 						progressBarInstance.setAlpha(getAlpha());
 						getArea(ID_PROGRESS).setAlpha(getAlpha());
 					}
@@ -268,7 +277,7 @@ public class StoryScreen extends Screen {
 			// Always use earth color map
 			ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("earth.colormap"));
 		} else {
-			String world = gameState.getWorld().getTitle();
+			String world = gameState.getWorld().getUntranslated();
 			ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get(world+".colormap"));
 		}
 

@@ -31,6 +31,7 @@
  */
 package worm;
 
+import com.shavenpuppy.jglib.resources.Data;
 import com.shavenpuppy.jglib.resources.Feature;
 
 /**
@@ -38,10 +39,13 @@ import com.shavenpuppy.jglib.resources.Feature;
  */
 public class GameConfiguration extends Feature {
 
+	private static final long serialVersionUID = 1L;
+
 	/** Singleton */
 	private static GameConfiguration instance;
 
 	/** Title */
+	@Data
 	private String title;
 
 	/** Initial interval at which a saucer spawns, ticks */
@@ -91,6 +95,9 @@ public class GameConfiguration extends Feature {
 
 	/** Survival mode difficulty factors (1 for each world) */
 	private float[] survivalModeDifficultyFactors;
+
+	/** Repair cost % */
+	private float repairCost;
 
 	private int survivalWaveLengthTimeAdjust; // Every minute, survival wave lengths increase
 	private int survivalWaveLengthTimeOffset; // .. only after 3 minutes have elapsed though
@@ -264,5 +271,9 @@ public class GameConfiguration extends Feature {
 
 	public float[] getScavengeRate() {
 	    return scavengeRate;
+    }
+
+	public float getRepairCost() {
+	    return repairCost;
     }
 }

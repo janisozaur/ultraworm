@@ -73,7 +73,7 @@ public class HitPointsEffect extends Effect {
 	}
 
 	@Override
-	protected void doSpawn() {
+	protected void doSpawnEffect() {
 		hitPoints = building.getHitPoints();
 		updateImage();
 	}
@@ -164,15 +164,12 @@ public class HitPointsEffect extends Effect {
 	}
 
 	@Override
-	public boolean isActive() {
+	public boolean isEffectActive() {
 		return !done;
 	}
 
 	@Override
-	protected void doRender() {
-		// Nothing to render
+	protected void render() {
+		// Nothing to actually render
 	}
-
-
-
 }

@@ -44,7 +44,7 @@ import com.shavenpuppy.jglib.util.XMLUtil;
  */
 public class AlphaCommand extends Command {
 
-	public static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
 	private int alpha, duration;
 	private boolean delta;
@@ -60,16 +60,15 @@ public class AlphaCommand extends Command {
 	 * @see com.shavenpuppy.jglib.sprites.Command#execute(com.shavenpuppy.jglib.sprites.Animated)
 	 */
 	@Override
-	public boolean execute(Animated target, int tickRate) {
+	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
 		int currentTick = target.getTick();
 
 		if (currentTick == 0) {
-			Transparent sprite = (Transparent) target;
 			if (delta) {
-				sprite.adjustAlpha(alpha);
+				target.adjustAlpha(alpha);
 			} else {
-				sprite.setAlpha(alpha);
+				target.setAlpha(alpha);
 			}
 		}
 		if (currentTick >= duration) {
@@ -78,7 +77,7 @@ public class AlphaCommand extends Command {
 			return true; // Execute the next command
 		}
 
-		target.setTick(currentTick + tickRate);
+		target.setTick(++currentTick);
 		return false; // Don't execute the next command
 	}
 

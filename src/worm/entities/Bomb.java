@@ -34,7 +34,9 @@ package worm.entities;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.puppygames.applet.effects.*;
+import net.puppygames.applet.effects.BlastEffect;
+import net.puppygames.applet.effects.Emitter;
+import net.puppygames.applet.effects.EmitterFeature;
 
 import org.lwjgl.util.Rectangle;
 

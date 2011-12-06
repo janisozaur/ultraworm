@@ -35,8 +35,9 @@ import java.io.IOException;
 
 import org.w3c.dom.Element;
 
-import com.shavenpuppy.jglib.*;
-import com.shavenpuppy.jglib.resources.ResourceArray;
+import com.shavenpuppy.jglib.Resource;
+import com.shavenpuppy.jglib.Resources;
+import com.shavenpuppy.jglib.XMLResourceWriter;
 
 /**
  * An Animation command which displays an image for a number of frames.
@@ -45,7 +46,7 @@ import com.shavenpuppy.jglib.resources.ResourceArray;
  */
 public class FrameCommand extends Command {
 
-	public static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
 	private static final boolean DEBUG = false;
 
@@ -62,7 +63,7 @@ public class FrameCommand extends Command {
 	private int idx;
 
 	/** The new appearance to display */
-	private transient AnimatedAppearance spriteAppearance;
+	private transient Appearance spriteAppearance;
 
 	/**
 	 * Constructor for FrameCommand.
@@ -80,7 +81,7 @@ public class FrameCommand extends Command {
 	 * @see com.shavenpuppy.jglib.sprites.Command#execute(com.shavenpuppy.jglib.sprites.Animated)
 	 */
 	@Override
-	public boolean execute(Animated target, int tickRate) {
+	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
 		int currentTick = target.getTick();
 
@@ -93,7 +94,7 @@ public class FrameCommand extends Command {
 					if (DEBUG) {
 						System.err.println("frame "+appearanceName+" not found");
 					}
-				} else if (spriteAppearance.toAnimated(target)) {
+				} else if (spriteAppearance.toSprite(target)) {
 					// This is a new animation; we should return right away instead of advancing the sequence number, and not
 					// execute the next instruction as this will already have occurred
 					return false;
@@ -105,7 +106,7 @@ public class FrameCommand extends Command {
 			target.setChildYOffset(childYOffset);
 			return true; // Execute the next command
 		} else {
-			target.setTick(currentTick + tickRate);
+			target.setTick(++currentTick);
 			boolean twiddle;
 			if (appearanceName == null) {
 				// Using frameindex
@@ -116,7 +117,7 @@ public class FrameCommand extends Command {
 				}
 				return false;
 			} else {
-				twiddle = spriteAppearance.toAnimated(target);
+				twiddle = spriteAppearance.toSprite(target);
 			}
 			if (twiddle) {
 				if (duration == 0 && target.getTick() == 0) {
@@ -180,7 +181,7 @@ public class FrameCommand extends Command {
 	protected void doCreate() {
 		// Load the image
 		if (appearanceName != null) {
-			spriteAppearance = (AnimatedAppearance) Resources.get(appearanceName);
+			spriteAppearance = (Appearance) Resources.get(appearanceName);
 		}
 	}
 
@@ -192,22 +193,22 @@ public class FrameCommand extends Command {
 		spriteAppearance = null;
 	}
 
-	private void updateSpriteAppearanceUsingIndex(Animated target) {
-		ResourceArray frameList = target.getFrameList();
-		if (frameList == null) {
-			// Not set.
-			if (DEBUG) {
-				System.err.println("no framelist set on "+this);
-			}
-		} else {
-			if (idx < 0 || idx >= frameList.getNumResources()) {
-				// No-op
-				if (DEBUG) {
-					System.err.println("Tried to set frame index "+idx+" but frame list "+frameList+" only has "+frameList.getNumResources());
-				}
-			} else {
-				spriteAppearance = (AnimatedAppearance) frameList.getResource(idx);
-			}
-		}
-	}
+//	private void updateSpriteAppearanceUsingIndex(Animated target) {
+//		ResourceArray frameList = target.getFrameList();
+//		if (frameList == null) {
+//			// Not set.
+//			if (DEBUG) {
+//				System.err.println("no framelist set on "+this);
+//			}
+//		} else {
+//			if (idx < 0 || idx >= frameList.getNumResources()) {
+//				// No-op
+//				if (DEBUG) {
+//					System.err.println("Tried to set frame index "+idx+" but frame list "+frameList+" only has "+frameList.getNumResources());
+//				}
+//			} else {
+//				spriteAppearance = (Appearance) frameList.getResource(idx);
+//			}
+//		}
+//	}
 }

@@ -36,6 +36,8 @@ package worm.screens;
  */
 public class CreditsScreen extends net.puppygames.applet.screens.CreditsScreen {
 
+	private static final long serialVersionUID = 1L;
+
 	public CreditsScreen(String name) {
 		super(name);
 	}

@@ -37,16 +37,24 @@ import net.puppygames.applet.Screen;
 import net.puppygames.applet.effects.Emitter;
 import net.puppygames.applet.effects.EmitterFeature;
 
-import org.lwjgl.util.*;
+import org.lwjgl.util.Color;
+import org.lwjgl.util.Point;
+import org.lwjgl.util.ReadablePoint;
 import org.w3c.dom.Element;
 
-import worm.*;
+import worm.AttenuatedColor;
+import worm.ColorAttenuationConstants;
+import worm.MapRenderer;
+import worm.Worm;
 import worm.animation.ThingWithLayers;
 
 import com.shavenpuppy.jglib.Point2f;
 import com.shavenpuppy.jglib.resources.Feature;
 import com.shavenpuppy.jglib.resources.MappedColor;
-import com.shavenpuppy.jglib.sprites.*;
+import com.shavenpuppy.jglib.sprites.Animation;
+import com.shavenpuppy.jglib.sprites.Sprite;
+import com.shavenpuppy.jglib.sprites.SpriteAllocator;
+import com.shavenpuppy.jglib.sprites.SpriteImage;
 import com.shavenpuppy.jglib.util.FPMath;
 import com.shavenpuppy.jglib.util.XMLUtil;
 

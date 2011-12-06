@@ -36,7 +36,14 @@ import net.puppygames.applet.effects.LabelEffect;
 import org.lwjgl.util.ReadableColor;
 import org.lwjgl.util.Rectangle;
 
-import worm.*;
+import worm.CrystalResource;
+import worm.Entity;
+import worm.EntitySpawningFeature;
+import worm.Layers;
+import worm.MapRenderer;
+import worm.Res;
+import worm.Worm;
+import worm.WormGameState;
 import worm.effects.CrystalSpawnEffect;
 import worm.entities.Building;
 import worm.entities.Gidrah;

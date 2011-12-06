@@ -47,10 +47,11 @@
 		spawnpointDelayAdjust="120"
 		spawnDelay="90"
 		builtBuildingsValueThreshold="1000"
-		bankFactor="1.5"
+		bankFactor="1.25"
 		normalInitialMoney="500"
 		difficultyFactor="15000.0"
 		difficultyFactorPerLevel="750.0"
+		repairCost="0.1"
 		endlessDifficultyCreep="0.03125"
 		centralDifficultyAdjustPerLevel="0.00625"
 		difficultyAdjustmentFactor="-0.25"
@@ -70,7 +71,7 @@
 		survivalGidrahUnlockIntervalAdjust="{10, 10, 10, 10}"
 		survivalModeDifficultyFactors="{50000.0, 60000.0, 70000.0, 75000.0, 80000.0}"
 		survivalInitialMoney="{2500, 3000, 3500, 4000, 4500}"
-		difficultyAttempts="{0.0, 0.0, -0.06125, -0.125, -0.25, -0.375, -0.5, -0.75, -1.0}"
+		difficultyAttempts="{0.0, -0.06125, -0.125, -0.25, -0.375, -0.5, -0.75, -1.0}"
 		scavengeRate="{0.1, 0.15, 0.2}"
 	/>
 

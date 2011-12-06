@@ -32,30 +32,95 @@
 package worm;
 
 
-import java.io.*;
-import java.util.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
-import net.puppygames.applet.*;
+import net.puppygames.applet.Area;
+import net.puppygames.applet.Game;
+import net.puppygames.applet.GameInputStream;
+import net.puppygames.applet.GameOutputStream;
+import net.puppygames.applet.GameState;
+import net.puppygames.applet.MiniGame;
+import net.puppygames.applet.RoamingFile;
 import net.puppygames.applet.effects.LabelEffect;
 import net.puppygames.applet.screens.DialogScreen;
+import net.puppygames.steam.Steam;
+import net.puppygames.steam.SteamException;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.util.*;
+import org.lwjgl.util.Color;
+import org.lwjgl.util.Point;
+import org.lwjgl.util.ReadableColor;
+import org.lwjgl.util.ReadablePoint;
+import org.lwjgl.util.ReadableRectangle;
+import org.lwjgl.util.Rectangle;
 
 import worm.buildings.BuildingFeature;
 import worm.effects.ArrowEffect;
-import worm.entities.*;
-import worm.features.*;
+import worm.entities.Building;
+import worm.entities.Capacitor;
+import worm.entities.Factory;
+import worm.entities.Gidrah;
+import worm.entities.Saucer;
+import worm.entities.Smartbomb;
+import worm.entities.Turret;
+import worm.entities.Unit;
+import worm.features.GidrahFeature;
+import worm.features.HintFeature;
+import worm.features.LevelFeature;
+import worm.features.MedalFeature;
+import worm.features.RankFeature;
+import worm.features.ResearchFeature;
+import worm.features.StoryFeature;
+import worm.features.WorldFeature;
 import worm.generator.BaseMapGenerator;
-import worm.powerups.*;
-import worm.screens.*;
+import worm.powerups.BatteryPowerupFeature;
+import worm.powerups.BezerkPowerupFeature;
+import worm.powerups.CapacitorPowerupFeature;
+import worm.powerups.CoolingTowerPowerupFeature;
+import worm.powerups.FreezePowerupFeature;
+import worm.powerups.MoneyPowerupFeature;
+import worm.powerups.PowerupFeature;
+import worm.powerups.ReactorPowerupFeature;
+import worm.powerups.RepairPowerupFeature;
+import worm.powerups.ResourcePowerupFeature;
+import worm.powerups.ScannerPowerupFeature;
+import worm.powerups.ShieldGeneratorPowerupFeature;
+import worm.powerups.ShieldPowerupFeature;
+import worm.powerups.SmartbombPowerupFeature;
+import worm.screens.CompleteGameScreen;
+import worm.screens.GameScreen;
+import worm.screens.IntermissionScreen;
+import worm.screens.MenuScreen;
+import worm.screens.NewWorldScreen;
+import worm.screens.ResearchScreen;
+import worm.screens.SelectEndlessLevelScreen;
+import worm.screens.SelectLevelScreen;
+import worm.screens.SelectSandboxLevelScreen;
+import worm.screens.SelectSurvivalLevelScreen;
+import worm.screens.SelectWorldScreen;
+import worm.screens.StoryScreen;
+import worm.screens.SurvivalMenuScreen;
 import worm.tiles.Crystal;
 import worm.tiles.Exclude;
 
 import com.shavenpuppy.jglib.Resources;
-import com.shavenpuppy.jglib.interpolators.*;
+import com.shavenpuppy.jglib.interpolators.CosineInterpolator;
+import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
+import com.shavenpuppy.jglib.interpolators.SineInterpolator;
 import com.shavenpuppy.jglib.resources.MappedColor;
 import com.shavenpuppy.jglib.resources.ResourceArray;
 import com.shavenpuppy.jglib.util.Util;
@@ -73,6 +138,7 @@ public class WormGameState extends GameState {
 	public static final int GAME_MODE_CAMPAIGN = 0;
 	public static final int GAME_MODE_ENDLESS = 1;
 	public static final int GAME_MODE_SURVIVAL = 2;
+	public static final int GAME_MODE_SANDBOX = 3;
 
 	/** Absolute max map size in tiles */
 	public static final int ABS_MAX_SIZE = 96;
@@ -180,7 +246,7 @@ public class WormGameState extends GameState {
 		private LevelFeature levelFeature;
 
 		/** Base difficulty, usually negative as player starts to lose */
-		private float difficulty = 0.3f;
+		private float difficulty = 0.0f;
 
 		/** Survival params */
 		private SurvivalParams survivalParams;
@@ -261,18 +327,16 @@ public class WormGameState extends GameState {
 		}
 
 		public static MetaState load(int level, int gameMode) throws Exception {
-			FileInputStream fis = null;
-			BufferedInputStream bis = null;
+			GameInputStream gis = null;
 			ObjectInputStream ois = null;
 			try {
 				String path = getPath(level, gameMode);
-				File file = new File(path);
+				RoamingFile file = new RoamingFile(path);
 				if (!file.exists()) {
 					throw new FileNotFoundException("The save game file "+path+" was not found");
 				}
-				fis = new FileInputStream(file);
-				bis = new BufferedInputStream(fis);
-				ois = new ObjectInputStream(bis);
+				gis = new GameInputStream(path);
+				ois = new ObjectInputStream(gis);
 
 				MetaState ret = (MetaState) ois.readObject();
 				Resources.dequeue();
@@ -290,8 +354,8 @@ public class WormGameState extends GameState {
 				return ret;
 			} finally {
 				try {
-					if (fis != null) {
-						fis.close();
+					if (gis != null) {
+						gis.close();
 					}
 				} catch (IOException e) {
 				}
@@ -299,21 +363,18 @@ public class WormGameState extends GameState {
 		}
 
 		public void save() throws Exception {
-			FileOutputStream fos = null;
-			BufferedOutputStream bos = null;
+			GameOutputStream gos = null;
 			ObjectOutputStream oos = null;
 			try {
-				fos = new FileOutputStream(getPath(level, gameMode));
-				bos = new BufferedOutputStream(fos);
-				oos = new ObjectOutputStream(bos);
+				gos = new GameOutputStream(getPath(level, gameMode));
+				oos = new ObjectOutputStream(gos);
 
 				oos.writeObject(this);
 				oos.flush();
-				bos.flush();
-				fos.flush();
+				gos.flush();
 			} finally {
 				try {
-					fos.close();
+					gos.close();
 				} catch (IOException e) {
 				}
 			}
@@ -1150,6 +1211,8 @@ public class WormGameState extends GameState {
 					return metaState.level / LEVELS_IN_WORLD + 10 + moreAliens - Math.min(9, type * 3);
 				case GAME_MODE_SURVIVAL:
 					return config.getSurvivalWaveLength() - Math.max(0, type * 3 - Math.max(0, getLevelTick() - config.getSurvivalWaveLengthTimeOffset()) / config.getSurvivalWaveLengthTimeAdjust());
+				case GAME_MODE_SANDBOX:
+					return metaState.level / LEVELS_IN_WORLD + 10 + moreAliens - Math.min(9, type * 3);
 				default:
 					assert false : "Unknown game mode " + metaState.gameMode;
 					return 1;
@@ -1777,6 +1840,10 @@ public class WormGameState extends GameState {
 				levelDuration = -1;
 				return;
 
+			case GAME_MODE_SANDBOX:
+				levelDuration = -1;
+				return;
+
 			default:
 				assert false : "Unknown game mode "+metaState.gameMode;
 				return;
@@ -2226,7 +2293,7 @@ public class WormGameState extends GameState {
 		if (!isBuildingAvailable()) {
 			SFX.insufficientFunds();
 			waitForMouse = true;
-			LabelEffect le = new LabelEffect(net.puppygames.applet.Res.getTinyFont(), "NO LONGER AVAILABLE", ReadableColor.WHITE, ReadableColor.CYAN, 120, 60);
+			LabelEffect le = new LabelEffect(net.puppygames.applet.Res.getTinyFont(), Game.getMessage("ultraworm.wormgamestate.no_longer_available"), ReadableColor.WHITE, ReadableColor.CYAN, 120, 60);
 			le.setAcceleration(0.0f, -0.003125f);
 			le.setVelocity(0.0f, 0.5f);
 			le.setLocation(buildEntity.getMapX() + buildEntity.getCollisionX(),  buildEntity.getMapY() + buildEntity.getFeature().getBounds().getHeight());
@@ -2241,7 +2308,7 @@ public class WormGameState extends GameState {
 		if (getMoney() < cost) {
 			SFX.insufficientFunds();
 			waitForMouse = true;
-			LabelEffect le = new LabelEffect(net.puppygames.applet.Res.getTinyFont(), "NEED $"+(cost - getMoney()), ReadableColor.WHITE, ReadableColor.CYAN, 30, 10);
+			LabelEffect le = new LabelEffect(net.puppygames.applet.Res.getTinyFont(), Game.getMessage("ultraworm.wormgamestate.insufficient_funds")+" $"+(cost - getMoney()), ReadableColor.WHITE, ReadableColor.CYAN, 30, 10);
 			le.setAcceleration(0.0f, -0.025f);
 			le.setVelocity(0.0f, 1.0f);
 			le.setLocation(buildEntity.getMapX() + buildEntity.getCollisionX(),  buildEntity.getMapY() + buildEntity.getFeature().getBounds().getHeight());
@@ -2342,9 +2409,9 @@ public class WormGameState extends GameState {
 		if (tick == END_OF_GAME_DURATION) {
 			// Game over! This puts up teh Game Over dialog. Or goes to the title screen if we've expired the demo.
 			if (demoExpired) {
-				Game.endGame();
+				MiniGame.endGame();
 			} else {
-				Game.gameOver();
+				MiniGame.gameOver();
 			}
 		}
 	}
@@ -2358,21 +2425,21 @@ public class WormGameState extends GameState {
 		}
 		String msg =
 			getGameMode() == GAME_MODE_CAMPAIGN
-					? "Well done! You've defeated the MOON BOSS and that's the end of the DEMO! Register now and carry on where you left off!"
-					: "That's as far as the demo plays - we hope you want to play some more! Register now and carry on where you left off!";
+					? Game.getMessage("ultraworm.wormgamestate.completed_campaign_demo")
+					: Game.getMessage("ultraworm.wormgamestate.completed_endless_demo");
 		Res.getResearchNagDialog().doModal("): DEMO EXPIRED :(", msg, new Runnable() {
 			@Override
 			public void run() {
 				if (Res.getResearchNagDialog().getOption() == DialogScreen.OK_OPTION) {
-					Game.buy(true);
+					MiniGame.buy(true);
 				} else {
-					LabelEffect nagEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), "): ): DEMO EXPIRED :( :(", ReadableColor.YELLOW, ReadableColor.RED, 160, 240);
+					LabelEffect nagEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), "): ): "+Game.getMessage("ultraworm.wormgamestate.demo_expired")+" :( :(", ReadableColor.YELLOW, ReadableColor.RED, 160, 240);
 					nagEffect.setLocation(Game.getWidth() / 2, Game.getHeight() / 2 + 32);
 					nagEffect.setVisible(true);
 					nagEffect.spawn(GameScreen.getInstance());
 					nagEffect.setOffset(null);
 
-					Game.getPreferences().putBoolean("showregister", true);
+					Game.getLocalPreferences().putBoolean("showregister", true);
 					phase = PHASE_END_OF_GAME;
 					tick = 0;
 					demoExpired = true;
@@ -2423,7 +2490,7 @@ public class WormGameState extends GameState {
 		if (saving && isAlive()) {
 			saveTick ++;
 			if (saveTick >= SAVE_DURATION) {
-				Game.saveGame();
+				MiniGame.saveGame();
 				return;
 			}
 		}
@@ -2481,6 +2548,17 @@ public class WormGameState extends GameState {
 				for (PowerupFeature pf : PowerupFeature.getPowerups()) {
 					addPowerup(pf, false);
 				}
+
+				for (Iterator<BuildingFeature> i = BuildingFeature.getBuildings().iterator(); i.hasNext(); ) {
+					BuildingFeature bf = i.next();
+					if (bf.isAvailable()) {
+						int num = bf.getNumAvailable();
+						if (num > 0) {
+							addAvailableStock(bf, num);
+						}
+					}
+				}
+
 				// chaz hack! powerup topup for testing
 				//for (int i = 0; i < 5; i ++) {
 				//	addPowerup(PowerupFeature.getPowerup());
@@ -2768,12 +2846,12 @@ public class WormGameState extends GameState {
 
 	private void doBossWarning(int numBosses) {
 		// TODO: sfx
-		LabelEffect challengeEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), "EXTREME DANGER", ReadableColor.YELLOW, ReadableColor.RED, 60, 240);
+		LabelEffect challengeEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), Game.getMessage("ultraworm.wormgamestate.extreme_danger"), ReadableColor.YELLOW, ReadableColor.RED, 60, 240);
 		challengeEffect.setLocation(Game.getWidth() / 2, Game.getHeight() / 2 + 40);
 		challengeEffect.setVisible(true);
 		challengeEffect.spawn(GameScreen.getInstance());
 		challengeEffect.setOffset(null);
-		LabelEffect challengeEffect2 = new LabelEffect(net.puppygames.applet.Res.getSmallFont(), "LARGE ENEM"+(numBosses > 1 ? "IES" : "Y")+" APPROACHING!", ReadableColor.YELLOW, ReadableColor.RED,
+		LabelEffect challengeEffect2 = new LabelEffect(net.puppygames.applet.Res.getSmallFont(), (numBosses > 1 ? Game.getMessage("ultraworm.wormgamestate.large_enemies_approaching") : Game.getMessage("ultraworm.wormgamestate.large_enemy_approaching")), ReadableColor.YELLOW, ReadableColor.RED,
 				60, 240);
 		challengeEffect2.setLocation(Game.getWidth() / 2, Game.getHeight() / 2);
 		challengeEffect2.setVisible(true);
@@ -2933,6 +3011,10 @@ public class WormGameState extends GameState {
 				SelectSurvivalLevelScreen.show();
 				break;
 
+			case GAME_MODE_SANDBOX:
+				SelectSandboxLevelScreen.show();
+				break;
+
 			default:
 				assert false : "Unknown game mode "+mode;
 		}
@@ -2953,7 +3035,7 @@ public class WormGameState extends GameState {
 		GameScreen.beginGame(this);
 		beginLevel();
 		initSurvivalResearch();
-		doInitMessages("DEFEND THE BASE!", "Hit ESC to save game and quit");
+		doInitMessages(Game.getMessage("ultraworm.wormgamestate.init_survival1"), Game.getMessage("ultraworm.wormgamestate.init_survival2"));
 	}
 
 	/**
@@ -2985,7 +3067,7 @@ public class WormGameState extends GameState {
 		}
 		beginLevel();
 
-		doInitMessages("DEFEND THE BASE!", "Hit ESC to save game and quit");
+		doInitMessages(Game.getMessage("ultraworm.wormgamestate.init1"), Game.getMessage("ultraworm.wormgamestate.init2"));
 	}
 
 	/**
@@ -3140,6 +3222,29 @@ public class WormGameState extends GameState {
 				showStoryScreen();
 				break;
 
+			case GAME_MODE_SANDBOX:
+				// Generate a random level
+				metaState.levelFeature = LevelFeature.generateEndless(metaState.level);
+
+				// We might have changed worlds
+				newWorld = getLevelFeature().getWorld();
+				if (newWorld != getWorld()) {
+					setWorld(newWorld);
+				}
+
+				currentStoryIndex = 0;
+				sf = getLevelFeature().getStories();
+				currentStories = new ArrayList<StoryFeature>(sf.length);
+				for (StoryFeature element : sf) {
+					if (element.qualifies()) {
+						currentStories.add(element);
+					}
+				}
+
+				suppressMedals = false;
+				showStoryScreen();
+				break;
+
 
 			default:
 				assert false : "Unknown game mode "+metaState.gameMode;
@@ -3149,7 +3254,7 @@ public class WormGameState extends GameState {
 
 	private void nextStoryScreen() {
 		if (++currentStoryIndex >= currentStories.size()) {
-			StoryScreen.tidyUp("story.screen."+getWorld().getTitle());
+			StoryScreen.tidyUp("story.screen."+getWorld().getUntranslated());
 			// Open research screen, unless this is level 0 or survival mode, in which case jump straight into the action
 			if (getLevel() == 0 || getGameMode() == GAME_MODE_SURVIVAL) {
 				beginLevel2();
@@ -3167,7 +3272,7 @@ public class WormGameState extends GameState {
 			switch (metaState.gameMode) {
 				case GAME_MODE_CAMPAIGN:
 					// Go to level select screen of current world
-					StoryScreen.tidyUp("story.screen."+getWorld().getTitle());
+					StoryScreen.tidyUp("story.screen."+getWorld().getUntranslated());
 					showLevelSelectScreen();
 					break;
 
@@ -3223,7 +3328,7 @@ public class WormGameState extends GameState {
 	private void showStoryScreen() {
 		StoryScreen.show
 			(
-				"story.screen."+getWorld().getTitle(),
+				"story.screen."+getWorld().getUntranslated(),
 				currentStoryIndex == 0,
 				currentStories.get(currentStoryIndex),
 				new Runnable() {
@@ -3566,7 +3671,7 @@ public class WormGameState extends GameState {
 
 		// Put up a New World screen in campaign mode
 		if (metaState.gameMode == GAME_MODE_CAMPAIGN) {
-			NewWorldScreen nw = (NewWorldScreen) Resources.get("newworld.screen."+getWorld().getTitle());
+			NewWorldScreen nw = (NewWorldScreen) Resources.get("newworld.screen."+getWorld().getUntranslated());
 			nw.open();
 		}
 
@@ -3587,14 +3692,11 @@ public class WormGameState extends GameState {
 		hintEffect.setOffset(null);
 	}
 
-	/* (non-Javadoc)
-	 * @see net.puppygames.applet.GameState#reinit()
-	 */
 	@Override
 	public void reinit() {
 		GameScreen.beginGame(this);
 
-		doInitMessages("RESUMING GAME", "Hit ESC to save game and quit");
+		doInitMessages(Game.getMessage("ultraworm.wormgamestate.reinit1"), Game.getMessage("ultraworm.wormgamestate.reinit2"));
 
 		waitForMouse = true;
 
@@ -3617,7 +3719,7 @@ public class WormGameState extends GameState {
 		GameScreen.onBeginLevel();
 
 		if (!isAlive()) {
-			Game.endGame();
+			MiniGame.endGame();
 		}
 	}
 
@@ -3903,7 +4005,7 @@ public class WormGameState extends GameState {
 		boolean survival = getGameMode() == GAME_MODE_SURVIVAL;
 
 		// And then attenuate this difficulty by how badly the player is being kicked in:
-		if (!survival && ret > 0.0f && valueOfDestroyedBuildings > 0 && valueOfBuiltBuildings > config.getBuiltBuildingsValueThreshold()) {
+		if (!survival && valueOfDestroyedBuildings > 0 && valueOfBuiltBuildings > config.getBuiltBuildingsValueThreshold()) {
 			float slaughterAttenuation = 1.0f;
 			// Attenuate the attenuation by the aliens losses when level is ended
 			if (!isLevelActive() && aliensSpawnedAtLevelEnd > 0 && aliensVanquishedSinceEndOfLevel > 0) {
@@ -3932,7 +4034,7 @@ public class WormGameState extends GameState {
 		}
 
 		// Add difficulty for powerups...
-		currentDifficulty += powerupDifficulty;
+		currentDifficulty += powerupDifficulty * attenuate;
 
 		// Finally, adjust by base difficulty offset
 		float attemptsDifficulty = Worm.getAutoDifficulty() ? config.getDifficultyAttempts()[Math.min(config.getDifficultyAttempts().length -1, attempts)] : 0.0f;
@@ -3954,7 +4056,7 @@ public class WormGameState extends GameState {
 	 * Quit the game
 	 */
 	public void quit() {
-		Game.endGame();
+		MiniGame.endGame();
 	}
 
 	private void reset() {
@@ -4048,7 +4150,7 @@ public class WormGameState extends GameState {
 	public void save() {
 		saving = true;
 		saveTick = 0;
-		LabelEffect saveEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), "SAVING GAME", new MappedColor("gui-bright"), new MappedColor("gui-dark"), SAVE_DURATION / 2, SAVE_DURATION / 2);
+		LabelEffect saveEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), Game.getMessage("ultraworm.wormgamestate.saving_game"), new MappedColor("gui-bright"), new MappedColor("gui-dark"), SAVE_DURATION / 2, SAVE_DURATION / 2);
 		saveEffect.setLocation(Game.getWidth() / 2, Game.getHeight() / 2);
 		saveEffect.setVisible(true);
 		saveEffect.spawn(GameScreen.getInstance());
@@ -4282,6 +4384,7 @@ public class WormGameState extends GameState {
 		metaState.score += mf.getPoints();
 		addMoney(mf.getMoney());
 		RankFeature newRank = RankFeature.getRank(metaState.score);
+		boolean storeSteamStats = false;
 		if (newRank != metaState.rank) {
 			System.out.println("New Rank: "+newRank.getTitle());
 			metaState.rank = newRank;
@@ -4290,10 +4393,26 @@ public class WormGameState extends GameState {
 				GameScreen.getInstance().showHint(newRank.getHint());
 			}
 			SFX.newRank();
+			if (Game.isUsingSteam() && Steam.isCreated() && Steam.isSteamRunning()) {
+				try {
+					Steam.getUserStats().setAchievement(newRank.getName());
+				} catch (SteamException e) {
+					System.err.println("Failed to set achievement "+newRank.getName()+" due to "+e);
+				}
+				storeSteamStats = true;
+			}
 		}
 		metaState.medals.put(mf, n);
 
 		System.out.println("Awarded "+medal+" ("+n+")");
+		if (mf.isSteam() && Game.isUsingSteam() && Steam.isCreated() && Steam.isSteamRunning()) {
+			try {
+				Steam.getUserStats().setAchievement(mf.getName());
+				storeSteamStats = true;
+			} catch (SteamException e) {
+				System.err.println("Failed to set achievement "+mf.getName()+" due to "+e);
+			}
+		}
 
 		// Update medals earned this level too
 		if (!mf.getSuppressHint()) {
@@ -4314,6 +4433,15 @@ public class WormGameState extends GameState {
 				}
 			} else {
 				System.out.println("Medal "+mf+" doesn't have a hint!");
+			}
+		}
+
+		// Store steam stats
+		if (storeSteamStats) {
+			try {
+				Steam.getUserStats().storeStats();
+			} catch (SteamException e) {
+				System.err.println("Failed to store steam stats due to "+e);
 			}
 		}
 		return mf;
@@ -4366,78 +4494,69 @@ public class WormGameState extends GameState {
 		StringBuilder sb = new StringBuilder(256);
 
 		if (getGameMode() == GAME_MODE_SURVIVAL) {
-
-			sb.append("{font:tinyfont.glfont color:button-red}\n10 {color:button-red-on}SITUATION = CRITICAL!{color:button-red}");
-			sb.append("\n20 CHANCE OF RESCUE = 0: LAST HUMAN = TRUE");
-			sb.append("\n30 FLASH 1");
-			sb.append("\n40 PRINT {color:button-red-on}IMPENDING DOOM = TRUE{color:button-red}");
-			sb.append("\n\n{color:button-red-on}BEEP!");
+			sb.append(Game.getMessage("ultraworm.wormgamestate.stats_survival"));
 		} else if (getLevel() == 0) {
-			sb.append("{font:smallfont.glfont color:text-bold}GREETINGS COMMANDER!");
-			sb.append("\n\n{font:tinyfont.glfont color:text}10 REM {color:text-bold}I AM YOUR ZX STAT-BOT{color:text}");
-			sb.append("\n20 DEFEND BASE FROM INVADING TITANS");
-			sb.append("\n30 PRINT STATISTICS");
-			sb.append("\n40 RESEARCH TECH");
-			sb.append("\n50 GOTO 20");
-			sb.append("\n\n{color:text-bold}BEEP!");
+			sb.append(Game.getMessage("ultraworm.wormgamestate.stats_level0"));
 		} else {
-			sb.append("{font:smallfont.glfont color:text-bold}BATTLE STATISTICS{font:tinyfont.glfont}\n\n");
+			sb.append("{font:smallfont.glfont color:text-bold}");
+			sb.append(Game.getMessage("ultraworm.wormgamestate.battle_statistics"));
+			sb.append("{font:tinyfont.glfont}\n\n");
 
 			int angry = getStat(Stats.ANGRY_SPAWNED);
 			int bosses = getStat(Stats.BOSSES_SPAWNED);
 			int gidlets = getStat(Stats.GIDLETS_SPAWNED);
 
 			int spawned = getStat(Stats.ALIENS_SPAWNED);
-			sb.append("{color:text-bold}"+spawned+" ALIENS SPAWNED");
+			sb.append("{color:text-bold}"+spawned+" "+Game.getMessage("ultraworm.wormgamestate.aliens_spawned"));
 
 			if (angry > 0 || bosses > 0 || gidlets > 0 || showAllStats) {
 				sb.append("\n\t\t {color:text}");
 				int normal = spawned - (angry + gidlets + bosses);
 				boolean addSpace = false;
 				if (normal > 0 || showAllStats) {
-					sb.append("{color:text}NORMAL: "+normal);
+					sb.append("{color:text}"+Game.getMessage("ultraworm.wormgamestate.normal_sized_aliens")+": "+normal);
 					addSpace = true;
 				}
 				if (angry > 0 || showAllStats) {
 					if (addSpace) {
 						sb.append(' ');
 					}
-					sb.append("{color:text}LARGE: "+angry);
+					sb.append("{color:text}"+Game.getMessage("ultraworm.wormgamestate.large_sized_aliens")+": "+angry);
 					addSpace = true;
 				}
 				if (gidlets > 0 || showAllStats) {
 					if (addSpace) {
 						sb.append(' ');
 					}
-					sb.append("{color:text}TINY: "+gidlets);
+					sb.append("{color:text}"+Game.getMessage("ultraworm.wormgamestate.tiny_sized_aliens")+": "+gidlets);
 					addSpace = true;
 				}
 				if (bosses > 0 || showAllStats) {
 					if (addSpace) {
 						sb.append(' ');
 					}
-					sb.append("{color:text}BOSSES: "+bosses);
+					sb.append("{color:text}"+Game.getMessage("ultraworm.wormgamestate.bosses")+": "+bosses);
 				}
 			}
 
 
 			int vanquished = getStat(Stats.ALIENS_VANQUISHED);
-			sb.append("\n{color:text-bold}"+vanquished+" ALIENS DESTROYED");
+			sb.append("\n{color:text-bold}"+vanquished+" "+Game.getMessage("ultraworm.wormgamestate.aliens_vanquished"));
 			int shot = getStat(Stats.ALIENS_SHOT);
 
 			if (vanquished != shot || showAllStats) {
 
 				int vanquishedCount = 1;
-				sb.append("\n\t\t {color:text}SHOT: "+shot);
+				sb.append("\n\t\t {color:text}"+Game.getMessage("ultraworm.wormgamestate.aliens_shot")+": "+shot);
 
 				int crushed = getStat(Stats.ALIENS_CRUSHED);
 				if (crushed > 0 || showAllStats) {
-					sb.append(" {color:text}CRUSHED: "+crushed);
+					sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.aliens_crushed")+": "+crushed);
 					vanquishedCount++;
 				}
 				int blownUp = getStat(Stats.ALIENS_BLOWN_UP);
 				if (blownUp > 0 || showAllStats) {
-					sb.append(" {color:text}BLOWN UP: "+blownUp);
+					sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.aliens_blown_up")+": "+blownUp);
 					vanquishedCount++;
 				}
 				int fried = getStat(Stats.ALIENS_FRIED);
@@ -4447,7 +4566,7 @@ public class WormGameState extends GameState {
 						vanquishedCount=0;
 						sb.append("\n\t\t");
 					}
-					sb.append(" {color:text}FRIED: "+fried);
+					sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.aliens_fried")+": "+fried);
 				}
 				int nuked = getStat(Stats.ALIENS_SMARTBOMBED);
 				if (nuked > 0 || showAllStats) {
@@ -4456,27 +4575,28 @@ public class WormGameState extends GameState {
 						vanquishedCount=0;
 						sb.append("\n\t\t");
 					}
-					sb.append(" {color:text}NUKED: "+nuked);
+					sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.aliens_nuked")+": "+nuked);
 				}
 			}
 
 
 			int alienAttacksOnBuildings = getStat(Stats.ALIEN_ATTACKS_ON_BUILDINGS);
 			if (alienAttacksOnBuildings > 0 || showAllStats) {
-				sb.append("\n{color:text-bold}"+alienAttacksOnBuildings+" ALIEN ATTACKS");
-				sb.append(" {color:text}CAUSING \\$"+getStat(Stats.VALUE_OF_BUILDINGS_DESTROYED));
-				sb.append(" {color:text}OF DAMAGE");
+				String msg = Game.getMessage("ultraworm.wormgamestate.alien_attacks");
+				msg = msg.replace("[num]", String.valueOf(alienAttacksOnBuildings));
+				msg = msg.replace("[value]", String.valueOf(getStat(Stats.VALUE_OF_BUILDINGS_DESTROYED)));
+				sb.append(msg);
 			}
 
-			sb.append("\n{color:text-bold}"+getStat(Stats.BUILDINGS_BUILT)+" BUILDINGS BUILT");
-			sb.append("\n\t\t {color:text}DESTROYED: "+getStat(Stats.BUILDINGS_DESTROYED));
+			sb.append("\n{color:text-bold}"+getStat(Stats.BUILDINGS_BUILT)+" "+Game.getMessage("ultraworm.wormgamestate.buildings_built"));
+			sb.append("\n\t\t {color:text}"+Game.getMessage("ultraworm.wormgamestate.buildings_destroyed")+": "+getStat(Stats.BUILDINGS_DESTROYED));
 			int recycled = getStat(Stats.RECYCLED);
 			int sold = getStat(Stats.SOLD);
-			sb.append(" {color:text}SOLD: "+sold);
-			sb.append(" {color:text}RECYCLED: "+recycled);
+			sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.buildings_sold")+": "+sold);
+			sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.buildings_recycled")+": "+recycled);
 
 			int buildCosts = getStat(Stats.VALUE_OF_BUILDINGS_BUILT);
-			sb.append("\n {color:text-bold}\\$"+buildCosts+" SPENT");
+			sb.append("\n {color:text-bold}\\$"+buildCosts+" "+Game.getMessage("ultraworm.wormgamestate.money_spent"));
 
 		}
 
@@ -4574,52 +4694,54 @@ public class WormGameState extends GameState {
     	List<Message> messages = new ArrayList<Message>();
 
     	if (!lotsOfTurrets) {
-    		messages.add(new Message(700, "BUILD MORE TURRETS"));
+    		messages.add(new Message(700, Game.getMessage("ultraworm.wormgamestate.hint1")));
     	}
     	if (lotsDestroyed) {
-    		messages.add(new Message(800, "DON'T BUILD IN THE TITANS' PATH"));
+    		messages.add(new Message(800, Game.getMessage("ultraworm.wormgamestate.hint2")));
     	} else if (valueOfBuiltBuildings > 2500) {
-    		messages.add(new Message(600, "DON'T BE AFRAID TO LOSE BUILDINGS"));
+    		messages.add(new Message(600, Game.getMessage("ultraworm.wormgamestate.hint3")));
     	}
     	if (!lotsOfAliensSlain && lotsOfRefineries) {
-    		messages.add(new Message(200, "BUILD MORE DEFENCES BEFORE REFINERIES"));
+    		messages.add(new Message(200, Game.getMessage("ultraworm.wormgamestate.hint4")));
     	}
     	if (hasUnrefinedCrystals) {
-    		messages.add(new Message(100, "FIND AND MINE ALL UNREFINED CRYSTALS"));
+    		messages.add(new Message(100, Game.getMessage("ultraworm.wormgamestate.hint5")));
     	}
     	if (!lotsOfRefineries && (getLevel() > 4 || getGameMode() == GAME_MODE_SURVIVAL)) {
-    		messages.add(new Message(900, "BUILD MORE REFINERIES"));
+    		messages.add(new Message(900, Game.getMessage("ultraworm.wormgamestate.hint6")));
     	}
     	if (hasPowerups) {
-    		messages.add(new Message(500, "YOU HAD POWERUPS - USE THEM"));
+    		messages.add(new Message(500, Game.getMessage("ultraworm.wormgamestate.hint7")));
     	}
     	if (!lotsOfMoneyLeft) {
     		if (lotsOfBuildings) {
-    			messages.add(new Message(100, "SELL UNUSED BUILDINGS TO RECLAIM MONEY"));
+    			messages.add(new Message(100, Game.getMessage("ultraworm.wormgamestate.hint8")));
     		} else {
     			if (isResearched(ResearchFeature.CONCRETE)) {
-    				messages.add(new Message(100, "BUILD BARRICADES TO SLOW THE TITANS"));
+    				messages.add(new Message(100, Game.getMessage("ultraworm.wormgamestate.hint9")));
     			} else if (isResearched(ResearchFeature.TANGLEWEB)) {
-    				messages.add(new Message(100, "LAY TANGLEWEB TO SLOW THE TITANS"));
+    				messages.add(new Message(100, Game.getMessage("ultraworm.wormgamestate.hint10")));
     			} else if (isResearched(ResearchFeature.MINES)) {
-    				messages.add(new Message(100, "LAY MINES TO DESTROY BIGGER TITANS"));
+    				messages.add(new Message(100, Game.getMessage("ultraworm.wormgamestate.hint11")));
     			} else {
-    				messages.add(new Message(100, "CONSIDER RESEARCHING BARRICADES"));
+    				messages.add(new Message(100, Game.getMessage("ultraworm.wormgamestate.hint12")));
     			}
     		}
     	} else {
-    		messages.add(new Message(1000, "SPEND MORE MONEY ON DEFENCES"));
+    		messages.add(new Message(1000, Game.getMessage("ultraworm.wormgamestate.hint13")));
     	}
     	if (getLevelFeature().getBosses() != null) {
     		if (getLevelFeature().getBosses().getNumResources() == 1) {
-    			messages.add(new Message(900, "CONCENTRATE GUNS ON THE BOSS EARLIER"));
+    			messages.add(new Message(900, Game.getMessage("ultraworm.wormgamestate.hint14")));
     		} else {
-    			messages.add(new Message(900, "CONCENTRATE GUNS ON THE BOSSES EARLIER"));
+    			messages.add(new Message(900, Game.getMessage("ultraworm.wormgamestate.hint15")));
     		}
     	}
 
     	StringBuilder sb = new StringBuilder(256);
-    	sb.append("{color:text-bold}BATTLE ANALYSIS:{color:text}");
+    	sb.append("{color:text-bold}");
+    	sb.append(Game.getMessage("ultraworm.wormgamestate.battle_analysis"));
+    	sb.append(":{color:text}");
 
     	Collections.sort(messages);
     	int count = 0;

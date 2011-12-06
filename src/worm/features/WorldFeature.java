@@ -39,7 +39,10 @@ import worm.buildings.BaseBuildingFeature;
 import worm.generator.MapTemplate;
 
 import com.shavenpuppy.jglib.openal.ALStream;
-import com.shavenpuppy.jglib.resources.*;
+import com.shavenpuppy.jglib.resources.Data;
+import com.shavenpuppy.jglib.resources.Feature;
+import com.shavenpuppy.jglib.resources.ResourceArray;
+import com.shavenpuppy.jglib.resources.TextResource;
 import com.shavenpuppy.jglib.util.Util;
 import com.shavenpuppy.jglib.util.XMLUtil;
 
@@ -48,11 +51,17 @@ import com.shavenpuppy.jglib.util.XMLUtil;
  */
 public class WorldFeature extends Feature {
 
+	private static final long serialVersionUID = 1L;
+
 	private static final ArrayList<WorldFeature> WORLDS = new ArrayList<WorldFeature>(5);
 
 	/** Title */
 	@Data
 	private String title;
+
+	/** Untranslated title */
+	@Data
+	private String untranslated;
 
 	/** Index */
 	private int index;
@@ -202,6 +211,10 @@ public class WorldFeature extends Feature {
 	public String getTitle() {
 		return title;
 	}
+
+	public String getUntranslated() {
+	    return untranslated;
+    }
 
 	/**
 	 * @return the number of worlds

@@ -31,24 +31,31 @@
  */
 package com.shavenpuppy.jglib.sprites;
 
-import java.nio.*;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.util.ReadableColor;
 import org.lwjgl.util.vector.Vector3f;
 
-import com.shavenpuppy.jglib.*;
+import com.shavenpuppy.jglib.Memory;
+import com.shavenpuppy.jglib.MultiBuffer;
+import com.shavenpuppy.jglib.Resource;
 import com.shavenpuppy.jglib.algorithms.RadixSort;
 import com.shavenpuppy.jglib.opengl.GLBaseTexture;
 import com.shavenpuppy.jglib.opengl.GLVertexBufferObject;
 import com.shavenpuppy.jglib.util.FPMath;
 import com.shavenpuppy.jglib.util.FloatList;
+import com.shavenpuppy.jglib.util.ShortList;
 
 import static org.lwjgl.opengl.ARBBufferObject.*;
 import static org.lwjgl.opengl.ARBMultitexture.*;
 import static org.lwjgl.opengl.ARBVertexBufferObject.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
 
 /**
@@ -59,6 +66,8 @@ import static org.lwjgl.opengl.GL13.*;
 class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 
 	private static final long serialVersionUID = 1L;
+
+	private static final float PREMULT_ALPHA = 1.0f / 255.0f;
 
 	/** Scratch vector */
 	private static final Vector3f offset = new Vector3f();
@@ -74,6 +83,8 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			GLBaseTexture texture0, texture1;
 			Style style;
 			int start, length;
+			ShortBuffer indices;
+			int startIndex, endIndex;
 
 			void render() {
 				if (style != lastRenderedStyle) {
@@ -103,26 +114,32 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 				}
 
 				if (style.getRenderSprite()) {
-					glDrawArrays(GL_QUADS, start, length);
+					if (useVBOs) {
+						glDrawRangeElements(GL_TRIANGLES, start, start + length, endIndex - startIndex, GL_UNSIGNED_SHORT, startIndex * 2);
+					} else {
+						indices.limit(endIndex).position(startIndex);
+						glDrawRangeElements(GL_TRIANGLES, start, start + length, indices);
+					}
 				} else {
-					style.render(start);
+					style.render(start, startIndex);
 				}
 			}
 		}
 
-		int bufferSize, bufferSizeInVertices;
+		int bufferSize, bufferSizeInVertices, indexBufferSize;
 		int numBuffers;
 
 		boolean useVBOs;
-		GLVertexBufferObject[] vbo;
+		GLVertexBufferObject[] vbo, ibo;
 		MultiBuffer[] buffer;
+		MultiBuffer[] indices;
 		int sequence = -1, mark = -1;
-		MultiBuffer current;
+		MultiBuffer currentVertices, currentIndices;
 		StateRun[] stateRun;
 
 		GLBaseTexture lastRenderedTexture0, lastRenderedTexture1, currentTexture0, currentTexture1;
 		Style lastRenderedStyle, currentStyle;
-		int vertexCursor;
+		int vertexCursor, indexCursor;
 		int numRuns;
 		StateRun currentRun;
 
@@ -138,19 +155,25 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			} else {
 				bufferSize = 1024 * 1024 * 4;
 				bufferSizeInVertices = bufferSize / VERTEX_SIZE;
-				numBuffers = 1;
+				numBuffers = 2;
 			}
+			indexBufferSize = bufferSizeInVertices * 3;
 			buffer = new MultiBuffer[numBuffers];
+			indices = new MultiBuffer[numBuffers];
 
 			if (useVBOs) {
 				vbo = new GLVertexBufferObject[numBuffers];
+				ibo = new GLVertexBufferObject[numBuffers];
 				for (int i = 0; i < numBuffers; i ++) {
 					vbo[i] = new GLVertexBufferObject(bufferSize, GL_ARRAY_BUFFER_ARB, GL_STREAM_DRAW_ARB);
 					vbo[i].create();
+					ibo[i] = new GLVertexBufferObject(indexBufferSize * 2, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_STREAM_DRAW_ARB);
+					ibo[i].create();
 				}
 			} else {
 				for (int i = 0; i < numBuffers; i ++) {
 					buffer[i] = new MultiBuffer(bufferSize);
+					indices[i] = new MultiBuffer(indexBufferSize * 2);
 				}
 			}
 			stateRun = new StateRun[DEFAULT_STATE_RUNS];
@@ -170,15 +193,25 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			}
 			if (useVBOs) {
 				vbo[sequence].render();
+				ibo[sequence].render();
 				ByteBuffer buf = vbo[sequence].map();
 				if (buffer[sequence] == null || buffer[sequence].bytes != buf) {
 					buffer[sequence] = new MultiBuffer(buf);
 				}
+				ByteBuffer ibuf = ibo[sequence].map();
+				if (indices[sequence] == null || indices[sequence].bytes != ibuf) {
+					indices[sequence] = new MultiBuffer(ibuf);
+				}
 			}
-			current = buffer[sequence];
-			current.bytes.clear();
-			current.floats.clear();
-			current.ints.clear();
+
+			currentVertices = buffer[sequence];
+			currentVertices.bytes.clear();
+			currentVertices.floats.clear();
+			currentVertices.ints.clear();
+
+			currentIndices = indices[sequence];
+			currentIndices.shorts.clear();
+
 			ContextCapabilities capabilities = GLContext.getCapabilities();
 			if (useVBOs) {
 				glVertexPointer(3, GL_FLOAT, VERTEX_SIZE, 0);
@@ -194,21 +227,22 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 				glTexCoordPointer(2, GL_FLOAT, VERTEX_SIZE, TEXTURE0_COORD_OFFSET);
 				glColorPointer(4, GL_UNSIGNED_BYTE, VERTEX_SIZE, COLOR_OFFSET);
 			} else {
-				glVertexPointer(3, VERTEX_SIZE, current.floats);
+				glVertexPointer(3, VERTEX_SIZE, currentVertices.floats);
 				if (capabilities.GL_ARB_multitexture) {
 					glClientActiveTextureARB(GL_TEXTURE1_ARB);
-					glTexCoordPointer(2, VERTEX_SIZE, Memory.chop(current.bytes, TEXTURE1_COORD_OFFSET).asFloatBuffer());
+					glTexCoordPointer(2, VERTEX_SIZE, Memory.chop(currentVertices.bytes, TEXTURE1_COORD_OFFSET).asFloatBuffer());
 					glClientActiveTextureARB(GL_TEXTURE0_ARB);
 				} else if (capabilities.OpenGL13) {
 					glClientActiveTexture(GL_TEXTURE1);
-					glTexCoordPointer(2, VERTEX_SIZE, Memory.chop(current.bytes, TEXTURE1_COORD_OFFSET).asFloatBuffer());
+					glTexCoordPointer(2, VERTEX_SIZE, Memory.chop(currentVertices.bytes, TEXTURE1_COORD_OFFSET).asFloatBuffer());
 					glClientActiveTexture(GL_TEXTURE1);
 				}
-				glTexCoordPointer(2, VERTEX_SIZE, Memory.chop(current.bytes, TEXTURE0_COORD_OFFSET).asFloatBuffer());
-				glColorPointer(4, true, VERTEX_SIZE, Memory.chop(current.bytes, COLOR_OFFSET));
+				glTexCoordPointer(2, VERTEX_SIZE, Memory.chop(currentVertices.bytes, TEXTURE0_COORD_OFFSET).asFloatBuffer());
+				glColorPointer(4, true, VERTEX_SIZE, Memory.chop(currentVertices.bytes, COLOR_OFFSET));
 			}
 
 			vertexCursor = 0;
+			indexCursor = 0;
 			numRuns = 0;
 			currentRun = null;
 		}
@@ -228,6 +262,7 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 
 			if (useVBOs) {
 				glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+				glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 			}
 		}
 
@@ -241,7 +276,7 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 		}
 
 		void add(Sprite s, Style newStyle, float engineAlpha) {
-			if (vertexCursor + 4 > bufferSizeInVertices) {
+			if (vertexCursor + 4 > bufferSizeInVertices || indexCursor + 6 > indexBufferSize) {
 				// Sprite won't fit, so flush first
 				render();
 				next();
@@ -250,7 +285,7 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			SpriteImage image = s.getImage();
 			GLBaseTexture newTexture0 = image != null ? image.getTexture() : null;
 			GLBaseTexture newTexture1 = s.getTexture();
-			if (currentRun == null || newStyle != currentStyle || newTexture0 != currentTexture0 || newTexture1 != currentTexture1) {
+			if (currentRun == null || (newStyle != currentStyle && (currentStyle == null || newStyle.getStyleID() != currentStyle.getStyleID())) || newTexture0 != currentTexture0 || newTexture1 != currentTexture1) {
 				// Changed state. Start new state.
 				currentRun = stateRun[numRuns];
 				currentRun.start = vertexCursor;
@@ -258,6 +293,9 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 				currentRun.style = newStyle;
 				currentRun.texture0 = newTexture0;
 				currentRun.texture1 = newTexture1;
+				currentRun.indices = currentIndices.shorts;
+				currentRun.startIndex = indexCursor;
+				currentRun.endIndex = indexCursor;
 				numRuns ++;
 
 				if (numRuns == stateRun.length) {
@@ -282,8 +320,7 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			final float x = s.getX() + offset.getX();
 			final float y = s.getY() + offset.getY();
 			final float z = s.getZ() + offset.getZ();
-			final float alphaDiv = 1.0f / 255.0f;
-			final float alpha = engineAlpha * s.getAlpha() * alphaDiv;
+			final int alpha = (int) (engineAlpha * s.getAlpha());
 			final double angle = FPMath.doubleValue(s.getAngle()) * Math.PI * 2.0;
 
 			// First scale then rotate coordinates
@@ -338,8 +375,12 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			final float y11 = scaledy11 + y;
 			final float y10 = scaledy10 + y;
 
-			FloatBuffer floats = current.floats;
-			IntBuffer ints = current.ints;
+			AlphaOp alphaOp = newStyle.getAlphaOp();
+			if (alphaOp == null) {
+				throw new RuntimeException(newStyle+" as no alpha op");
+			}
+			FloatBuffer floats = currentVertices.floats;
+			IntBuffer ints = currentVertices.ints;
 			int vertex = vertexCursor * VERTEX_SIZE;
 			floats.position(vertex >> 2);
 			ints.position((vertex + COLOR_OFFSET) >> 2);
@@ -351,8 +392,7 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			floats.put(s.getTx00());
 			floats.put(s.getTy00());
 			ReadableColor color = s.getColor(0);
-			ints.put((color.getRed() << 0) | (color.getGreen() << 8) | (color.getBlue() << 16)
-					| (int) (color.getAlpha() * alpha) << 24);
+			alphaOp.op(color, alpha, ints);
 
 			vertex += VERTEX_SIZE;
 			floats.position(vertex >> 2);
@@ -365,8 +405,7 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			floats.put(s.getTx10());
 			floats.put(s.getTy10());
 			color = s.getColor(1);
-			ints.put((color.getRed() << 0) | (color.getGreen() << 8) | (color.getBlue() << 16)
-					| (int) (color.getAlpha() * alpha) << 24);
+			alphaOp.op(color, alpha, ints);
 
 			vertex += VERTEX_SIZE;
 			floats.position(vertex >> 2);
@@ -379,8 +418,7 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			floats.put(s.getTx11());
 			floats.put(s.getTy11());
 			color = s.getColor(2);
-			ints.put((color.getRed() << 0) | (color.getGreen() << 8) | (color.getBlue() << 16)
-					| (int) (color.getAlpha() * alpha) << 24);
+			alphaOp.op(color, alpha, ints);
 
 			vertex += VERTEX_SIZE;
 			floats.position(vertex >> 2);
@@ -393,20 +431,34 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			floats.put(s.getTx01());
 			floats.put(s.getTy01());
 			color = s.getColor(3);
-			ints.put((color.getRed() << 0) | (color.getGreen() << 8) | (color.getBlue() << 16)
-					| (int) (color.getAlpha() * alpha) << 24);
+			alphaOp.op(color, alpha, ints);
 
 
+			// Write indices: need 6, for two triangles
+			currentIndices.shorts.position(indexCursor);
+			currentIndices.shorts.put((short) vertexCursor);
+			currentIndices.shorts.put((short) (vertexCursor + 1));
+			currentIndices.shorts.put((short) (vertexCursor + 2));
+			currentIndices.shorts.put((short) vertexCursor);
+			currentIndices.shorts.put((short) (vertexCursor + 2));
+			currentIndices.shorts.put((short) (vertexCursor + 3));
+
+			indexCursor += 6;
 			vertexCursor += 4;
+			currentRun.endIndex += 6;
 			currentRun.length += 4;
+
 		}
 
 		void add(Style s) {
 			// Build the geometry
-			FloatList data = s.build();
+			GeometryData data = s.build();
 
 			// Does it fit?
-			int vertsToWrite = data.size() >> 3;
+			FloatList vertexData = data.getVertexData();
+			ShortList indexData = data.getIndexData();
+
+			int vertsToWrite = vertexData.size() >> 3;
 			if (vertexCursor + vertsToWrite > bufferSizeInVertices) {
 				// No. Flush what we have so far.
 //				System.out.println("  FLUSH 2");
@@ -421,15 +473,27 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			currentRun.style = s;
 			currentRun.texture0 = null;
 			currentRun.texture1 = null;
+			currentRun.startIndex = indexCursor;
 			numRuns ++;
 			if (numRuns == stateRun.length) {
 				growStateRuns();
 			}
 
 			// Write the data out
-			current.floats.position(vertexCursor * VERTEX_SIZE >> 2);
-			current.floats.put(data.array(), 0, data.size());
+			currentVertices.floats.position(vertexCursor * VERTEX_SIZE >> 2);
+			currentVertices.floats.put(vertexData.array(), 0, vertexData.size());
+
+			currentIndices.shorts.position(indexCursor);
+			short[] idx = indexData.array();
+			int indicesToWrite = indexData.size();
+			// Note that this irritation will go away once glDrawRangeElementsOffset is available generally...
+			for (int i = 0; i < indicesToWrite; i ++) {
+				idx[i] += vertexCursor;
+			}
+			currentIndices.shorts.put(idx, 0, indicesToWrite);
+
 			vertexCursor += vertsToWrite;
+			indexCursor += indicesToWrite;
 
 			currentStyle = null;
 			currentTexture0 = null;
@@ -441,6 +505,7 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			//System.out.println("  RENDER "+numRuns+" RUNS");
 			if (useVBOs) {
 				vbo[sequence].unmap();
+				ibo[sequence].unmap();
 			}
 			lastRenderedStyle = null;
 			lastRenderedTexture0 = null;
@@ -580,7 +645,6 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 			// Only need to render the sprite once, which will make it stark
 			// white:
 			addSprite(FlashStyle.instance, s);
-			style[numSprites] = FlashStyle.instance;
 //			if (uniqueSprites) {
 //				Sprite copy = sprite[numSprites++];
 //				copy.copy(s);
@@ -786,7 +850,8 @@ class DefaultSpriteRenderer extends Resource implements SpriteRenderer {
 	 * @param alpha
 	 *            The alpha to set.
 	 */
-	void setAlpha(float alpha) {
+	@Override
+    public void setAlpha(float alpha) {
 		this.alpha = alpha;
 	}
 }

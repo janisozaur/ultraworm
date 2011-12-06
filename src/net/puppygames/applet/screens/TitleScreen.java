@@ -35,9 +35,18 @@ package net.puppygames.applet.screens;
 import java.rmi.Naming;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
-import net.puppygames.applet.*;
+import net.puppygames.applet.AppletMessageCheckerRemote;
+import net.puppygames.applet.Configuration;
+import net.puppygames.applet.Game;
+import net.puppygames.applet.MessageReturn;
+import net.puppygames.applet.News;
+import net.puppygames.applet.PlayerSlot;
+import net.puppygames.applet.Res;
+import net.puppygames.applet.Screen;
 import net.puppygames.applet.effects.FadeEffect;
 import net.puppygames.applet.effects.SFX;
 import net.puppygames.gamecommerce.shared.RegistrationDetails;
@@ -56,7 +65,11 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class TitleScreen extends Screen {
 
-	public static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
+
+	private static final boolean TEST_NEW_VERSION_MESSAGE = true;
+	private static final boolean TEST_MESSAGE_LONG = true;
+	private static final boolean TEST_REGISTRATION_DETAILS = true;
 
 	private static final int FADE_DELAY = 300;
 	private static final int FADE_DURATION = 120;
@@ -112,17 +125,11 @@ public class TitleScreen extends Screen {
 		super(name);
 	}
 
-	/* (non-Javadoc)
-	 * @see genesis.Feature#doRegister()
-	 */
 	@Override
 	protected void doRegister() {
 		instance = this;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.shavenpuppy.jglib.resources.Feature#doDeregister()
-	 */
 	@Override
 	protected void doDeregister() {
 		instance = null;
@@ -253,7 +260,7 @@ public class TitleScreen extends Screen {
 
 		// Possibly check for a message
 		new Thread() {
-			@Override
+            @Override
 			public void run() {
 				if (Game.getDontCheckMessages() || !Game.isRemoteCallAllowed() || !CheckOnline.isOnline()) {
 					// Won't be allowed to connect
@@ -264,6 +271,14 @@ public class TitleScreen extends Screen {
 					return;
 				}
 				try {
+					if (Game.DEBUG && TEST_NEW_VERSION_MESSAGE) {
+						messagesChecked = true;
+						if (TEST_MESSAGE_LONG) {
+	                        pendingMessage = new MessageReturn("TEST LONG MESSAGE", "Unfortunately, newsletter signup failed for the following reason:\n\n There has been a problem connecting to the Puppygames newsletter server. Please ensure you are online and try again, or alternatively contact us on contact@humblebundle.com for assistance.", null);
+                        } else {
+	                        pendingMessage = new MessageReturn("TEST MESSAGE", "This is an example message returned from the message service\nThis is a test of Q, ß and ç æ ø and ö\nTest of ö and ÑÀÁÂÃÄÅ working with leading.", null);
+                        }
+					}
 					AppletMessageCheckerRemote amcr = (AppletMessageCheckerRemote) Naming.lookup("//"+AppletMessageCheckerRemote.REMOTE_HOST+"/"+AppletMessageCheckerRemote.REMOTE_NAME);
 					if (!messagesChecked && pendingMessage == null) {
 						messagesChecked = true;
@@ -334,13 +349,16 @@ public class TitleScreen extends Screen {
 
 		PlayerSlot slot = Game.getPlayerSlot();
 		if (slot == null) {
-			getArea(ID_SLOT).setText("PLEASE CLICK HERE TO ENTER YOUR NAME!");
+			getArea(ID_SLOT).setText(Game.getMessage("lwjglapplets.titlescreen.entername"));
 		} else {
-			getArea(ID_SLOT).setText("WELCOME "+slot.getName().toUpperCase()+". NOT YOU? CLICK HERE");
+			String msg = Game.getMessage("lwjglapplets.titlescreen.welcome");
+			msg = msg.replace("[name]", slot.getName().toUpperCase());
+			getArea(ID_SLOT).setText(msg);
 		}
 	}
 
-	private void doUpdateRegistrationDetails() {
+	@SuppressWarnings("unused")
+    private void doUpdateRegistrationDetails() {
 		tick = 0;
 		fade = FADE_NORMAL;
 
@@ -350,20 +368,25 @@ public class TitleScreen extends Screen {
 		}
 		fadeEffect = new FadeEffect(FADE_DELAY, FADE_DURATION) {
 			@Override
-			protected void doRender() {
+            protected void onTicked() {
 				getArea(ID_REGISTRATION).setTextAlpha(getAlpha());
 			}
 		};
 		fadeEffect.spawn(this);
 
-		RegistrationDetails regDetails = Game.getRegistrationDetails();
-		if (regDetails == null) {
-			getArea(ID_REGISTRATION).setText("");
+		if (Game.DEBUG && TEST_REGISTRATION_DETAILS) {
+			getArea(ID_REGISTRATION).setText("Registered to Wing Commander Testy 'McTesticles' McTestington (someone.with.a.long.email.address@puppygames.net)");
 		} else {
-			boolean nameOnly = Game.getPreferences().getBoolean("nameOnly", false);
-			getArea(ID_REGISTRATION).setText(regDetails.toTitleScreen(nameOnly).toUpperCase());
-			Game.getPreferences().putBoolean("nameOnly", true);
+			RegistrationDetails regDetails = Game.getRegistrationDetails();
+			if (regDetails == null) {
+				getArea(ID_REGISTRATION).setText("");
+			} else {
+				boolean nameOnly = Game.getLocalPreferences().getBoolean("nameOnly", false);
+				getArea(ID_REGISTRATION).setText(regDetails.toTitleScreen(nameOnly).toUpperCase());
+				Game.getLocalPreferences().putBoolean("nameOnly", true);
+			}
 		}
+
 		if (Game.isRegistered()) {
 			getArea(ID_VERSION).setText("v" + Game.getVersion());
 		} else {
@@ -378,11 +401,11 @@ public class TitleScreen extends Screen {
 	 */
 	protected void updateControls() {
 		if (getArea(GenericButtons.BUY) != null) {
-			getArea(GenericButtons.BUY).setVisible(!Game.isRegistered());
+			getArea(GenericButtons.BUY).setEnabled(!Game.isRegistered());
 		}
-		if (getArea(GenericButtons.MOREGAMES) != null) {
-			getArea(GenericButtons.MOREGAMES).setVisible(!Game.isRegistered());
-		}
+		//if (getArea(GenericButtons.MOREGAMES) != null) {
+		//	getArea(GenericButtons.MOREGAMES).setVisible(!Game.isRegistered());
+		//}
 	}
 
 }

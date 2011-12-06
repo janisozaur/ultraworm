@@ -31,9 +31,16 @@
  */
 package worm.screens;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import net.puppygames.applet.Area;
+import net.puppygames.applet.Game;
 import net.puppygames.applet.Screen;
 
 import org.lwjgl.util.ReadableRectangle;
@@ -46,13 +53,15 @@ import worm.features.MedalFeature;
 
 import com.shavenpuppy.jglib.Resources;
 import com.shavenpuppy.jglib.resources.ColorMapFeature;
-import com.shavenpuppy.jglib.sprites.AnimatedAppearanceResource;
+import com.shavenpuppy.jglib.sprites.Appearance;
 import com.shavenpuppy.jglib.sprites.Sprite;
 
 /**
  * The medals screen
  */
 public class MedalsScreen extends Screen {
+
+	private static final long serialVersionUID = 1L;
 
 	private static final int MEDALS_PER_PAGE = 6;
 
@@ -110,12 +119,12 @@ public class MedalsScreen extends Screen {
 		WormGameState gameState = Worm.getGameState();
 		medals = new HashMap<MedalFeature, Integer>(gameState.getMedals());
 
-		String world = gameState.getWorld().getTitle();
-		getArea(BACKGROUND).setMouseOffAppearance((AnimatedAppearanceResource) Resources.get(world+".research.background.anim"));
+		String world = gameState.getWorld().getUntranslated();
+		getArea(BACKGROUND).setMouseOffAppearance((Appearance) Resources.get(world+".research.background.anim"));
 		ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get(world+".colormap"));
 
-		getArea("score").setText("{color:text font:tinyfont.glfont}SCORE: {color:text-bold}"+gameState.getScore());
-		getArea("rank").setText("{color:text font:smallfont.glfont}RANK: {color:text-bold}"+gameState.getRank().getTitle());
+		getArea("score").setText("{color:text font:tinyfont.glfont}"+Game.getMessage("ultraworm.medalsscreen.score")+": {color:text-bold}"+gameState.getScore());
+		getArea("rank").setText("{color:text font:smallfont.glfont}"+Game.getMessage("ultraworm.medalsscreen.rank")+": {color:text-bold}"+gameState.getRank().getTitle());
 
 		// rank img
 

@@ -31,23 +31,45 @@
  */
 package worm.buildings;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-import org.lwjgl.util.*;
+import net.puppygames.applet.Game;
+
+import org.lwjgl.util.Color;
+import org.lwjgl.util.Point;
+import org.lwjgl.util.ReadableColor;
+import org.lwjgl.util.Rectangle;
 import org.w3c.dom.Element;
 
-import worm.*;
+import worm.ClickAction;
+import worm.Entity;
+import worm.GameMap;
+import worm.Hints;
+import worm.Layers;
+import worm.MapRenderer;
+import worm.Medals;
+import worm.Mode;
+import worm.Res;
+import worm.SFX;
+import worm.Worm;
 import worm.effects.RangeEffect;
-import worm.entities.*;
+import worm.entities.Building;
+import worm.entities.Gidrah;
+import worm.entities.Turret;
 import worm.features.LayersFeature;
 import worm.features.ResearchFeature;
 import worm.screens.GameScreen;
 import worm.weapons.WeaponFeature;
 
 import com.shavenpuppy.jglib.resources.PointParser;
-import com.shavenpuppy.jglib.sprites.AnimatedAppearanceResource;
+import com.shavenpuppy.jglib.sprites.Appearance;
 import com.shavenpuppy.jglib.sprites.Sprite;
-import com.shavenpuppy.jglib.util.*;
+import com.shavenpuppy.jglib.util.FPMath;
+import com.shavenpuppy.jglib.util.Util;
+import com.shavenpuppy.jglib.util.XMLUtil;
 
 /**
  * $Id: TurretBuildingFeature.java,v 1.96 2010/11/08 02:03:11 foo Exp $
@@ -136,7 +158,7 @@ public class TurretBuildingFeature extends BuildingFeature {
 	 */
 
 	private transient WeaponFeature weaponFeature;
-	private transient AnimatedAppearanceResource beamResource;
+	private transient Appearance beamResource;
 
 	/**
 	 * Building instances
@@ -914,6 +936,7 @@ public class TurretBuildingFeature extends BuildingFeature {
 				||	feature instanceof CoolingTowerBuildingFeature
 				||	feature instanceof ScannerBuildingFeature
 				||	feature instanceof AutoLoaderBuildingFeature
+				|| 	feature instanceof CloakBuildingFeature
 				;
 		}
 	}
@@ -937,7 +960,7 @@ public class TurretBuildingFeature extends BuildingFeature {
 		if (isDecoy()) {
 			return super.getBuildingType();
 		} else {
-			return "turret";
+			return Game.getMessage("ultraworm.researchstats.building_type_turret");
 		}
 	}
 

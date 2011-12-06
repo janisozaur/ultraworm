@@ -31,15 +31,19 @@
  */
 package worm;
 
-import java.io.*;
-import java.util.*;
+import java.io.Serializable;
 
-import net.puppygames.applet.*;
+import net.puppygames.applet.Game;
+import net.puppygames.applet.GameState;
+import net.puppygames.applet.MiniGame;
+import net.puppygames.applet.PlayerSlot;
 import net.puppygames.applet.effects.LabelEffect;
 import net.puppygames.applet.effects.Particle;
 import net.puppygames.applet.screens.DialogScreen;
 import net.puppygames.applet.screens.NagScreen;
-import net.puppygames.gamecommerce.shared.NewsletterIncentive;
+import net.puppygames.steam.NotificationPosition;
+import net.puppygames.steam.Steam;
+import net.puppygames.steam.SteamException;
 
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
@@ -48,14 +52,21 @@ import org.lwjgl.util.Rectangle;
 
 import worm.animation.SimpleThingWithLayers;
 import worm.features.LayersFeature;
-import worm.features.PrizeFeature;
-import worm.screens.*;
+import worm.screens.ChooseGameModeScreen;
+import worm.screens.GameScreen;
 
 import com.shavenpuppy.jglib.Resources;
 import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
 import com.shavenpuppy.jglib.openal.ALBuffer;
-import com.shavenpuppy.jglib.resources.*;
-import com.shavenpuppy.jglib.sprites.*;
+import com.shavenpuppy.jglib.resources.Attenuator;
+import com.shavenpuppy.jglib.resources.AttenuatorFeature;
+import com.shavenpuppy.jglib.resources.MappedColor;
+import com.shavenpuppy.jglib.sprites.SoundCommand;
+import com.shavenpuppy.jglib.sprites.Sprite;
+import com.shavenpuppy.jglib.sprites.SpriteAllocator;
+import com.shavenpuppy.jglib.sprites.SpriteEngine;
+import com.shavenpuppy.jglib.sprites.SpriteImage;
+import com.shavenpuppy.jglib.sprites.StaticSpriteEngine;
 import com.shavenpuppy.jglib.util.Util;
 
 /**
@@ -65,11 +76,9 @@ import com.shavenpuppy.jglib.util.Util;
  * @author $Author: foo $
  * @version $Revision: 1.56 $
  */
-public class Worm extends Game {
+public class Worm extends MiniGame {
 
 	private static final long serialVersionUID = 1L;
-
-	private static final boolean TESTSIGNUP = false;
 
 	public static final float MAX_LOUD_ATTENUATION_DISTANCE = 1280.0f;
 	public static final float MAX_ATTENUATION_DISTANCE = 720.f;
@@ -131,9 +140,11 @@ public class Worm extends Game {
 	}
 
 	private static final SpriteAllocator MOUSE_SPRITE_ALLOCATOR = new SpriteAllocator() {
+        private static final long serialVersionUID = 1L;
+
 		@Override
 		public Sprite allocateSprite(Serializable owner) {
-			return instance.mouseSpriteEngine.allocate(owner);
+			return instance.mouseSpriteEngine.allocateSprite(owner);
 		}
 	};
 
@@ -190,9 +201,6 @@ public class Worm extends Game {
 		mouseSpriteEngine.tick();
 	}
 
-	/* (non-Javadoc)
-	 * @see net.puppygames.applet.Game#setGameState(net.puppygames.applet.GameState)
-	 */
 	@Override
 	protected void setGameState(GameState newGameState) {
 		super.setGameState(newGameState);
@@ -220,7 +228,7 @@ public class Worm extends Game {
 
 	@Override
 	protected void doShowHelp() {
-		Sys.openURL("http://www.puppygames.net/revenge-of-the-titans/help");
+		Sys.openURL("http://www.puppygames.net/revenge-of-the-titans/help/" + getLanguage());
 	}
 
 	@Override
@@ -236,13 +244,19 @@ public class Worm extends Game {
 		mouseLayers = new SimpleThingWithLayers(MOUSE_SPRITE_ALLOCATOR);
 
 		setMouseAppearance(Res.getMousePointer());
-		mouseSpeed = getPreferences().getInt("mouseSpeed", mouseSpeed);
-
-		prefsSaver = new PrefsSaverThread();
-		prefsSaver.start();
+		mouseSpeed = getLocalPreferences().getInt("mouseSpeed", mouseSpeed);
 
 		Particle.setMaxParticles(4096);
 		SoundCommand.setDefaultAttenuator(DEFAULT_ATTENUATOR_FEATURE);
+
+		if (isUsingSteam() && Steam.isCreated() && Steam.isSteamRunning()) {
+			Steam.getUtils().setOverlayNotificationPosition(NotificationPosition.TopRight);
+			try {
+				Steam.getUserStats().requestCurrentStats();
+			} catch (SteamException e) {
+				System.err.println("Failed to request user stats due to "+e);
+			}
+		}
 	}
 
 	public static void setInstance(Worm instance) {
@@ -257,7 +271,7 @@ public class Worm extends Game {
 
 	@Override
 	protected void doEndGame() {
-		if (Game.isDemoExpired()) {
+		if (MiniGame.isDemoExpired()) {
 			NagScreen.show("You know you want to!", true);
 		} else {
 			net.puppygames.applet.screens.TitleScreen.show();
@@ -265,7 +279,7 @@ public class Worm extends Game {
 	}
 
 	@Override
-	protected void doGameTick() {
+	protected void doTick() {
 		int newMouseDX = Mouse.getDX() * MOUSE_SPEED_MULTIPLIER * getMouseSpeed();
 		int newMouseDY = Mouse.getDY() * MOUSE_SPEED_MULTIPLIER * getMouseSpeed();
 		float newMouseX = mouseX + newMouseDX;
@@ -353,7 +367,7 @@ public class Worm extends Game {
 	 */
 	public static void setMouseSpeed(int newSpeed) {
 		mouseSpeed = newSpeed;
-		getPreferences().putInt("mouseSpeed", newSpeed);
+		getLocalPreferences().putInt("mouseSpeed", newSpeed);
 		flushPrefs();
 	}
 
@@ -497,7 +511,7 @@ public class Worm extends Game {
 
 	@Override
 	protected void onGameSaved() {
-		LabelEffect le = new LabelEffect(net.puppygames.applet.Res.getBigFont(), "GAME SAVED", new MappedColor("titles.colormap:text-bold"), new MappedColor("titles.colormap:text-dark"), 180, 60);
+		LabelEffect le = new LabelEffect(net.puppygames.applet.Res.getBigFont(), getMessage("ultraworm.worm.game_saved"), new MappedColor("titles.colormap:text-bold"), new MappedColor("titles.colormap:text-dark"), 180, 60);
 		le.setLayer(100);
 		le.setLocation(Game.getWidth() / 2, Game.getHeight() / 2);
 		le.setSound((ALBuffer) Resources.get("gamesaved.buffer"));
@@ -507,7 +521,7 @@ public class Worm extends Game {
 	@Override
 	protected void doRequestExit() {
 		final DialogScreen reallyDialog = (DialogScreen) Resources.get("yescancel.dialog");
-		reallyDialog.doModal("EXIT GAME", "REALLY EXIT THE GAME?", new Runnable() {
+		reallyDialog.doModal(getMessage("ultraworm.worm.exit_game"), getMessage("ultraworm.worm.exit_question"), new Runnable() {
 			@Override
 			public void run() {
 				if (reallyDialog.getOption() == DialogScreen.OK_OPTION) {
@@ -612,92 +626,18 @@ public class Worm extends Game {
 		ChooseGameModeScreen.show();
 	}
 
-	/**
-	 * Choose a random valid prize
-	 * @return a {@link PrizeFeature}, or null
-	 */
-	private PrizeFeature choosePrize() {
-		List<PrizeFeature> prizes = new ArrayList<PrizeFeature>(PrizeFeature.getPrizes());
-		Collections.shuffle(prizes);
-		for (PrizeFeature pf : prizes) {
-			if (pf.isValid()) {
-				return pf;
-			}
-		}
-		return null;
-	}
-
-	public static NagState getNagState() {
-		return NagState.valueOf(getPreferences().get("nagstate", NagState.NOT_YET_SHOWN.name()));
-	}
-
-	public static void setNagState(NagState newNagState) {
-		getPreferences().put("nagstate", newNagState.name());
-		flushPrefs();
-	}
-
-	@SuppressWarnings("unused")
 	@Override
 	protected void onPreRegisteredStartup() {
 		if (getPlayerSlot() == null) {
-			showTitleScreen();
+			MiniGame.showTitleScreen();
 			return;
 		}
-		NagState nagState = getNagState();
-		if (TESTSIGNUP && DEBUG) {
-			nagState = NagState.NOT_YET_SHOWN;
-		}
-		switch (nagState) {
-			case NOT_YET_SHOWN:
-				PrizeFeature prize = choosePrize();
-				if (prize != null) {
-					SignUpScreen.show(prize);
-				} else {
-					showTitleScreen();
-				}
-				break;
-			case PRIZE_AWAITS:
-				// Restore the incentive file
-				FileInputStream fis = null;
-				BufferedInputStream bis = null;
-				ObjectInputStream ois = null;
-				try {
-					fis = new FileInputStream(getIncentiveFile());
-					bis = new BufferedInputStream(fis);
-					ois = new ObjectInputStream(bis);
-					NewsletterIncentive ni = (NewsletterIncentive) ois.readObject();
-					if (!ni.validate()) {
-						throw new Exception("Existing incentive file is invalid.");
-					}
-					UnlockBonusScreen.show(ni);
-				} catch (Exception e) {
-					e.printStackTrace(System.err);
-					showTitleScreen();
-				} finally {
-					if (fis != null) {
-						try {
-							fis.close();
-						} catch (IOException e) {
-						}
-					}
-				}
-				break;
-			case DONT_NAG:
-			case REDEEMED:
-				showTitleScreen();
-				break;
-			default:
-				assert false : "Unknown nag state "+nagState;
-		}
-	}
-
-	public static File getIncentiveFile() {
-		return new File(Game.getDirectoryPrefix() + "incentive.dat");
+		super.onPreRegisteredStartup();
 	}
 
 	@Override
-	protected File getRestoreFile() {
-		return new File(getPlayerDirectoryPrefix() + "savedGame_"+newMode+".dat");
+	protected String getRestoreFile() {
+		return getPlayerDirectoryPrefix() + "savedGame_"+newMode+".dat";
 	}
 
 	/**
@@ -707,8 +647,8 @@ public class Worm extends Game {
 	public static void newGame(int mode) {
 		newMode = mode;
 		// Is there a saved game file?
-		if (isRestoreAvailable()) {
-			restoreGame();
+		if (MiniGame.isRestoreAvailable()) {
+			MiniGame.restoreGame();
 		} else {
 			cleanGame();
 		}

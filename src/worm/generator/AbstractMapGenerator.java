@@ -31,19 +31,38 @@
  */
 package worm.generator;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import net.puppygames.applet.Game;
+import net.puppygames.applet.GameInputStream;
+import net.puppygames.applet.GameOutputStream;
+import net.puppygames.applet.RoamingFile;
 
 import org.lwjgl.util.Point;
 import org.lwjgl.util.ReadablePoint;
 
-import worm.*;
+import worm.GameMap;
+import worm.IntGrid;
+import worm.Res;
+import worm.Tile;
+import worm.Worm;
+import worm.WormGameState;
 import worm.features.LevelFeature;
 import worm.path.AStar;
 import worm.path.Topology;
-import worm.tiles.*;
+import worm.tiles.Crystal;
+import worm.tiles.Exclude;
+import worm.tiles.Ruin;
+import worm.tiles.TotalExclude;
 
 import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
 import com.shavenpuppy.jglib.util.IntList;
@@ -231,7 +250,7 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 	}
 
 	private boolean exists() {
-		return level != -1 && new File(getFileName()).exists();
+		return level != -1 && new RoamingFile(getFileName()).exists();
 	}
 
 	/**
@@ -242,15 +261,12 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 		if (!exists()) {
 			throw new IOException(getFileName()+" does not exist");
 		}
-		File file = new File(getFileName());
-		FileInputStream fis = null;
-		BufferedInputStream bis = null;
+		GameInputStream gis = null;
 		ObjectInputStream ois = null;
 		GameMap ret = null;
 		try {
-			fis = new FileInputStream(file);
-			bis = new BufferedInputStream(fis);
-			ois = new ObjectInputStream(bis);
+			gis = new GameInputStream(getFileName());
+			ois = new ObjectInputStream(gis);
 
 			ret = (GameMap) ois.readObject();
 			return ret;
@@ -259,8 +275,8 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 
 		} finally {
 			try {
-				if (fis != null) {
-					fis.close();
+				if (gis != null) {
+					gis.close();
 				}
 			} catch (IOException e) {
 			}
@@ -268,21 +284,18 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 	}
 
 	private void save(GameMap gameMap) throws IOException {
-		File file = new File(getFileName());
-		FileOutputStream fos = null;
-		BufferedOutputStream bos = null;
+		GameOutputStream gos = null;
 		ObjectOutputStream oos = null;
 		try {
-			fos = new FileOutputStream(file);
-			bos = new BufferedOutputStream(fos);
-			oos = new ObjectOutputStream(bos);
+			gos = new GameOutputStream(getFileName());
+			oos = new ObjectOutputStream(gos);
 
 			oos.writeObject(gameMap);
 			oos.flush();
 		} finally {
 			try {
-				if (fos != null) {
-					fos.close();
+				if (gos != null) {
+					gos.close();
 				}
 			} catch (IOException e) {
 			}
@@ -512,7 +525,7 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 
 		for (int yy = 0; yy < h; yy ++) {
 			for (int xx = 0; xx < w; xx ++) {
-				assert map.getValue(x + xx, y + yy) == FLOOR;
+				//assert map.getValue(x + xx, y + yy) == FLOOR : "Argh! Map is "+map.getValue(x + xx, y + yy)+" not FLOOR!";
 
 				int val;
 				if (bThruMap != null) {

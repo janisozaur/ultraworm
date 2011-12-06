@@ -35,20 +35,43 @@ import java.util.ArrayList;
 
 import net.puppygames.applet.Game;
 import net.puppygames.applet.Screen;
-import net.puppygames.applet.effects.*;
+import net.puppygames.applet.effects.BlastEffect;
+import net.puppygames.applet.effects.Effect;
+import net.puppygames.applet.effects.Emitter;
+import net.puppygames.applet.effects.LabelEffect;
 
-import org.lwjgl.util.*;
+import org.lwjgl.util.Color;
+import org.lwjgl.util.Point;
+import org.lwjgl.util.ReadableColor;
+import org.lwjgl.util.Rectangle;
 
-import worm.*;
+import worm.AttenuatedColor;
+import worm.CauseOfDeath;
+import worm.ClickAction;
+import worm.Entity;
+import worm.GameMap;
+import worm.GameStateInterface;
+import worm.Hints;
+import worm.Layers;
+import worm.MapRenderer;
+import worm.Medals;
+import worm.Res;
 import worm.SFX;
+import worm.Stats;
+import worm.Worm;
+import worm.WormGameState;
 import worm.brains.SmartBrainFeature;
 import worm.effects.BuildingAttackedEffect;
-import worm.features.*;
+import worm.features.GidrahFeature;
+import worm.features.LayersFeature;
+import worm.features.ResearchFeature;
 import worm.screens.GameScreen;
 import worm.weapons.WeaponFeature.WeaponInstance;
 
 import com.shavenpuppy.jglib.Resources;
-import com.shavenpuppy.jglib.interpolators.*;
+import com.shavenpuppy.jglib.interpolators.CosineInterpolator;
+import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
+import com.shavenpuppy.jglib.interpolators.OpenLinearInterpolator;
 import com.shavenpuppy.jglib.openal.ALBuffer;
 import com.shavenpuppy.jglib.resources.Range;
 import com.shavenpuppy.jglib.sound.SoundEffect;
@@ -86,7 +109,7 @@ public class Gidrah extends Entity {
 	private static final int WRAITHS_VISIBLE_TO_TURRETS_ALPHA = 224;
 	private static final int DANGER_RECALC_THRESHOLD = 20;
 	private static final int DANGER_DIVISOR = 5;
-	private static final int MAX_DANGER = 100;
+	public static final int MAX_DANGER = 100;
 	private static final float MAX_SURVIVAL_DIFFICULTY_HITPOINTS_MULTIPLIER = 2.0f;
 	private static final float MAX_SURVIVAL_DIFFICULTY_BOSS_HITPOINTS_MULTIPLIER = 1.5f;
 	private static final float MAX_DIFFICULTY_HITPOINTS_MULTIPLIER = 3.0f;

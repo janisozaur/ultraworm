@@ -31,15 +31,22 @@
  */
 package worm;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import net.puppygames.applet.Game;
 import net.puppygames.applet.Screen;
 import net.puppygames.applet.TickableObject;
 import net.puppygames.applet.effects.Emitter;
 import net.puppygames.applet.effects.EmitterFeature;
 
-import org.lwjgl.util.*;
+import org.lwjgl.util.Color;
+import org.lwjgl.util.Point;
+import org.lwjgl.util.ReadableColor;
+import org.lwjgl.util.ReadablePoint;
 
 import worm.animation.SimpleThingWithLayers;
 import worm.features.DecalFeature;
@@ -47,9 +54,8 @@ import worm.features.LayersFeature;
 import worm.screens.GameScreen;
 
 import com.shavenpuppy.jglib.Resources;
-import com.shavenpuppy.jglib.interpolators.ColorInterpolator;
-import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
-import com.shavenpuppy.jglib.opengl.*;
+import com.shavenpuppy.jglib.opengl.GLRenderable;
+import com.shavenpuppy.jglib.opengl.GLTexture;
 import com.shavenpuppy.jglib.resources.MappedColor;
 import com.shavenpuppy.jglib.sprites.Sprite;
 import com.shavenpuppy.jglib.util.FPMath;
@@ -68,6 +74,8 @@ public class MapRenderer implements MapListener {
 
 	public static final int OPAQUE_SIZE = 6;
 	public static final int FADE_SIZE = 12;
+	private static final short[] FADE_INDICES = {0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15};
+	private static final short[] OPAQUE_INDICES = {16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23, 24, 25, 26, 24, 26, 27, 28, 29, 30, 28, 30, 31};
 
 	/** Layers */
 	private static final int FLOOR_LAYER = 0;
@@ -78,13 +86,13 @@ public class MapRenderer implements MapListener {
 	private static final Color TEMP = new Color();
 
 	/** Dimensions of the renderable screen, in tiles */
-	private final int tileWidth, tileHeight;
+	private int tileWidth, tileHeight;
 
 	/** Origin on screen */
 	private int originX, originY;
 
 	/** A bunch of TileInfos */
-	private final TileInfo[] tileInfo;
+	private TileInfo[] tileInfo;
 
 	/** Fog o' war */
 	private TickableObject fogOfWar;
@@ -147,24 +155,24 @@ public class MapRenderer implements MapListener {
 		void updateColors() {
 			for (int i = 0; i < displayed.length; i++) {
 				// Fade layer 0 tiles
-				MappedColor color = getColor(displayed[i]);
-				Sprite ts = tileSprite[i];
-				if (i == 0 || displayed[i] != null && displayed[i].isAttenuated()) {
-					if (color.getColorName() != null && color.getColorName().intern() == LayersFeature.SHADOW_COLOR_NAME) {
-						ts.setColor(0, new AttenuatedColor(color, map.getFFade(mapx, mapy), FLOOR_FADE, ratio00, 0, true));
-						ts.setColor(1, new AttenuatedColor(color, map.getFFade(mapx + 1, mapy), FLOOR_FADE, ratio10, 0, true));
-						ts.setColor(2, new AttenuatedColor(color, map.getFFade(mapx + 1, mapy + 1), FLOOR_FADE, ratio11, 0, true));
-						ts.setColor(3, new AttenuatedColor(color, map.getFFade(mapx, mapy + 1), FLOOR_FADE, ratio01, 0, true));
-					} else {
-						ts.setColor(0, new AttenuatedColor(color, map.getFFade(mapx, mapy), FLOOR_FADE, ratio00, 0, false));
-						ts.setColor(1, new AttenuatedColor(color, map.getFFade(mapx + 1, mapy), FLOOR_FADE, ratio10, 0, false));
-						ts.setColor(2, new AttenuatedColor(color, map.getFFade(mapx + 1, mapy + 1), FLOOR_FADE, ratio11, 0, false));
-						ts.setColor(3, new AttenuatedColor(color, map.getFFade(mapx, mapy + 1), FLOOR_FADE, ratio01, 0, false));
-					}
-				} else {
-					ts.setColors(color);
-				}
 				if (displayed[i] != null) {
+					MappedColor color = getColor(displayed[i]);
+					Sprite ts = tileSprite[i];
+					if (i == 0 || displayed[i] != null && displayed[i].isAttenuated()) {
+						if (color.getColorName() != null && color.getColorName().intern() == LayersFeature.SHADOW_COLOR_NAME) {
+							ts.setColor(0, new AttenuatedColor(color, map.getFFade(mapx, mapy), FLOOR_FADE, ratio00, 0, true));
+							ts.setColor(1, new AttenuatedColor(color, map.getFFade(mapx + 1, mapy), FLOOR_FADE, ratio10, 0, true));
+							ts.setColor(2, new AttenuatedColor(color, map.getFFade(mapx + 1, mapy + 1), FLOOR_FADE, ratio11, 0, true));
+							ts.setColor(3, new AttenuatedColor(color, map.getFFade(mapx, mapy + 1), FLOOR_FADE, ratio01, 0, true));
+						} else {
+							ts.setColor(0, new AttenuatedColor(color, map.getFFade(mapx, mapy), FLOOR_FADE, ratio00, 0, false));
+							ts.setColor(1, new AttenuatedColor(color, map.getFFade(mapx + 1, mapy), FLOOR_FADE, ratio10, 0, false));
+							ts.setColor(2, new AttenuatedColor(color, map.getFFade(mapx + 1, mapy + 1), FLOOR_FADE, ratio11, 0, false));
+							ts.setColor(3, new AttenuatedColor(color, map.getFFade(mapx, mapy + 1), FLOOR_FADE, ratio01, 0, false));
+						}
+					} else {
+						ts.setColors(color);
+					}
 					List<DecalFeature> decals = displayed[i].getDecals();
 					if (decals != null) {
 						for (int j = 0; j < decalSprite[i].length; j ++) {
@@ -251,10 +259,6 @@ public class MapRenderer implements MapListener {
 						emitterY = p.getY();
 					}
 					emitter.setLocation(mapx * TILE_SIZE + emitterX, mapy * TILE_SIZE + emitterY);
-					emitter.tick();
-					emitter.tick();
-					emitter.tick();
-					emitter.tick();
 				} else if (emitter != null && ef == null) {
 					emitter.remove();
 					emitter = null;
@@ -280,7 +284,7 @@ public class MapRenderer implements MapListener {
 									if (df != null) {
 										decalSprite[i][j] = screen.allocateSprite(screen);
 
-										df.getAppearance().toAnimated(decalSprite[i][j]);
+										df.getAppearance().toSprite(decalSprite[i][j]);
 										decalSprite[i][j].setScale(FPMath.fpValue(df.getScale()));
 										decalSprite[i][j].setLayer(df.getLayer());
 										decalSprite[i][j].setSubLayer(df.getSubLayer());
@@ -341,7 +345,7 @@ public class MapRenderer implements MapListener {
 									DecalFeature df = decals.get(j);
 									if (df != null) {
 										decalSprite[i][j] = screen.allocateSprite(screen);
-										df.getAppearance().toAnimated(decalSprite[i][j]);
+										df.getAppearance().toSprite(decalSprite[i][j]);
 										decalSprite[i][j].setLayer(df.getLayer());
 										decalSprite[i][j].setSubLayer(df.getSubLayer());
 										decalSprite[i][j].setYSortOffset(df.getYSortOffset());
@@ -461,85 +465,85 @@ public class MapRenderer implements MapListener {
 		 * Debugging
 		 */
 		void postRender() {
-			if (debug) {
-				if (map == null) {
-					return;
-				}
-				Tile t0 = map.getTile(mapx, mapy, 0);
-				Tile t1 = map.getTile(mapx, mapy, 1);
-				Tile t2 = map.getTile(mapx, mapy, 2);
-				if (t0 != null && t0.isImpassable() || t1 != null && t1.isImpassable() || t2 != null && t2.isImpassable()) {
-					glDisable(GL_TEXTURE_2D);
-					glDisable(GL_BLEND);
-					glLineWidth(1.0f);
-					// We need to work out the screen coordinates of the tile
-					ColorUtil.setGLColor(ReadableColor.RED);
-					glBegin(GL_LINE_LOOP);
-					glVertex2i(screenx, screeny);
-					glVertex2i(screenx + TILE_SIZE, screeny);
-					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
-					glVertex2i(screenx, screeny + TILE_SIZE);
-					glEnd();
-				}
-				if (t0 != null && !t0.isBulletThrough() || t1 != null && !t1.isBulletThrough() || t2 != null && !t2.isBulletThrough()) {
-					glDisable(GL_TEXTURE_2D);
-					glDisable(GL_BLEND);
-					glLineWidth(1.0f);
-					// We need to work out the screen coordinates of the tile
-					ColorUtil.setGLColor(ReadableColor.RED);
-					glBegin(GL_LINES);
-					glVertex2i(screenx, screeny);
-					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
-					glEnd();
-				}
-
-				if (map.isAttacking(mapx, mapy)) {
-					glDisable(GL_TEXTURE_2D);
-					glDisable(GL_BLEND);
-					glLineWidth(1.0f);
-					// We need to work out the screen coordinates of the tile
-					ColorUtil.setGLColor(ReadableColor.GREEN);
-					glBegin(GL_LINE_LOOP);
-					glVertex2i(screenx + 1, screeny + 1);
-					glVertex2i(screenx - 1 + TILE_SIZE, screeny + 1);
-					glVertex2i(screenx - 1+ TILE_SIZE, screeny + TILE_SIZE - 1);
-					glVertex2i(screenx + 1, screeny + TILE_SIZE - 1);
-					glEnd();
-				}
-				if (map.isOccupied(mapx, mapy)) {
-					glDisable(GL_TEXTURE_2D);
-					glDisable(GL_BLEND);
-					glLineWidth(1.0f);
-					// We need to work out the screen coordinates of the tile
-					ColorUtil.setGLColor(ReadableColor.BLUE);
-					glBegin(GL_LINE_LOOP);
-					glVertex2i(screenx + 2, screeny + 2);
-					glVertex2i(screenx - 2 + TILE_SIZE, screeny + 2);
-					glVertex2i(screenx - 2 + TILE_SIZE, screeny + TILE_SIZE - 2);
-					glVertex2i(screenx + 2, screeny + TILE_SIZE - 2);
-					glEnd();
-				}
-
-				int danger = map.getDanger(mapx, mapy);
-				if (danger > 0) {
-					glDisable(GL_TEXTURE_2D);
-					glEnable(GL_BLEND);
-					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-					float alpha = 0.5f;
-					float ratio = danger / 64.0f;
-					Color c = ColorInterpolator.interpolate(ReadableColor.BLACK, ReadableColor.WHITE, ratio, LinearInterpolator.instance, new Color());
-					ColorUtil.setGLColor(c, (int) (alpha * 255));
-					//glColor4f(danger < 25 ? danger / 25.0f : danger == 0 ? 0.0f : 1.0f, danger >= 25 && danger < 50 ? (danger - 25.0f) / 25.0f : danger >= 50 ? 1.0f : 0.0f, danger >= 50 && danger < 100 ? (danger - 50.0f) / 50.0f : danger >= 100 ? 1.0f : 0.0f, alpha);
-					glBegin(GL_QUADS);
-					glVertex2i(screenx, screeny);
-					glVertex2i(screenx + TILE_SIZE, screeny);
-					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
-					glVertex2i(screenx, screeny + TILE_SIZE);
-					glEnd();
-
-				}
-			}
+//			if (debug) {
+//				if (map == null) {
+//					return;
+//				}
+//				Tile t0 = map.getTile(mapx, mapy, 0);
+//				Tile t1 = map.getTile(mapx, mapy, 1);
+//				Tile t2 = map.getTile(mapx, mapy, 2);
+//				if (t0 != null && t0.isImpassable() || t1 != null && t1.isImpassable() || t2 != null && t2.isImpassable()) {
+//					glDisable(GL_TEXTURE_2D);
+//					glDisable(GL_BLEND);
+//					glLineWidth(1.0f);
+//					// We need to work out the screen coordinates of the tile
+//					ColorUtil.setGLColor(ReadableColor.RED);
+//					glBegin(GL_LINE_LOOP);
+//					glVertex2i(screenx, screeny);
+//					glVertex2i(screenx + TILE_SIZE, screeny);
+//					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
+//					glVertex2i(screenx, screeny + TILE_SIZE);
+//					glEnd();
+//				}
+//				if (t0 != null && !t0.isBulletThrough() || t1 != null && !t1.isBulletThrough() || t2 != null && !t2.isBulletThrough()) {
+//					glDisable(GL_TEXTURE_2D);
+//					glDisable(GL_BLEND);
+//					glLineWidth(1.0f);
+//					// We need to work out the screen coordinates of the tile
+//					ColorUtil.setGLColor(ReadableColor.RED);
+//					glBegin(GL_LINES);
+//					glVertex2i(screenx, screeny);
+//					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
+//					glEnd();
+//				}
+//
+//				if (map.isAttacking(mapx, mapy)) {
+//					glDisable(GL_TEXTURE_2D);
+//					glDisable(GL_BLEND);
+//					glLineWidth(1.0f);
+//					// We need to work out the screen coordinates of the tile
+//					ColorUtil.setGLColor(ReadableColor.GREEN);
+//					glBegin(GL_LINE_LOOP);
+//					glVertex2i(screenx + 1, screeny + 1);
+//					glVertex2i(screenx - 1 + TILE_SIZE, screeny + 1);
+//					glVertex2i(screenx - 1+ TILE_SIZE, screeny + TILE_SIZE - 1);
+//					glVertex2i(screenx + 1, screeny + TILE_SIZE - 1);
+//					glEnd();
+//				}
+//				if (map.isOccupied(mapx, mapy)) {
+//					glDisable(GL_TEXTURE_2D);
+//					glDisable(GL_BLEND);
+//					glLineWidth(1.0f);
+//					// We need to work out the screen coordinates of the tile
+//					ColorUtil.setGLColor(ReadableColor.BLUE);
+//					glBegin(GL_LINE_LOOP);
+//					glVertex2i(screenx + 2, screeny + 2);
+//					glVertex2i(screenx - 2 + TILE_SIZE, screeny + 2);
+//					glVertex2i(screenx - 2 + TILE_SIZE, screeny + TILE_SIZE - 2);
+//					glVertex2i(screenx + 2, screeny + TILE_SIZE - 2);
+//					glEnd();
+//				}
+//
+//				int danger = map.getDanger(mapx, mapy);
+//				if (danger > 0) {
+//					glDisable(GL_TEXTURE_2D);
+//					glEnable(GL_BLEND);
+//					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+//
+//					float alpha = 0.5f;
+//					float ratio = danger / 64.0f;
+//					Color c = ColorInterpolator.interpolate(ReadableColor.BLACK, ReadableColor.WHITE, ratio, LinearInterpolator.instance, new Color());
+//					ColorUtil.setGLColor(c, (int) (alpha * 255));
+//					//glColor4f(danger < 25 ? danger / 25.0f : danger == 0 ? 0.0f : 1.0f, danger >= 25 && danger < 50 ? (danger - 25.0f) / 25.0f : danger >= 50 ? 1.0f : 0.0f, danger >= 50 && danger < 100 ? (danger - 50.0f) / 50.0f : danger >= 100 ? 1.0f : 0.0f, alpha);
+//					glBegin(GL_QUADS);
+//					glVertex2i(screenx, screeny);
+//					glVertex2i(screenx + TILE_SIZE, screeny);
+//					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
+//					glVertex2i(screenx, screeny + TILE_SIZE);
+//					glEnd();
+//
+//				}
+//			}
 		}
 
 	}
@@ -551,14 +555,8 @@ public class MapRenderer implements MapListener {
 	 * C'tor
 	 * @param screen The screen we're being drawn on
 	 */
-	public MapRenderer(Screen screen, int width, int height) {
-		this.tileWidth = width;
-		this.tileHeight = height;
-		tileInfo = new TileInfo[width * height];
+	public MapRenderer(Screen screen) {
 		this.screen = screen;
-		for (int i = 0; i < tileInfo.length; i ++) {
-			tileInfo[i] = new TileInfo();
-		}
 
 		fogOfWar = new TickableObject() {
 
@@ -590,8 +588,6 @@ public class MapRenderer implements MapListener {
 				// Determine the offset in pixels
 				int ox = x - originX;
 				int oy = y - originY;
-
-				glBegin(GL_QUADS);
 
 				// Bottom strip
 				glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
@@ -634,11 +630,9 @@ public class MapRenderer implements MapListener {
 				glTexCoord2f(0.5f, 0.5f);
 				glVertex2f((map.getWidth() - FADE_SIZE - 1) * TILE_SIZE - ox,  map.getHeight() * TILE_SIZE - oy);
 
-				glEnd();
+				glRender(GL_TRIANGLES, FADE_INDICES);
 
 				glRender(init2);
-
-				glBegin(GL_QUADS);
 
 				// Bottom opaque strip
 				glVertex2f(0 - ox, 0 - oy - TILE_SIZE * OPAQUE_SIZE);
@@ -664,12 +658,27 @@ public class MapRenderer implements MapListener {
 				glVertex2f((map.getWidth() + OPAQUE_SIZE) * TILE_SIZE - ox, (map.getHeight() + OPAQUE_SIZE) * TILE_SIZE - oy);
 				glVertex2f((map.getWidth()) * TILE_SIZE - ox,  (map.getHeight() + OPAQUE_SIZE) * TILE_SIZE - oy);
 
-				glEnd();
+				glRender(GL_TRIANGLES, OPAQUE_INDICES);
 
 			}
 		};
 		fogOfWar.setLayer(Layers.FOG);
 		fogOfWar.spawn(screen);
+	}
+
+	/**
+	 * Called when the UI is resized
+	 */
+	public void onResized() {
+		int adjustWidth = Game.getWidth() % TILE_SIZE > 0 ? 7 : 6;
+		int adjustHeight = Game.getHeight() % TILE_SIZE > 0 ? 7 : 6;
+		tileWidth = Game.getWidth() / TILE_SIZE + adjustWidth;
+		tileHeight = Game.getHeight() / TILE_SIZE + adjustHeight;
+		tileInfo = new TileInfo[tileWidth * tileHeight];
+		for (int i = 0; i < tileInfo.length; i ++) {
+			tileInfo[i] = new TileInfo();
+		}
+
 	}
 
 	/**
@@ -696,9 +705,6 @@ public class MapRenderer implements MapListener {
 	 * @param map The map to set.
 	 */
 	public void setMap(GameMap map) {
-		if (this.map == map) {
-			return;
-		}
 		this.map = map;
 
 		if (map != null) {
@@ -713,7 +719,6 @@ public class MapRenderer implements MapListener {
 
 		// Reset the display
 		reset();
-
 	}
 
 	/**

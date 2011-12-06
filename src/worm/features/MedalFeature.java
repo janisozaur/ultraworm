@@ -31,7 +31,9 @@
  */
 package worm.features;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.shavenpuppy.jglib.resources.Data;
 import com.shavenpuppy.jglib.resources.Feature;
@@ -54,6 +56,7 @@ public class MedalFeature extends Feature {
 	private boolean repeatable;
 	private LayersFeature appearance;
 	private boolean suppressHint;
+	private boolean steam;
 
 	private transient HintFeature hintFeature;
 
@@ -103,6 +106,10 @@ public class MedalFeature extends Feature {
 	public boolean isRepeatable() {
 		return repeatable;
 	}
+
+	public boolean isSteam() {
+	    return steam;
+    }
 
 	@Override
 	protected void doCreate() {

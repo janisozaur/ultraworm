@@ -116,41 +116,35 @@
 		endHue="0.48"
 		emitterScale="0.75"
 	/>	
-	
-	
-	<!-- 
+
 	<emitter
-		name="steam.burst.emitter"
+		name="dronefactory.left.steam.emitter"
 		tag="smoke"
-		duration="3.0"
-		infinite="true"
-		particlesPerTick="4.0"
-		appearance="smoke.animation"
+		inherit="barracks.steam.emitter"
+		angle="135.0"
+	/>	
+	
+	<emitter
+		name="dronefactory.right.steam.emitter"
+		tag="smoke"
+		inherit="barracks.steam.emitter"
+		angle="45.0"
+	/>		
+	
+	<emitter
+		name="test.coords.emitter"
+		duration="2.0"
+		particlesPerTick="2.0"
+		appearance="spriteimage.particle.glowing.3px.01"
 		layer="5"
 		sublayer="2"
-		velocity="1.0, 1.5"
-		acceleration="-0.035"
-		radius="0.0, 3.0"
-		startScale="0.1, 0.2"
-		scale="0.5, 0.6"
-		endScale="1.0, 1.5"
-		gravityX="-0.0015, 0.0015"
-		gravityY="-5.0E-4, 0.0015"
-		particleDuration="25.0, 30.0"
-		fadeDuration="75.0, 200.0"
-		startHue="0.2"
-		startSaturation="0.0"
-		startBrightness="1.0"
-		endHue="0.2"
-		endSaturation="0.3"
-		endBrightness="0.9"
-		angle="75.0, 105.0"
-		delayAfter="166.0"
-		relativeRotate="true"
-		emitterScale="0.75"
+		startScale="0.1"
+		scale="0.1"
+		endScale="0.1"
+		particleDuration="1500"
+		fadeDuration="10000"
 		doYOffset="true"
-	/>
-	 -->
+	/> 	
 	 
 	<emitter
 		name="steam.burst.emitter"
@@ -982,6 +976,41 @@
 		<chain><emitter inherit="flash.emitter" emitterScale="0.5" fadeDuration="8,12" /></chain>
 	</emitter>	
 	
+
+
+
+	<!-- damaged buildings -->
+	
+	<emitter name="damaged.building.1x1.fire.emitter" inherit="ruins.flame.emitter" velocity="0.0, 10.0" particlesPerTick="-20.0, 1.0">
+		<slave><emitter	inherit="fire.smoke.emitter" delay="1">
+			<chain><emitter inherit="flame.glow.emitter">
+				<slave><emitter inherit="flame.sparks.emitter" delay="1"/></slave>
+	</emitter></chain></emitter></slave></emitter>		
+
+	<emitter name="damaged.building.2x2.fire.emitter" inherit="ruins.flame.emitter" velocity="0.0, 18.0" particlesPerTick="-18.0, 1.0">
+		<slave><emitter	inherit="fire.smoke.emitter" delay="1">
+			<chain><emitter inherit="flame.glow.emitter">
+				<slave><emitter inherit="flame.sparks.emitter" delay="1"/></slave>
+	</emitter></chain></emitter></slave></emitter>	
+
+	<emitter name="damaged.building.3x3.fire.emitter" inherit="ruins.flame.emitter" velocity="0.0, 22.0" particlesPerTick="-16.0, 1.0">
+		<slave><emitter	inherit="fire.smoke.emitter" delay="1">
+			<chain><emitter inherit="flame.glow.emitter">
+				<slave><emitter inherit="flame.sparks.emitter" delay="1"/></slave>
+	</emitter></chain></emitter></slave></emitter>	
+
+	<emitter name="damaged.building.4x4.fire.emitter" inherit="ruins.flame.emitter" velocity="0.0, 28.0" particlesPerTick="-14.0, 1.0">
+		<slave><emitter	inherit="fire.smoke.emitter" delay="1">
+			<chain><emitter inherit="flame.glow.emitter">
+				<slave><emitter inherit="flame.sparks.emitter" delay="1"/></slave>
+	</emitter></chain></emitter></slave></emitter>	
+	
+	<emitter name="damaged.building.5x5.fire.emitter" inherit="ruins.flame.emitter" velocity="0.0, 50.0" particlesPerTick="-12.0, 1.0">
+		<slave><emitter	inherit="fire.smoke.emitter" delay="1">
+			<chain><emitter inherit="flame.glow.emitter">
+				<slave><emitter inherit="flame.sparks.emitter" delay="1"/></slave>
+	</emitter></chain></emitter></slave></emitter>	
+
 	
 	
 	<!-- ruins on fire -->

@@ -18,7 +18,9 @@
  */
 package worm.util.list;
 
-import worm.util.*;
+import worm.util.AbstractIntCollection;
+import worm.util.IntCollection;
+import worm.util.IntIterator;
 import worm.util.hash.DefaultIntHashFunction;
 import worm.util.util.Exceptions;
 

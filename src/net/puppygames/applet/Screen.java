@@ -31,22 +31,37 @@
  */
 package net.puppygames.applet;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-import net.puppygames.applet.effects.Effect;
 import net.puppygames.applet.effects.SFX;
 
-import org.lwjgl.input.*;
-import org.lwjgl.util.*;
+import org.lwjgl.input.Controllers;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.util.ReadablePoint;
+import org.lwjgl.util.ReadableRectangle;
+import org.lwjgl.util.Rectangle;
 import org.w3c.dom.Element;
 
 import com.shavenpuppy.jglib.XMLResourceWriter;
 import com.shavenpuppy.jglib.openal.ALBuffer;
 import com.shavenpuppy.jglib.openal.ALStream;
+import com.shavenpuppy.jglib.opengl.GLRenderable;
 import com.shavenpuppy.jglib.opengl.GLString;
 import com.shavenpuppy.jglib.resources.Feature;
-import com.shavenpuppy.jglib.sprites.*;
+import com.shavenpuppy.jglib.sprites.Sprite;
+import com.shavenpuppy.jglib.sprites.SpriteAllocator;
+import com.shavenpuppy.jglib.sprites.SpriteEngine;
+import com.shavenpuppy.jglib.sprites.SpriteImage;
+import com.shavenpuppy.jglib.sprites.StaticSpriteEngine;
 import com.shavenpuppy.jglib.util.XMLUtil;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -70,6 +85,11 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 
 	/** Monkeying: slow tick speed */
 	private static final int SLOW_TICK_SPEED = 4;
+
+	/** Mouse grab hack */
+	private static int mouseGrabAttempts = 0;
+	private static Screen screenGrabbingMouse = null;
+	private static final int MAX_MOUSE_GRAB_ATTEMPTS = 4;
 
 	/*
 	 * Resource data
@@ -111,18 +131,15 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	/** Layer above which not to Y-sort */
 	private int sortLayer;
 
+	/** Allcaps areas */
+	private boolean allCaps;
+
 	/*
 	 * Transient data
 	 */
 
 	/** Sprite engine */
 	private transient StaticSpriteEngine spriteEngine;
-
-	/** Background effects */
-	private transient List<Effect> backgroundEffects;
-
-	/** Foreground effects */
-	private transient List<Effect> foregroundEffects;
 
 	/** A timer */
 	private transient int timer;
@@ -189,6 +206,120 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 
 	/** Transition handling */
 	private transient Transition transitionFeature;
+
+	/** Constrain mouse */
+	private transient ReadableRectangle constrainMouse;
+
+	/** Monkeying */
+	private transient MonkeyRenderable monkeyRenderable;
+	private class MonkeyRenderable extends TickableObject {
+		@Override
+		protected void render() {
+			// Draw all area borders
+			glRender(new GLRenderable() {
+				@Override
+				public void render() {
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					glDisable(GL_TEXTURE_2D);
+					glEnable(GL_BLEND);
+				}
+			});
+
+			int n = areas.size();
+			boolean foundHover = false;
+			for (int i = n; -- i >= 0; ) {
+				Area area = areas.get(i);
+				boolean hover = false;
+				Rectangle r = (Rectangle) area.getBounds();
+				if (r == null) {
+					ReadablePoint p = area.getPosition();
+					SpriteImage si = area.getCurrentImage();
+					if (si != null && p != null) {
+						r = new Rectangle(p.getX(), p.getY(), si.getWidth(), si.getHeight());
+					}
+				}
+				if (!foundHover && r != null) {
+					if (r.contains(mouseX, mouseY)) {
+						foundHover = true;
+						hover = true;
+					}
+				}
+				if (r != null) {
+					renderMonkeyedArea(area.getID(), r, hover);
+				}
+			}
+		}
+
+		private void renderMonkeyedArea(String id, Rectangle r, boolean hover) {
+			if (hover) {
+				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			} else {
+				glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+			}
+			boolean stippled = dragging != null && dragging.getID() != null && dragging.getID().equals(id);
+			if (stippled) {
+				selectTick = (selectTick + 1) % 64;
+				glLineStipple(1, (short)(0xF0F0F >> (selectTick >> 3)));
+				glEnable(GL_LINE_STIPPLE);
+			}
+
+			short idx = glVertex2f(r.getX(), r.getY());
+			glVertex2f(r.getX() + r.getWidth(), r.getY());
+			glVertex2f(r.getX() + r.getWidth(), r.getY() + r.getHeight());
+			glVertex2f(r.getX(), r.getY() + r.getHeight());
+			glRender(GL_LINE_LOOP, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 3)});
+
+			if (stippled) {
+				glRender(new GLRenderable() {
+					@Override
+					public void render() {
+						glEnable(GL_TEXTURE_2D);
+						glEnable(GL_BLEND);
+						glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+						glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+					}
+				});
+				GLString s = new GLString(id, Res.getTinyFont());
+				glColor3f(0, 0, 0);
+				s.setLocation(r.getX() + 1, r.getY() + r.getHeight() - 1);
+				s.render(this);
+				glColor3f(1, 1, 1);
+				s.setLocation(r.getX(), r.getY() + r.getHeight());
+				s.render(this);
+
+				GLString s2 = new GLString(r.getX()+", "+r.getY(), Res.getTinyFont());
+				glColor3f(0, 0, 0);
+				s2.setLocation(r.getX() + 1, r.getY() - 1);
+				s2.render(this);
+				glColor3f(1, 1, 1);
+				s2.setLocation(r.getX(), r.getY());
+				s2.render(this);
+
+				GLString s3 = new GLString(r.getWidth()+"x"+r.getHeight(), Res.getTinyFont());
+				glColor3f(0, 0, 0);
+				s3.setLocation(r.getX() + r.getWidth() - s3.getBounds(null).getWidth() + 1, r.getY() + r.getHeight() - s3.getBounds(null).getHeight() - 1);
+				s3.render(this);
+				glColor3f(1, 1, 1);
+				s3.setLocation(r.getX() + r.getWidth() - s3.getBounds(null).getWidth(), r.getY() + r.getHeight() - s3.getBounds(null).getHeight());
+				s3.render(this);
+				glRender(new GLRenderable() {
+					@Override
+					public void render() {
+						glDisable(GL_TEXTURE_2D);
+					}
+				});
+			}
+			if (!stippled) {
+				glRender(new GLRenderable() {
+					@Override
+					public void render() {
+						glLineStipple(1, (short) 0xFFFF);
+						glDisable(GL_LINE_STIPPLE);
+					}
+				});
+			}
+		}
+	}
 
 	/*
 	 * Phases
@@ -314,14 +445,6 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		return transitionFeature;
 	}
 
-	/**
-	 * Sets this screen to be the default screen on which all sprites are
-	 * deserialized to, when a game is restored.
-	 */
-	public final void setDefaultScreen() {
-		SerializedSprite.setSpriteEngine(spriteEngine);
-	}
-
 	@Override
 	public void load(Element element, Loader loader) throws Exception {
 		super.load(element, loader);
@@ -330,6 +453,9 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		areas = new ArrayList<Area>(children.size());
 		for (Element child : children) {
 			Area area = (Area) loader.load(child);// new Area();
+			if (allCaps) {
+				area.setAllCaps(true);
+			}
 			areas.add(area);
 		}
 
@@ -350,8 +476,6 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 
 		// Create somewhere to stash all our tickables in
 		if (!inited) {
-			backgroundEffects = new ArrayList<Effect>(4);
-			foregroundEffects = new ArrayList<Effect>(8);
 			tickables = new ArrayList<Tickable>(256);
 			// The first tickable is a sprite engine
 			spriteEngine = new StaticSpriteEngine(true, sortLayer, uniqueSprites, 1);
@@ -513,22 +637,25 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		mouseY = (int) Game.physicalYtoLogicalY(Game.getMouseY());
 		if (!isMouseVisible()) {
 			boolean setMousePosition = false;
-			if (mouseX < 0) {
-				mouseX = 0;
+			int minX = constrainMouse == null ? 0 : constrainMouse.getX();
+			int minY = constrainMouse == null ? 0 : constrainMouse.getY();
+			int maxW = constrainMouse == null ? getWidth() : constrainMouse.getWidth();
+			int maxH = constrainMouse == null ? getHeight() : constrainMouse.getHeight();
+			if (mouseX < minX) {
+				mouseX = minX;
 				setMousePosition = true;
-			} else if (mouseX >= Game.getWidth()) {
-				mouseX = Game.getWidth() - 1;
+			} else if (mouseX >= maxW) {
+				mouseX = maxW - 1;
 				setMousePosition = true;
 			}
-			if (mouseY < 0) {
-				mouseY = 0;
+			if (mouseY < minY) {
+				mouseY = minY;
 				setMousePosition = true;
-			} else if (mouseY >= Game.getHeight()) {
-				mouseY = Game.getHeight() - 1;
+			} else if (mouseY >= maxH) {
+				mouseY = maxH - 1;
 				setMousePosition = true;
 			}
 			if (setMousePosition) {
-				System.out.println((int) Game.logicalXtoPhysicalX(mouseX)+","+ (int) Game.logicalYtoPhysicalY(mouseY));
 				Mouse.setCursorPosition((int) Game.logicalXtoPhysicalX(mouseX), (int) Game.logicalYtoPhysicalY(mouseY));
 			}
 		}
@@ -567,10 +694,19 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 					if (Game.DEBUG && Game.wasKeyPressed(Keyboard.KEY_F11)) { // warning suppressed
 						if (monkeying) {
 							monkeying = false;
+							System.out.println("No longer Monkeying");
+							if (monkeyRenderable != null) {
+								monkeyRenderable.remove();
+								monkeyRenderable = null;
+							}
 							Mouse.setGrabbed(wasMouseGrabbed);
 							SFX.gameOver();
 						} else {
 							monkeying = true;
+							System.out.println("Monkeying");
+							monkeyRenderable = new MonkeyRenderable();
+							monkeyRenderable.setLayer(100);
+							monkeyRenderable.spawn(this);
 							wasMouseGrabbed = Mouse.isGrabbed();
 							Mouse.setGrabbed(false);
 							SFX.textEntered();
@@ -609,7 +745,6 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 				} else {
 					doTick();
 					tickEverything();
-					//updateEverything();
 					postTick();
 				}
 				break;
@@ -620,7 +755,6 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 				if (!paused) {
 					doTick();
 					tickEverything();
-					//updateEverything();
 					postTick();
 				}
 				break;
@@ -631,6 +765,10 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 
 	public final void update() {
 		updateEverything();
+		doUpdate();
+	}
+
+	protected void doUpdate() {
 	}
 
 	/**
@@ -694,38 +832,6 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	public final void addTickable(Tickable tickable) {
 		assert !tickables.contains(tickable) : "Tickable "+tickable+" already added to "+this;
 		tickables.add(tickable);
-	}
-
-	/**
-	 * Add a background effect
-	 */
-	public final void addBackgroundEffect(Effect effect) {
-		backgroundEffects.add(effect);
-		addTickable(effect);
-	}
-
-	/**
-	 * Add a foreground effect
-	 */
-	public final void addForegroundEffect(Effect effect) {
-		foregroundEffects.add(effect);
-		addTickable(effect);
-	}
-
-	/**
-	 * Remove a background effect
-	 * @param effect
-	 */
-	public final void removeBackgroundEffect(Effect effect) {
-		backgroundEffects.remove(effect);
-	}
-
-	/**
-	 * Remove a foreground effect
-	 * @param effect
-	 */
-	public final void removeForegroundEffect(Effect effect) {
-		foregroundEffects.remove(effect);
 	}
 
 	/**
@@ -806,6 +912,13 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	protected void onBlocked() {}
 
 	/**
+	 * Force this screen into "open" state instantly.
+	 */
+	public void forceOpen() {
+		phase = OPEN;
+	}
+
+	/**
 	 * Remove the screen
 	 * @param instantly Whether to close the screen instantly
 	 */
@@ -883,8 +996,8 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		for (Area area : areas) {
 			area.init();
 		}
-		resized();
 		initHotkeys();
+		resized();
 		onOpen();
 	}
 
@@ -955,30 +1068,19 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		// Render background (for example, clear the screen)
 		renderBackground();
 
-		// Render background effects
-		renderEffects(backgroundEffects, alpha);
-
 		// Render sprites
 		renderSprites(spriteEngine, alpha);
 
-		// Render areas
-		for (Area area : areas) {
-			area.render();
-		}
+//		// Render areas
+//		for (Area area : areas) {
+//			area.render();
+//		}
 
 		// Render foreground, eg. text etc.
 		renderForeground();
 
-		// Render foreground effects
-		renderEffects(foregroundEffects, alpha);
-
 		// Do any post processing
 		postRender();
-
-		// Monkey mode render
-		if (monkeying) {
-			renderMonkeying();
-		}
 
 		if (startPhase == OPENING) {
 			transitionFeature.postRenderOpening(this, timer);
@@ -997,19 +1099,6 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	protected void renderSprites(SpriteEngine engine, float alpha) {
 		spriteEngine.setAlpha(alpha);
 		spriteEngine.render();
-	}
-
-	/**
-	 * Render a List of effects
-	 * @param effects A List of Effects to render
-	 * @param alpha Alpha value, 0.0f ... 1.0f
-	 */
-	protected void renderEffects(List<Effect> effects, float alpha) {
-		int n = effects.size();
-		for (int i = 0; i < n; i ++) {
-			Effect effect = effects.get(i);
-			effect.render(); // TODO: refactor to add alpha
-		}
 	}
 
 	/**
@@ -1038,7 +1127,9 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 
 	@Override
 	public Sprite allocateSprite(Serializable owner) {
-		return spriteEngine.allocate(owner);
+		Sprite ret = spriteEngine.allocateSprite(owner);
+		ret.setAllocator(this);
+		return ret;
 	}
 
 	/**
@@ -1062,8 +1153,25 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		}
 
 		boolean grabbed = Mouse.isGrabbed();
-		if (grabbed == isMouseVisible() && top != null && !top.monkeying) {
-			Mouse.setGrabbed(!isMouseVisible());
+		if (top != null && !top.monkeying) {
+			if (!isMouseVisible()) {
+				if (!grabbed) {
+					mouseGrabAttempts = MAX_MOUSE_GRAB_ATTEMPTS;
+					screenGrabbingMouse = top;
+				}
+				if (mouseGrabAttempts -- > 0) {
+					if (screenGrabbingMouse != top) {
+						// Screen has changed. Reset
+						mouseGrabAttempts = MAX_MOUSE_GRAB_ATTEMPTS;
+						screenGrabbingMouse = top;
+					}
+					Mouse.setGrabbed(true);
+				}
+			} else if (grabbed) {
+				Mouse.setGrabbed(false);
+				mouseGrabAttempts = 0;
+				screenGrabbingMouse = null;
+			}
 		}
 	}
 
@@ -1511,93 +1619,6 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	}
 
 	/**
-	 * Render monkey mode
-	 */
-	private void renderMonkeying() {
-		// Draw all area borders
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		int n = areas.size();
-		boolean foundHover = false;
-		for (int i = n; -- i >= 0; ) {
-			Area area = areas.get(i);
-			boolean hover = false;
-			Rectangle r = (Rectangle) area.getBounds();
-			if (r == null) {
-				ReadablePoint p = area.getPosition();
-				SpriteImage si = area.getCurrentImage();
-				if (si != null && p != null) {
-					r = new Rectangle(p.getX(), p.getY(), si.getWidth(), si.getHeight());
-				}
-			}
-			if (!foundHover && r != null) {
-				if (r.contains(mouseX, mouseY)) {
-					foundHover = true;
-					hover = true;
-				}
-			}
-			if (r != null) {
-				renderMonkeyedArea(area.getID(), r, hover);
-			}
-		}
-	}
-
-	private void renderMonkeyedArea(String id, Rectangle r, boolean hover) {
-		if (hover) {
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		} else {
-			glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-		}
-		boolean stippled = dragging != null && dragging.getID() != null && dragging.getID().equals(id);
-		if (stippled) {
-			selectTick = (selectTick + 1) % 64;
-			glLineStipple(1, (short)(0xF0F0F >> (selectTick >> 3)));
-			glEnable(GL_LINE_STIPPLE);
-		}
-		glBegin(GL_LINE_LOOP);
-		glVertex2i(r.getX(), r.getY());
-		glVertex2i(r.getX() + r.getWidth(), r.getY());
-		glVertex2i(r.getX() + r.getWidth(), r.getY() + r.getHeight());
-		glVertex2i(r.getX(), r.getY() + r.getHeight());
-		glEnd();
-		if (stippled) {
-			glEnable(GL_TEXTURE_2D);
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			GLString s = new GLString(id, Res.getTinyFont());
-			glColor3f(0, 0, 0);
-			s.setLocation(r.getX() + 1, r.getY() + r.getHeight() - 1);
-			s.render();
-			glColor3f(1, 1, 1);
-			s.setLocation(r.getX(), r.getY() + r.getHeight());
-			s.render();
-
-			GLString s2 = new GLString(r.getX()+", "+r.getY(), Res.getTinyFont());
-			glColor3f(0, 0, 0);
-			s2.setLocation(r.getX() + 1, r.getY() - 1);
-			s2.render();
-			glColor3f(1, 1, 1);
-			s2.setLocation(r.getX(), r.getY());
-			s2.render();
-
-			GLString s3 = new GLString(r.getWidth()+"x"+r.getHeight(), Res.getTinyFont());
-			glColor3f(0, 0, 0);
-			s3.setLocation(r.getX() + r.getWidth() - s3.getBounds(null).getWidth() + 1, r.getY() + r.getHeight() - s3.getBounds(null).getHeight() - 1);
-			s3.render();
-			glColor3f(1, 1, 1);
-			s3.setLocation(r.getX() + r.getWidth() - s3.getBounds(null).getWidth(), r.getY() + r.getHeight() - s3.getBounds(null).getHeight());
-			s3.render();
-			glDisable(GL_TEXTURE_2D);
-		}
-		if (!stippled) {
-			glLineStipple(1, (short) 0xFFFF);
-			glDisable(GL_LINE_STIPPLE);
-		}
-	}
-
-	/**
 	 * @return true if the screen is enabled
 	 */
 	public final boolean isEnabled() {
@@ -1653,5 +1674,19 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		return "both".equals(centre);
 	}
 
+	public int getWidth() {
+		return Game.getWidth();
+	}
 
+	public int getHeight() {
+		return Game.getHeight();
+	}
+
+	/**
+	 * Constrain the mouse
+	 * @param constrainMouse Mouse constraints (logical coordinates); or null to clear
+	 */
+	public void setConstrainMouse(ReadableRectangle constrainMouse) {
+	    this.constrainMouse = constrainMouse;
+    }
 }

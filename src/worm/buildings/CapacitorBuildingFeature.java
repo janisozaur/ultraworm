@@ -34,7 +34,9 @@ package worm.buildings;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 
-import worm.*;
+import worm.Layers;
+import worm.Res;
+import worm.Worm;
 import worm.effects.RangeEffect;
 import worm.entities.Building;
 import worm.entities.Capacitor;
@@ -42,7 +44,7 @@ import worm.screens.GameScreen;
 import worm.weapons.WeaponFeature;
 import worm.weapons.WeaponFeature.WeaponInstance;
 
-import com.shavenpuppy.jglib.sprites.AnimatedAppearanceResource;
+import com.shavenpuppy.jglib.sprites.Appearance;
 import com.shavenpuppy.jglib.sprites.Sprite;
 import com.shavenpuppy.jglib.util.FPMath;
 
@@ -88,7 +90,7 @@ public class CapacitorBuildingFeature extends BuildingFeature {
 	private float lightSpeed;
 
 	private transient WeaponFeature weaponFeature;
-	private transient AnimatedAppearanceResource lightResource, beamResource;
+	private transient Appearance lightResource, beamResource;
 
 	/**
 	 * Building instances
@@ -373,6 +375,7 @@ public class CapacitorBuildingFeature extends BuildingFeature {
 				feature instanceof ReactorBuildingFeature
 			|| 	feature instanceof ShieldGeneratorBuildingFeature
 			||	feature instanceof BatteryBuildingFeature
+			|| 	feature instanceof CloakBuildingFeature
 			;
 	}
 

@@ -37,6 +37,9 @@
 
 	<!-- Load all the tags -->
 	<include resource="tags.xml" />
+	
+	<!-- Translation -->
+	<include resource="language.xml"/>
 
 	<!-- Sound effects & other resources -->
 	<instance
@@ -880,6 +883,7 @@
 		top_right="spriteimage.proximity_top_right"
 		leftColor="255,255,255,0"
 		rightColor="255,255,255,255"
+		blend="GLOWING"
 	/>
 
 
@@ -993,6 +997,17 @@
 		min="GL_LINEAR_MIPMAP_NEAREST"
 		mag="GL_LINEAR"
 		wrap="GL_TRUE"
+	/>
+	
+	<!--  Lasers -->
+	<texture
+		name="laser.texture"
+		url="classpath:laser.jgimage"
+		dst="GL_RGBA"
+		target="GL_TEXTURE_2D"
+		min="GL_LINEAR"
+		mag="GL_LINEAR"
+		wrap="GL_FALSE"
 	/>
 	
 	<!--  Turret and capacitor ranges -->
@@ -1122,7 +1137,19 @@
 	<instance name="dumb.brain" class="worm.brains.DumbBrainFeature" avoidanceFactor="0.25" />
 	<instance name="clever.brain" class="worm.brains.SmartBrainFeature" avoidanceFactor="0.5" baseFactor="0.5" defaultFactor="1.0"/>
 	<instance name="tactical.brain" class="worm.brains.TacticalBrainFeature" avoidanceFactor="1.0" baseFactor="1.0" factoryFactor="1.5" turretFactor="2.0" heavyTurretFactor="1.25"/>
-	<instance name="unit.brain" class="worm.brains.UnitBrainFeature"/>
+	<instance name="unit.brain" class="worm.brains.UnitBrainFeature" 	
+		gidletWeight="1.0"
+		gidrahWeight="32.0"
+		angryGidrahWeight="64.0"
+		bossWeight="128.0"
+	/>
+	<instance name="tank.brain" class="worm.brains.UnitBrainFeature" 	
+		gidletWeight="16.0"
+		gidrahWeight="1.0"
+		angryGidrahWeight="4.0"
+		bossWeight="16.0"
+	/>
+	<instance name="drone.brain" class="worm.brains.DroneBrainFeature" baseValue="7500.0" valuableFactor="2.0" distanceFactor="128.0"/>
 	<instance name="boss.brain" class="worm.brains.DumbBrainFeature" avoidanceFactor="0.0" />
 	
 
@@ -1177,106 +1204,13 @@
 		<sprite layer="14" sublayer="0" offset="31,1" animation="spawnpoint.west.animation" />	
 	</layers>
 
-	<!-- Ranks -->
-	
-	<rank title="UNRANKED" points="0">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.unranked.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.unranked.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="WARRANT OFFICER" points="500">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.warrant-officer.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.warrant-officer.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="SECOND LIEUTENANT" points="1000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.2nd-lieutenant.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.2nd-lieutenant.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="LIEUTENANT" points="2000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.lieutenant.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.lieutenant.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="CAPTAIN" points="3000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.captain.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.captain.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="MAJOR" points="4000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.major.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.major.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="LIEUTENANT COLONEL" points="5000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.lieutenant-colonel.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.lieutenant-colonel.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="COLONEL" points="7500">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.colonel.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.colonel.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="BRIGADIER" points="10000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.brigadier.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.brigadier.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="MAJOR GENERAL" points="20000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.major-general.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.major-general.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="LIEUTENANT GENERAL" points="30000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.lieutenant-general.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.lieutenant-general.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="GENERAL" points="40000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.general.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.general.glow.01" />
-		</layers></appearance>
-	</rank>
-	
-	<rank title="FIELD MARSHAL" points="50000">
-		<appearance><layers scale="0.45">
-			<sprite layer="10" bottomColored="info-floor" topColored="info-building" image="spriteimage.rank.field-marshal.01" />
-			<sprite layer="11" colored="text-bold"  image="spriteimage.rank.field-marshal.glow.01" />
-		</layers></appearance>
-	</rank>
-	
 	<!-- Spotlight texture -->
 	<instance
 		name="edgefade.image"
 		class="worm.InterpolatorImageResource"
 		type="luminance_alpha"
 		size="64"
-		interpolator="cosine"
+		interpolator="oldcosine"
 	/>
 	<texture
 		name="edgefade.texture"
@@ -1349,8 +1283,14 @@
 
 	<!-- Survival mode -->
 	<include resource="survival.xml" />
+	
+	<!-- Ranks -->
+	<include resource="ranks.xml" />
 
 	<!-- Basic game config -->
 	<include resource="config.xml" />
+	
+	<!-- Bribes -->
+	<include resource="bribes.xml" />
 
 </resources>

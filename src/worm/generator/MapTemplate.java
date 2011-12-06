@@ -33,7 +33,9 @@ package worm.generator;
 
 import worm.Tile;
 import worm.features.LevelFeature;
-import worm.tiles.*;
+import worm.tiles.BasePoint;
+import worm.tiles.FloorTile;
+import worm.tiles.SpawnPoint;
 
 
 /**

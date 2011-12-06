@@ -31,32 +31,63 @@
  */
 package worm.screens;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
-import net.puppygames.applet.*;
-import net.puppygames.applet.effects.*;
+import net.puppygames.applet.Area;
+import net.puppygames.applet.Game;
+import net.puppygames.applet.MiniGame;
+import net.puppygames.applet.Screen;
+import net.puppygames.applet.TickableObject;
+import net.puppygames.applet.effects.AdjusterEffect;
+import net.puppygames.applet.effects.Effect;
+import net.puppygames.applet.effects.FadeEffect;
+import net.puppygames.applet.effects.LabelEffect;
 
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.util.*;
+import org.lwjgl.util.Color;
+import org.lwjgl.util.Point;
+import org.lwjgl.util.ReadableColor;
+import org.lwjgl.util.ReadablePoint;
+import org.lwjgl.util.ReadableRectangle;
+import org.lwjgl.util.Rectangle;
 
-import worm.*;
+import worm.AttenuatedColor;
+import worm.Hints;
+import worm.Layers;
+import worm.MapRenderer;
 import worm.Res;
 import worm.SFX;
+import worm.ShopItem;
+import worm.TimeUtil;
+import worm.Worm;
+import worm.WormGameState;
 import worm.animation.SimpleThingWithLayers;
 import worm.buildings.BuildingFeature;
 import worm.entities.Building;
 import worm.entities.Gidrah;
-import worm.features.*;
-import worm.powerups.*;
+import worm.features.HintFeature;
+import worm.features.LayersFeature;
+import worm.features.LevelColorsFeature;
+import worm.features.LevelFeature;
+import worm.powerups.PowerupFeature;
+import worm.powerups.RepairPowerupFeature;
+import worm.powerups.ShieldPowerupFeature;
 
 import com.shavenpuppy.jglib.Resources;
 import com.shavenpuppy.jglib.interpolators.ColorInterpolator;
 import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
 import com.shavenpuppy.jglib.openal.ALBuffer;
-import com.shavenpuppy.jglib.opengl.*;
-import com.shavenpuppy.jglib.resources.*;
+import com.shavenpuppy.jglib.opengl.ColorUtil;
+import com.shavenpuppy.jglib.opengl.GLRenderable;
+import com.shavenpuppy.jglib.opengl.GLTextArea;
+import com.shavenpuppy.jglib.resources.ColorMapFeature;
+import com.shavenpuppy.jglib.resources.MappedColor;
+import com.shavenpuppy.jglib.resources.TextResource;
 import com.shavenpuppy.jglib.sound.SoundEffect;
-import com.shavenpuppy.jglib.sprites.AnimatedAppearanceResource;
+import com.shavenpuppy.jglib.sprites.Appearance;
 import com.shavenpuppy.jglib.util.FPMath;
 import com.shavenpuppy.jglib.util.Util;
 
@@ -75,6 +106,15 @@ public class GameScreen extends Screen {
 	private static final long serialVersionUID = 1L;
 
 	private static final boolean ALLOW_SCROLL_PAST = true;
+	private static final GLRenderable SETUP_RENDERING = new GLRenderable() {
+		@Override
+		public void render() {
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glDisable(GL_TEXTURE_2D);
+		}
+	};
 
 	private transient boolean debug = false;
 
@@ -504,7 +544,7 @@ public class GameScreen extends Screen {
 			handleMouse();
 		}
 
-		Game.onTicked();
+		MiniGame.onTicked();
 		gameState.tick();
 		renderer.render((int) mapX + renderer.getOriginX(), (int) mapY + renderer.getOriginY());
 		calcRumble();
@@ -536,7 +576,7 @@ public class GameScreen extends Screen {
 				int buildingCost = gameState.getBuildingCost();
 
 				if (buildingCost == 0) {
-					buildText.append("FREE");
+					buildText.append(Game.getMessage("ultraworm.gamescreen.free"));
 				} else {
 					buildText.append('$');
 					buildText.append(buildingCost);
@@ -551,14 +591,14 @@ public class GameScreen extends Screen {
 				}
 			}
 
-			AnimatedAppearanceResource buildInfoIconAnim;
+			Appearance buildInfoIconAnim;
 
 			if (canBuild) {
 				costArea.setTextColors(buildColor, buildColor);
-				buildInfoIconAnim = (AnimatedAppearanceResource) Resources.get("buildInfo."+gameState.getBuilding().getShopIcon()+".on.animation");
+				buildInfoIconAnim = (Appearance) Resources.get("buildInfo."+gameState.getBuilding().getShopIcon()+".on.animation");
 			} else {
 				costArea.setTextColors(cantBuildColor, cantBuildColor);
-				buildInfoIconAnim = (AnimatedAppearanceResource) Resources.get("buildInfo."+gameState.getBuilding().getShopIcon()+".off.animation");
+				buildInfoIconAnim = (Appearance) Resources.get("buildInfo."+gameState.getBuilding().getShopIcon()+".off.animation");
 			}
 
 			costArea.setMouseOffAppearance(buildInfoIconAnim);
@@ -766,16 +806,13 @@ public class GameScreen extends Screen {
 
 	@Override
 	protected void onResized() {
-		if (renderer != null) {
-			renderer.cleanup();
-			renderer = null;
+		if (renderer == null) {
+			renderer = new MapRenderer(this);
+			renderer.setOrigin(-MapRenderer.TILE_SIZE * 4, -MapRenderer.TILE_SIZE * 4);
+			renderer.setMap(gameState.getMap());
 		}
-		int adjustWidth = Game.getWidth() % MapRenderer.TILE_SIZE > 0 ? 7 : 6;
-		int adjustHeight = Game.getHeight() % MapRenderer.TILE_SIZE > 0 ? 7 : 6;
-		renderer = new MapRenderer(this, Game.getWidth() / MapRenderer.TILE_SIZE + adjustWidth, Game.getHeight() / MapRenderer.TILE_SIZE + adjustHeight);
-		renderer.setOrigin(-MapRenderer.TILE_SIZE * 4, -MapRenderer.TILE_SIZE * 4);
-		renderer.setMap(gameState.getMap());
-
+		renderer.onResized();
+		renderer.render((int) mapX + renderer.getOriginX(), (int) mapY + renderer.getOriginY());
 		setHover(null);
 	}
 
@@ -798,15 +835,7 @@ public class GameScreen extends Screen {
 		tickableObject = new TickableObject() {
 			@Override
 			protected void render() {
-				glRender(new GLRenderable() {
-					@Override
-					public void render() {
-						glEnable(GL_BLEND);
-						glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-						glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-						glDisable(GL_TEXTURE_2D);
-					}
-				});
+				glRender(SETUP_RENDERING);
 
 				ReadableColor currtimeLeftColorBottom = timeLeftColorBottom;
 				ReadableColor currtimeLeftColorTop = timeLeftColorTop;
@@ -815,31 +844,34 @@ public class GameScreen extends Screen {
 				float ratio;
 				int h;
 				if (gameState.getGameMode() != WormGameState.GAME_MODE_SURVIVAL && !gameState.isRushActive()) {
-					glBegin(GL_QUADS);
 					ratio = 1.0f - (float) gameState.getLevelTick() / gameState.getLevelDuration();
 					ReadableRectangle r = timerBarArea.getBounds();
 					h = (int) LinearInterpolator.instance.interpolate(0.0f, r.getHeight(), ratio);
 
 					if (gameState.getLevelTick() > 0) {
-						ColorUtil.setGLColor(currtimeLeftColorBottom, sideHUDAlpha, this);
-						glVertex2f(r.getX(), r.getY());
+						ColorUtil.setGLColorPre(currtimeLeftColorBottom, sideHUDAlpha, this);
+						short idx = glVertex2f(r.getX(), r.getY());
 						glVertex2f(r.getX() + r.getWidth(), r.getY());
 						ColorInterpolator.interpolate(currtimeLeftColorBottom, currtimeLeftColorTop, ratio, LinearInterpolator.instance, TEMPCOLOR);
-						ColorUtil.setGLColor(TEMPCOLOR, sideHUDAlpha, this);
+						ColorUtil.setGLColorPre(TEMPCOLOR, sideHUDAlpha, this);
 						glVertex2f(r.getX() + r.getWidth(), r.getY() + h);
 						glVertex2f(r.getX(), r.getY() + h);
+
+						glRender(GL_TRIANGLES, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 0), (short) (idx + 2), (short) (idx + 3)});
 					}
 
 					if (gameState.getLevelTick() < gameState.getLevelDuration()) {
 						ColorInterpolator.interpolate(currtimePastColorBottom, currtimePastColorTop, ratio, LinearInterpolator.instance, TEMPCOLOR);
-						ColorUtil.setGLColor(TEMPCOLOR, sideHUDAlpha, this);
-						glVertex2f(r.getX(), r.getY() + h);
+						ColorUtil.setGLColorPre(TEMPCOLOR, sideHUDAlpha, this);
+						short idx = glVertex2f(r.getX(), r.getY() + h);
 						glVertex2f(r.getX() + r.getWidth(), r.getY() + h);
-						ColorUtil.setGLColor(currtimePastColorTop, sideHUDAlpha, this);
+						ColorUtil.setGLColorPre(currtimePastColorTop, sideHUDAlpha, this);
 						glVertex2f(r.getX() + r.getWidth(), r.getY() + r.getHeight());
 						glVertex2f(r.getX(), r.getY() + r.getHeight());
+
+						glRender(GL_TRIANGLES, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 0), (short) (idx + 2), (short) (idx + 3)});
 					}
-					glEnd();
+
 				}
 
 				currtimeLeftColorBottom = powerupTimeLeftColorBottom;
@@ -852,27 +884,29 @@ public class GameScreen extends Screen {
 					ReadableRectangle r2 = bezerkBarArea.getBounds();
 					ratio = (float) gameState.getBezerkTick() / (float) bezerkTimerMax;
 					h = (int) LinearInterpolator.instance.interpolate(0.0f, r2.getHeight(), ratio);
-					glBegin(GL_QUADS);
 
 					if (gameState.getBezerkTick() > 0) {
-						ColorUtil.setGLColor(currtimeLeftColorBottom, sideHUDAlpha, this);
-						glVertex2f(r2.getX(), r2.getY());
+						ColorUtil.setGLColorPre(currtimeLeftColorBottom, sideHUDAlpha, this);
+						short idx = glVertex2f(r2.getX(), r2.getY());
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY());
 						ColorInterpolator.interpolate(currtimeLeftColorBottom, currtimeLeftColorTop, ratio, LinearInterpolator.instance, TEMPCOLOR);
-						ColorUtil.setGLColor(TEMPCOLOR, sideHUDAlpha, this);
+						ColorUtil.setGLColorPre(TEMPCOLOR, sideHUDAlpha, this);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + h);
 						glVertex2f(r2.getX(), r2.getY() + h);
+
+						glRender(GL_TRIANGLES, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 0), (short) (idx + 2), (short) (idx + 3)});
 					}
 					if (gameState.getBezerkTick() < bezerkTimerMax) {
 						ColorInterpolator.interpolate(currtimePastColorBottom, currtimePastColorTop, ratio, LinearInterpolator.instance, TEMPCOLOR);
-						ColorUtil.setGLColor(TEMPCOLOR, sideHUDAlpha, this);
-						glVertex2f(r2.getX(), r2.getY() + h);
+						ColorUtil.setGLColorPre(TEMPCOLOR, sideHUDAlpha, this);
+						short idx = glVertex2f(r2.getX(), r2.getY() + h);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + h);
-						ColorUtil.setGLColor(currtimePastColorTop, sideHUDAlpha, this);
+						ColorUtil.setGLColorPre(currtimePastColorTop, sideHUDAlpha, this);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + r2.getHeight());
 						glVertex2f(r2.getX(), r2.getY() + r2.getHeight());
+
+						glRender(GL_TRIANGLES, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 0), (short) (idx + 2), (short) (idx + 3)});
 					}
-					glEnd();
 				}
 
 				// SHIELD
@@ -880,26 +914,27 @@ public class GameScreen extends Screen {
 					ReadableRectangle r2 = shieldBarArea.getBounds();
 					ratio = (float) gameState.getShieldTick() / (float) shieldTimerMax;
 					h = (int) LinearInterpolator.instance.interpolate(0.0f, r2.getHeight(), ratio);
-					glBegin(GL_QUADS);
+
 					if (gameState.getShieldTick() > 0) {
-						ColorUtil.setGLColor(currtimeLeftColorBottom, sideHUDAlpha, this);
-						glVertex2f(r2.getX(), r2.getY());
+						ColorUtil.setGLColorPre(currtimeLeftColorBottom, sideHUDAlpha, this);
+						short idx = glVertex2f(r2.getX(), r2.getY());
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY());
 						ColorInterpolator.interpolate(currtimeLeftColorBottom, currtimeLeftColorTop, ratio, LinearInterpolator.instance, TEMPCOLOR);
-						ColorUtil.setGLColor(TEMPCOLOR, sideHUDAlpha, this);
+						ColorUtil.setGLColorPre(TEMPCOLOR, sideHUDAlpha, this);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + h);
 						glVertex2f(r2.getX(), r2.getY() + h);
+						glRender(GL_TRIANGLES, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 0), (short) (idx + 2), (short) (idx + 3)});
 					}
 					if (gameState.getShieldTick() < shieldTimerMax) {
 						ColorInterpolator.interpolate(currtimePastColorBottom, currtimePastColorTop, ratio, LinearInterpolator.instance, TEMPCOLOR);
-						ColorUtil.setGLColor(TEMPCOLOR, sideHUDAlpha, this);
-						glVertex2f(r2.getX(), r2.getY() + h);
+						ColorUtil.setGLColorPre(TEMPCOLOR, sideHUDAlpha, this);
+						short idx = glVertex2f(r2.getX(), r2.getY() + h);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + h);
-						ColorUtil.setGLColor(currtimePastColorTop, sideHUDAlpha, this);
+						ColorUtil.setGLColorPre(currtimePastColorTop, sideHUDAlpha, this);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + r2.getHeight());
 						glVertex2f(r2.getX(), r2.getY() + r2.getHeight());
+						glRender(GL_TRIANGLES, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 0), (short) (idx + 2), (short) (idx + 3)});
 					}
-					glEnd();
 				}
 
 				// FREEZE
@@ -907,62 +942,26 @@ public class GameScreen extends Screen {
 					ReadableRectangle r2 = freezeBarArea.getBounds();
 					ratio = (float) gameState.getFreezeTick() / (float) freezeTimerMax;
 					h = (int) LinearInterpolator.instance.interpolate(0.0f, r2.getHeight(), ratio);
-					glBegin(GL_QUADS);
 
 					if (gameState.getFreezeTick() > 0) {
-						ColorUtil.setGLColor(currtimeLeftColorBottom, sideHUDAlpha, this);
-						glVertex2f(r2.getX(), r2.getY());
+						ColorUtil.setGLColorPre(currtimeLeftColorBottom, sideHUDAlpha, this);
+						short idx = glVertex2f(r2.getX(), r2.getY());
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY());
 						ColorInterpolator.interpolate(currtimeLeftColorBottom, currtimeLeftColorTop, ratio, LinearInterpolator.instance, TEMPCOLOR);
-						ColorUtil.setGLColor(TEMPCOLOR, sideHUDAlpha, this);
+						ColorUtil.setGLColorPre(TEMPCOLOR, sideHUDAlpha, this);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + h);
 						glVertex2f(r2.getX(), r2.getY() + h);
+						glRender(GL_TRIANGLES, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 0), (short) (idx + 2), (short) (idx + 3)});
 					}
 					if (gameState.getFreezeTick() < freezeTimerMax) {
 						ColorInterpolator.interpolate(currtimePastColorBottom, currtimePastColorTop, ratio, LinearInterpolator.instance, TEMPCOLOR);
-						ColorUtil.setGLColor(TEMPCOLOR, sideHUDAlpha, this);
-						glVertex2f(r2.getX(), r2.getY() + h);
+						ColorUtil.setGLColorPre(TEMPCOLOR, sideHUDAlpha, this);
+						short idx = glVertex2f(r2.getX(), r2.getY() + h);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + h);
-						ColorUtil.setGLColor(currtimePastColorTop, sideHUDAlpha, this);
+						ColorUtil.setGLColorPre(currtimePastColorTop, sideHUDAlpha, this);
 						glVertex2f(r2.getX() + r2.getWidth(), r2.getY() + r2.getHeight());
 						glVertex2f(r2.getX(), r2.getY() + r2.getHeight());
-					}
-					glEnd();
-				}
-
-				if (debug) {
-					ColorUtil.setGLColor(ReadableColor.WHITE, this);
-					particleDebug.setText("total "+String.valueOf(Particle.getNumParticles()));
-					particleDebug.render(this);
-
-					glRender(new GLRenderable() {
-						@Override
-						public void render() {
-							glDisable(GL_TEXTURE_2D);
-							glLineWidth(1.0f);
-						}
-					});
-					ArrayList<Entity> entities = Worm.getGameState().getEntities();
-					Rectangle scratch = new Rectangle();
-					glColor4f(1.0f, 0.0f, 1.0f, 0.5f);
-					for (int i = 0; i < entities.size(); i ++) {
-						Entity e = entities.get(i);
-						if (e.isRound()) {
-							glBegin(GL_LINE_LOOP);
-							for (int angle = 0; angle < 20; angle ++) {
-								double rangle = Math.PI * angle / 10.0;
-								glVertex2f((float)(e.getMapX() + e.getCollisionX() + OFFSET.getX() + Math.cos(rangle) * e.getRadius()), (float)(e.getMapY() + e.getCollisionY() + OFFSET.getY() + Math.sin(rangle) * e.getRadius()));
-							}
-							glEnd();
-						} else {
-							e.getBounds(scratch);
-							glBegin(GL_LINE_LOOP);
-							glVertex2f(scratch.getX() + OFFSET.getX(), scratch.getY() + OFFSET.getY());
-							glVertex2f(scratch.getX() + OFFSET.getX() + scratch.getWidth(), scratch.getY() + OFFSET.getY());
-							glVertex2f(scratch.getX() + OFFSET.getX() + scratch.getWidth(), scratch.getY() + OFFSET.getY() + scratch.getHeight());
-							glVertex2f(scratch.getX() + OFFSET.getX(), scratch.getY() + OFFSET.getY() + scratch.getHeight());
-							glEnd();
-						}
+						glRender(GL_TRIANGLES, new short[] {(short) (idx + 0), (short) (idx + 1), (short) (idx + 2), (short) (idx + 0), (short) (idx + 2), (short) (idx + 3)});
 					}
 				}
 			}
@@ -1043,7 +1042,7 @@ public class GameScreen extends Screen {
 		bezerkTimerVisible = false;
 		shieldTimerVisible = false;
 		freezeTimerVisible = false;
-		getArea(ID_BASE).setMouseOffAppearance((AnimatedAppearanceResource) Resources.get("quicklaunch.focus.base.off.animation"));
+		getArea(ID_BASE).setMouseOffAppearance((Appearance) Resources.get("quicklaunch.focus.base.off.animation"));
 		onMapChanged();
 		doOnPowerupsUpdated();
 		enableBuildings();
@@ -1075,7 +1074,7 @@ public class GameScreen extends Screen {
 			// Always use earth color map
 			ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("earth.colormap"));
 		} else {
-			String world = gameState.getWorld().getTitle();
+			String world = gameState.getWorld().getUntranslated();
 			ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get(world+".colormap"));
 		}
 		LevelColorsFeature colors = levelFeature.getColors();
@@ -1133,16 +1132,16 @@ public class GameScreen extends Screen {
 		setGroupVisible(ID_BASE_UNDER_ATTACK, true);
 		baseAttackedEffect = new FadeEffect(120, 60) {
 			@Override
-			protected void doRender() {
+			protected void onTicked() {
 				setGroupAlpha(ID_BASE_UNDER_ATTACK, getAlpha());
 			}
 			@Override
 			protected void doRemove() {
 				setGroupVisible(ID_BASE_UNDER_ATTACK, false);
-				getArea(ID_BASE).setMouseOffAppearance((AnimatedAppearanceResource) Resources.get("quicklaunch.focus.base.off.animation"));
+				getArea(ID_BASE).setMouseOffAppearance((Appearance) Resources.get("quicklaunch.focus.base.off.animation"));
 			}
 		};
-		getArea(ID_BASE).setMouseOffAppearance((AnimatedAppearanceResource) Resources.get("quicklaunch.focus.base.flash.animation"));
+		getArea(ID_BASE).setMouseOffAppearance((Appearance) Resources.get("quicklaunch.focus.base.flash.animation"));
 		baseAttackedEffect.spawn(this);
 	}
 
@@ -1163,17 +1162,17 @@ public class GameScreen extends Screen {
 		setGroupVisible(ID_DESTRUCTION_IMMINENT, true);
 		baseDestructionImminentEffect = new FadeEffect(180, 60) {
 			@Override
-			protected void doRender() {
+			protected void onTicked() {
 				setGroupAlpha(ID_DESTRUCTION_IMMINENT, getAlpha());
 			}
 			@Override
 			protected void doRemove() {
 				setGroupVisible(ID_DESTRUCTION_IMMINENT, false);
-				getArea(ID_BASE).setMouseOffAppearance((AnimatedAppearanceResource) Resources.get("quicklaunch.focus.base.off.animation"));
+				getArea(ID_BASE).setMouseOffAppearance((Appearance) Resources.get("quicklaunch.focus.base.off.animation"));
 				baseDestructionImminentEffect = null;
 			}
 		};
-		getArea(ID_BASE).setMouseOffAppearance((AnimatedAppearanceResource) Resources.get("quicklaunch.focus.base.flash.animation"));
+		getArea(ID_BASE).setMouseOffAppearance((Appearance) Resources.get("quicklaunch.focus.base.flash.animation"));
 		baseDestructionImminentEffect.spawn(this);
 		if (RepairPowerupFeature.getInstance().isEnabledInShop() && !repairFlagged) {
 			gameState.flagHint(Hints.REPAIR);
@@ -1244,9 +1243,6 @@ public class GameScreen extends Screen {
 		particleDebug = new GLTextArea();
 		particleDebug.setBounds(220, 240, 100, 60);
 		particleDebug.setFont(net.puppygames.applet.Res.getTinyFont());
-
-		// Set default sprite allocator to be the GameScreen
-		setDefaultScreen();
 
 		// And the default offset for effects
 		Effect.setDefaultOffset(this, OFFSET);
@@ -1330,7 +1326,7 @@ public class GameScreen extends Screen {
 			} else {
 				unminedCrystalEffect = new FadeEffect(180, 60) {
 					@Override
-					protected void doRender() {
+					protected void onTicked() {
 						setGroupAlpha(ID_CRYSTAL_MESSAGE_GROUP, getAlpha() * sideHUDAlpha / 255);
 					}
 					@Override
@@ -1427,7 +1423,6 @@ public class GameScreen extends Screen {
 			setSellOff();
 		}
 
-
 	}
 
 	public void onBezerkTimerIncreased(int newMax) {
@@ -1497,7 +1492,7 @@ public class GameScreen extends Screen {
 	 */
 	public static void onExit() {
 		if (instance != null && instance.isOpen()) {
-			Game.saveGame();
+			MiniGame.saveGame();
 		}
 	}
 
@@ -1532,7 +1527,7 @@ public class GameScreen extends Screen {
 
 					tooltipEffect = new FadeEffect(90, 5) {
 						@Override
-						protected void doRender() {
+						protected void onTicked() {
 							getArea(id+"_tooltip").setAlpha(getAlpha());
 							getArea(id+"_tooltip_glow").setAlpha(getAlpha());
 						}
@@ -1686,7 +1681,7 @@ public class GameScreen extends Screen {
 	}
 
 	public static void doSaveEffect() {
-		LabelEffect saveEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), "GAME SAVED", ReadableColor.WHITE, ReadableColor.BLUE, SAVE_DURATION / 2, SAVE_DURATION / 2);
+		LabelEffect saveEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), Game.getMessage("ultraworm.gamescreen.game_saved"), ReadableColor.WHITE, ReadableColor.BLUE, SAVE_DURATION / 2, SAVE_DURATION / 2);
 		saveEffect.setLocation(Game.getWidth() / 2, Game.getHeight() / 2 + MapRenderer.TILE_SIZE);
 		saveEffect.setVisible(true);
 		saveEffect.spawn(instance);
@@ -1694,7 +1689,7 @@ public class GameScreen extends Screen {
 	}
 
 	public static void doFailedSaveEffect() {
-		LabelEffect failEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), "FAILED TO SAVE", ReadableColor.WHITE, ReadableColor.RED, SAVE_DURATION / 2, SAVE_DURATION / 2);
+		LabelEffect failEffect = new LabelEffect(net.puppygames.applet.Res.getBigFont(), Game.getMessage("ultraworm.gamescreen.failed_to_save"), ReadableColor.WHITE, ReadableColor.RED, SAVE_DURATION / 2, SAVE_DURATION / 2);
 		failEffect.setLocation(Game.getWidth() / 2, Game.getHeight() / 2 + MapRenderer.TILE_SIZE);
 		failEffect.setVisible(true);
 		failEffect.spawn(instance);
@@ -1847,7 +1842,7 @@ public class GameScreen extends Screen {
 					ShopItem currentHover;
 
 					@Override
-					protected void doRender() {
+					protected void onTicked() {
 						int a = getCurrent();
 						setGroupAlpha(ID_INFO_GROUP, a);
 						if (a == 0 && shopSpritesVisible) {
@@ -1872,27 +1867,27 @@ public class GameScreen extends Screen {
 								if (hover.getInitialValue() > 0) {
 									// It's a building
 									StringBuilder sb = new StringBuilder(128);
-									sb.append("COST: ");
+									sb.append(Game.getMessage("ultraworm.gamescreen.cost")+": ");
 									if (hover.isEnabledInShop()) {
 										int shopValue = hover.getShopValue();
 										if (shopValue > 0) {
 											sb.append(shopValue);
 										} else {
-											sb.append("FREE");
+											sb.append(Game.getMessage("ultraworm.gamescreen.free"));
 										}
 									} else {
 										sb.append("N/A");
 									}
 									if (inventory > 0) {
-										sb.append("     AVAILABLE: ");
+										sb.append("     "+Game.getMessage("ultraworm.gamescreen.available")+": ");
 										sb.append(inventory);
 									} else if (inventory == 0 && hover.getNumAvailable() > 0) {
-										sb.append("     NONE AVAILABLE");
+										sb.append("     "+Game.getMessage("ultraworm.gamescreen.none_available"));
 									}
 									costTextArea.setText(sb.toString());
 								} else {
 									// It's a powerup
-									costTextArea.setText("AVAILABLE: "+inventory);
+									costTextArea.setText(Game.getMessage("ultraworm.gamescreen.available")+": "+inventory);
 								}
 							}
 						} else {
@@ -1916,7 +1911,7 @@ public class GameScreen extends Screen {
 						shopEffect = null;
 					}
 					@Override
-					protected void doSpawn() {
+					protected void doSpawnEffect() {
 						currentHover = hover;
 					}
 				};
@@ -2009,7 +2004,7 @@ public class GameScreen extends Screen {
 			hintEffect = new AdjusterEffect(HINT_FADE_RATE, 0, 255) {
 
 				@Override
-				protected void doRender() {
+				protected void onTicked() {
 					int current = getCurrent();
 					int a = current * topHudAlpha / 255;
 					setGroupAlpha(ID_HINT_GROUP, a);

@@ -42,6 +42,8 @@ import com.shavenpuppy.jglib.resources.ColorMapFeature;
  */
 public class TitleScreen extends net.puppygames.applet.screens.TitleScreen {
 
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * C'tor
 	 *

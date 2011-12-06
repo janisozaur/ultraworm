@@ -45,7 +45,7 @@ import com.shavenpuppy.jglib.util.XMLUtil;
  */
 public class ColorCommand extends Command {
 
-	public static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
 	private MappedColor color;
 	private int duration;
@@ -61,13 +61,12 @@ public class ColorCommand extends Command {
 	 * @see com.shavenpuppy.jglib.sprites.Command#execute(com.shavenpuppy.jglib.sprites.Animated)
 	 */
 	@Override
-	public boolean execute(Animated target, int tickRate) {
+	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
 		int currentTick = target.getTick();
 
 		if (currentTick == 0) {
-			Colored sprite = (Colored) target;
-			sprite.setColors(color);
+			target.setColors(color);
 		}
 		if (currentTick >= duration) {
 			target.setSequence(++currentSequence);
@@ -75,7 +74,7 @@ public class ColorCommand extends Command {
 			return true; // Execute the next command
 		}
 
-		target.setTick(currentTick + tickRate);
+		target.setTick(++currentTick);
 		return false; // Don't execute the next command
 	}
 

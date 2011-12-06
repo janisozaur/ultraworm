@@ -45,7 +45,7 @@ import com.shavenpuppy.jglib.util.XMLUtil;
  */
 public class MoveCommand extends Command {
 
-	public static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
 	/** Temp holder */
 	private static final Vector3f temp = new Vector3f();
@@ -70,14 +70,13 @@ public class MoveCommand extends Command {
 	 * @see com.shavenpuppy.jglib.sprites.Command#execute(com.shavenpuppy.jglib.sprites.Animated)
 	 */
 	@Override
-	public boolean execute(Animated target, int tickRate) {
+	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
 		int currentTick = target.getTick();
 
 		if (currentTick == 0) {
-			Positioned positionedTarget = (Positioned) target;
 			if (relativex) {
-				positionedTarget.getLocation(temp);
+				target.getLocation(temp);
 				if (relativey) {
 					temp.setX(temp.getX() + deltax);
 					temp.setY(temp.getY() + deltay);
@@ -85,14 +84,14 @@ public class MoveCommand extends Command {
 					temp.setX(temp.getX() + deltax);
 					temp.setY(deltay);
 				}
-				positionedTarget.setLocation(temp.getX(), temp.getY(), 0);
+				target.setLocation(temp.getX(), temp.getY(), 0);
 			} else if (relativey) {
-				positionedTarget.getLocation(temp);
+				target.getLocation(temp);
 				temp.setX(deltax);
 				temp.setY(temp.getY() + deltay);
-				positionedTarget.setLocation(temp.getX(), temp.getY(), 0);
+				target.setLocation(temp.getX(), temp.getY(), 0);
 			} else {
-				positionedTarget.setLocation(deltax, deltay, 0);
+				target.setLocation(deltax, deltay, 0);
 			}
 		}
 		if (currentTick >= duration) {
@@ -101,7 +100,7 @@ public class MoveCommand extends Command {
 			return true; // Execute the next command
 		}
 
-		target.setTick(currentTick + tickRate);
+		target.setTick(++currentTick);
 		return false; // Don't execute the next command
 	}
 

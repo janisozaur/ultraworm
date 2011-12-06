@@ -31,7 +31,6 @@
  */
 package worm.effects;
 
-import net.puppygames.applet.TickableObject;
 import net.puppygames.applet.effects.Effect;
 import worm.Layers;
 import worm.entities.Building;
@@ -82,6 +81,32 @@ public class BuildingAttackedEffect extends Effect {
 	/** Length of crosshair lines on inner circle */
 	private static final float INNER_LINE_RADIUS = INNER_SIZE - LINE_LENGTH;
 
+	private static final int SEGMENTS = 32;
+	private static final int CROSSHAIR_STEP = 8;
+	private static final short[] OUTER_CIRCLE_INDICES, CROSSHAIR_INDICES, INNER_CIRCLE_INDICES, INNER_CROSSHAIR_INDICES;
+	static {
+		OUTER_CIRCLE_INDICES = new short[SEGMENTS];
+		for (short i = 0; i < SEGMENTS; i ++) {
+			OUTER_CIRCLE_INDICES[i] = i;
+		}
+
+		CROSSHAIR_INDICES = new short[2 * SEGMENTS / CROSSHAIR_STEP];
+		for (short i = 0; i < CROSSHAIR_INDICES.length; i ++) {
+			CROSSHAIR_INDICES[i] = (short) (i + OUTER_CIRCLE_INDICES[SEGMENTS - 1] + 1);
+		}
+
+		INNER_CIRCLE_INDICES = new short[SEGMENTS];
+		for (short i = 0; i < SEGMENTS; i ++) {
+			INNER_CIRCLE_INDICES[i] = (short) (i + CROSSHAIR_INDICES[2 * SEGMENTS / CROSSHAIR_STEP - 1] + 1);
+		}
+
+		INNER_CROSSHAIR_INDICES = new short[2 * SEGMENTS / CROSSHAIR_STEP];
+		for (short i = 0; i < CROSSHAIR_INDICES.length; i ++) {
+			INNER_CROSSHAIR_INDICES[i] = (short) (i + INNER_CIRCLE_INDICES[SEGMENTS - 1] + 1);
+		}
+
+	}
+
 	/** Tick */
 	private int tick;
 
@@ -102,9 +127,6 @@ public class BuildingAttackedEffect extends Effect {
 
 	/** Location */
 	private final float x, y;
-
-	/** TickableObject that actually does the rendering */
-	private TickableObject tickableObject;
 
 	/**
 	 * C'tor
@@ -148,144 +170,115 @@ public class BuildingAttackedEffect extends Effect {
 	}
 
 	@Override
-	protected void doSpawn() {
-		tickableObject = new TickableObject() {
+	protected void render() {
+		glRender(new GLRenderable() {
 			@Override
 			public void render() {
-				glRender(new GLRenderable() {
-					@Override
-					public void render() {
-						glEnable(GL_BLEND);
-						glDisable(GL_TEXTURE_2D);
-						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-						glLineWidth(LINE_WIDTH);
-						glPushMatrix();
-						glTranslatef(getOffset().getX() + x, getOffset().getY() + y, 0.0f);
-					}
-				});
-
-				float alpha;
-				float radius;
-				switch (phase) {
-					case PHASE_RES_IN:
-						radius = LinearInterpolator.instance.interpolate(OUTER_START_SIZE, OUTER_END_SIZE, tick / (float) RES_IN_DURATION);
-						alpha = LinearInterpolator.instance.interpolate(0.0f, ALPHA, tick / (float) RES_IN_DURATION);
-						break;
-					case PHASE_NORMAL:
-						radius = OUTER_END_SIZE;
-						alpha = ALPHA;
-						break;
-					case PHASE_RES_OUT:
-						radius = LinearInterpolator.instance.interpolate(OUTER_END_SIZE, OUTER_START_SIZE, tick / (float) RES_OUT_DURATION);
-						alpha = LinearInterpolator.instance.interpolate(ALPHA, 0.0f, tick / (float) RES_OUT_DURATION);
-						break;
-					default:
-						assert false;
-						radius = 0.0f;
-						alpha = 0.0f;
-				}
-
-				glColor4f(1.0f, 0.0f, 0.0f, alpha);
-
-				// Draw outer circle
-				float lineRadius = radius + LINE_LENGTH;
-				glBegin(GL_LINE_LOOP);
-				{
-					for (int i = 0; i < 32; i++) {
-						glVertex2f((float) Math.cos(i * Math.PI / 16.0) * radius, (float) Math.sin(i * Math.PI / 16.0) * radius);
-					}
-				}
-				glEnd();
-
-				// Draw crosshair lines at the edge of the circle
-				glRender(new GLRenderable() {
-					@Override
-					public void render() {
-						glRotatef(outerAngle, 0.0f, 0.0f, 1.0f);
-					}
-				});
-
-				glBegin(GL_LINES);
-				{
-					for (int i = 0; i < 32; i += 8) {
-						glVertex2f((float) Math.cos(i * Math.PI / 16.0) * radius, (float) Math.sin(i * Math.PI / 16.0) * radius);
-						glVertex2f((float) Math.cos(i * Math.PI / 16.0) * lineRadius, (float) Math.sin(i * Math.PI / 16.0) * lineRadius);
-					}
-				}
-				glEnd();
-
-				glRender(new GLRenderable() {
-					@Override
-					public void render() {
-						glPopMatrix();
-						glPushMatrix();
-						glTranslatef(getOffset().getX() + x, getOffset().getY() + y, 0.0f);
-						glRotatef(innerAngle, 0.0f, 0.0f, 1.0f);
-						glLineStipple(1, (short) 0xF0F0);
-						glEnable(GL_LINE_STIPPLE);
-					}
-				});
-
-				// Draw inner circle
-
-				glColor4f(1.0f, 0.0f, 0.0f, alpha*OUTER_ALPHA_MULT);
-
-				glBegin(GL_LINE_LOOP);
-				{
-					for (int i = 0; i < 32; i++) {
-						glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_SIZE, (float) Math.sin(i * Math.PI / 16.0) * INNER_SIZE);
-					}
-				}
-				glEnd();
-
-				glRender(new GLRenderable() {
-					@Override
-					public void render() {
-						glDisable(GL_LINE_STIPPLE);
-					}
-				});
-
-				// Draw crosshair lines at the edge of the circle
-				glBegin(GL_LINES);
-				{
-					for (int i = 0; i < 32; i += 8) {
-						glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_SIZE, (float) Math.sin(i * Math.PI / 16.0) *
-								INNER_SIZE);
-						glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_LINE_RADIUS, (float) Math.sin(i * Math.PI / 16.0) *
-								INNER_LINE_RADIUS);
-					}
-
-				}
-				glEnd();
-
-				glRender(new GLRenderable() {
-					@Override
-					public void render() {
-						glPopMatrix();
-						glLineWidth(1.0f);
-					}
-				});
+				glEnable(GL_BLEND);
+				glDisable(GL_TEXTURE_2D);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				glLineWidth(LINE_WIDTH);
+				glPushMatrix();
+				glTranslatef(getOffset().getX() + x, getOffset().getY() + y, 0.0f);
 			}
-		};
-		tickableObject.setLayer(Layers.ATTACK_EFFECT);
-		tickableObject.spawn(getScreen());
+		});
 
-	}
-
-	@Override
-	protected void doRemove() {
-		if (tickableObject != null) {
-			tickableObject.remove();
-			tickableObject = null;
+		float alpha;
+		float radius;
+		switch (phase) {
+			case PHASE_RES_IN:
+				radius = LinearInterpolator.instance.interpolate(OUTER_START_SIZE, OUTER_END_SIZE, tick / (float) RES_IN_DURATION);
+				alpha = LinearInterpolator.instance.interpolate(0.0f, ALPHA, tick / (float) RES_IN_DURATION);
+				break;
+			case PHASE_NORMAL:
+				radius = OUTER_END_SIZE;
+				alpha = ALPHA;
+				break;
+			case PHASE_RES_OUT:
+				radius = LinearInterpolator.instance.interpolate(OUTER_END_SIZE, OUTER_START_SIZE, tick / (float) RES_OUT_DURATION);
+				alpha = LinearInterpolator.instance.interpolate(ALPHA, 0.0f, tick / (float) RES_OUT_DURATION);
+				break;
+			default:
+				assert false;
+				radius = 0.0f;
+				alpha = 0.0f;
 		}
+
+		glColor4f(1.0f, 0.0f, 0.0f, alpha);
+
+		// Draw outer circle
+		float lineRadius = radius + LINE_LENGTH;
+		for (int i = 0; i < SEGMENTS; i++) {
+			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * radius, (float) Math.sin(i * Math.PI / 16.0) * radius);
+		}
+		glRender(GL_LINE_LOOP, OUTER_CIRCLE_INDICES);
+
+		// Draw crosshair lines at the edge of the circle
+		glRender(new GLRenderable() {
+			@Override
+			public void render() {
+				glRotatef(outerAngle, 0.0f, 0.0f, 1.0f);
+			}
+		});
+
+		for (int i = 0; i < SEGMENTS; i += CROSSHAIR_STEP) {
+			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * radius, (float) Math.sin(i * Math.PI / 16.0) * radius);
+			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * lineRadius, (float) Math.sin(i * Math.PI / 16.0) * lineRadius);
+		}
+		glRender(GL_LINES, CROSSHAIR_INDICES);
+
+		glRender(new GLRenderable() {
+			@Override
+			public void render() {
+				glPopMatrix();
+				glPushMatrix();
+				glTranslatef(getOffset().getX() + x, getOffset().getY() + y, 0.0f);
+				glRotatef(innerAngle, 0.0f, 0.0f, 1.0f);
+				glLineStipple(1, (short) 0xF0F0);
+				glEnable(GL_LINE_STIPPLE);
+			}
+		});
+
+		// Draw inner circle
+		glColor4f(1.0f, 0.0f, 0.0f, alpha * OUTER_ALPHA_MULT);
+		for (int i = 0; i < SEGMENTS; i++) {
+			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_SIZE, (float) Math.sin(i * Math.PI / 16.0) * INNER_SIZE);
+		}
+		glRender(GL_LINE_LOOP, INNER_CIRCLE_INDICES);
+
+		glRender(new GLRenderable() {
+			@Override
+			public void render() {
+				glDisable(GL_LINE_STIPPLE);
+			}
+		});
+
+		// Draw crosshair lines at the edge of the circle
+		for (int i = 0; i < SEGMENTS; i += CROSSHAIR_STEP) {
+			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_SIZE, (float) Math.sin(i * Math.PI / 16.0) *
+					INNER_SIZE);
+			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_LINE_RADIUS, (float) Math.sin(i * Math.PI / 16.0) *
+					INNER_LINE_RADIUS);
+		}
+		glRender(GL_LINES, INNER_CROSSHAIR_INDICES);
+
+		glRender(new GLRenderable() {
+			@Override
+			public void render() {
+				glPopMatrix();
+				glLineWidth(1.0f);
+			}
+		});
+
 	}
 
 	@Override
-	protected void doRender() {
+    public int getDefaultLayer() {
+		return Layers.ATTACK_EFFECT;
 	}
 
 	@Override
-	public boolean isActive() {
+	public boolean isEffectActive() {
 		return !(phase == PHASE_RES_OUT && tick >= RES_OUT_DURATION);
 	}
 

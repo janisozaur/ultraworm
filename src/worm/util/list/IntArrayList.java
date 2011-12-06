@@ -18,7 +18,10 @@
  */
 package worm.util.list;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 import worm.util.IntCollection;
 import worm.util.hash.DefaultIntHashFunction;
