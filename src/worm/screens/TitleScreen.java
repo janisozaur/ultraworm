@@ -57,9 +57,23 @@ public class TitleScreen extends net.puppygames.applet.screens.TitleScreen {
 	protected void onOpen() {
 		super.onOpen();
 		setEnabled("exit", true);
+
+		setGroupVisible("not-xmas", !Worm.isXmas());
+		setGroupVisible("xmas", Worm.isXmas());
+
 		Worm.setMouseAppearance(Res.getMousePointer());
 
 		ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("titles.colormap"));
+	}
+
+	@Override
+	public String getRegistrationID() {
+		return ID_REGISTRATION + (Worm.isXmas() ? "-xmas" : "-not-xmas");
+	}
+
+	@Override
+	public String getVersionID() {
+		return ID_VERSION + (Worm.isXmas() ? "-xmas" : "-not-xmas");
 	}
 
 }

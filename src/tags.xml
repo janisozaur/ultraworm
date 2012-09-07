@@ -70,4 +70,5 @@
 	<map tag="emit" class="worm.animation.EmitCommand"/>
 	<map tag="print" class="worm.animation.PrintCommand"/>
 	<map tag="shoot" class="worm.animation.ShootCommand"/>
+	<map tag="weather" class="worm.effects.WeatherEmitter"/>
 </resources>

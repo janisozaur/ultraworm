@@ -134,10 +134,15 @@ public class GameOverScreen extends Screen {
 
 	@Override
 	protected void onClose() {
-		if (Worm.getGameState().getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
-			SurvivalEndGameScreen.show();
-		} else {
-			EndGameScreen.show();
+		switch (Worm.getGameState().getGameMode()) {
+			case WormGameState.GAME_MODE_SURVIVAL:
+				SurvivalEndGameScreen.show();
+				break;
+			case WormGameState.GAME_MODE_XMAS:
+				XmasEndGameScreen.show();
+				break;
+			default:
+				EndGameScreen.show();
 		}
 	}
 

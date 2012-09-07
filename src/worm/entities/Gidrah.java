@@ -589,12 +589,18 @@ public class Gidrah extends Entity {
 	}
 
 	private void calcHitPoints() {
+		int gameMode = Worm.getGameState().getGameMode();
 		if (feature.isBoss()) {
-			if (Worm.getGameState().getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
-				hitPoints = (int) OpenLinearInterpolator.instance.interpolate(feature.getHitPoints(), feature.getHitPoints() * MAX_SURVIVAL_DIFFICULTY_BOSS_HITPOINTS_MULTIPLIER, Worm.getGameState().getDifficulty() );
-			} else {
-				hitPoints = (int) OpenLinearInterpolator.instance.interpolate(feature.getHitPoints(), feature.getHitPoints() * MAX_DIFFICULTY_HITPOINTS_MULTIPLIER, Worm.getGameState().getDifficulty());
+			float mult;
+			switch (gameMode) {
+				case WormGameState.GAME_MODE_SURVIVAL:
+				case WormGameState.GAME_MODE_XMAS:
+					mult = MAX_SURVIVAL_DIFFICULTY_BOSS_HITPOINTS_MULTIPLIER;
+					break;
+				default:
+					mult = MAX_DIFFICULTY_HITPOINTS_MULTIPLIER;
 			}
+			hitPoints = (int) OpenLinearInterpolator.instance.interpolate(feature.getHitPoints(), feature.getHitPoints() * mult, Worm.getGameState().getDifficulty() );
 			Building base = Worm.getGameState().getBase();
 			double dx = getTileX() - base.getTileX();
 			double dy = getTileY() - base.getTileY();
@@ -609,7 +615,7 @@ public class Gidrah extends Entity {
 				System.out.println("... and now "+hitPoints);
 			}
 		} else {
-			if (Worm.getGameState().getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
+			if (gameMode == WormGameState.GAME_MODE_SURVIVAL || gameMode == WormGameState.GAME_MODE_XMAS) {
 				hitPoints = (int) OpenLinearInterpolator.instance.interpolate
 					(
 						feature.getHitPoints() + Worm.getGameState().getLevelTick() * HITPOINTS_PER_SURVIVAL_LEVEL_TICK / (type + 1),
@@ -960,7 +966,7 @@ public class Gidrah extends Entity {
 			appearance.updateEmitters(emitter, getMapX(), getMapY());
 		}
 		if (hitPointsSprite != null) {
-			hitPointsSprite.setLocation(getScreenX()+feature.getHitPointsX(), getScreenY()+feature.getHitPointsY(), 0);
+			hitPointsSprite.setLocation(getScreenX()+feature.getHitPointsX(), getScreenY()+feature.getHitPointsY());
 		}
 	}
 

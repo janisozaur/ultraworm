@@ -190,7 +190,7 @@ public class HiscoresScreen extends Screen {
 		void onResized() {
 			int rowYPos = rankCoords.getY() + yPos - pos * yGap;
 			if (registeredSprite != null && registeredCoords != null) {
-				registeredSprite.setLocation(registeredCoords.getX(), registeredCoords.getY() + rowYPos, 0);
+				registeredSprite.setLocation(registeredCoords.getX(), registeredCoords.getY() + rowYPos);
 			}
 			rankLabel.setBounds(rankCoords.getX(), rowYPos - Res.getSmallFont().getDescent(), rankCoords.getWidth(), Res.getSmallFont().getHeight());
 			pointsLabel.setBounds(scoreCoords.getX(), rowYPos - Res.getSmallFont().getDescent(), scoreCoords.getWidth(), Res.getSmallFont().getHeight());

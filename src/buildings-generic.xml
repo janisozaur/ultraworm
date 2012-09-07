@@ -1695,6 +1695,7 @@
 			<layers scale="0.5">
 				<sprite layer="4" offset="0,0" colored="floor" attenuated="true" image="spriteimage.generic.4x4.base.02"/>
 				<sprite layer="4" sublayer="2" offset="0,0" colored="shadow" attenuated="true" image="spriteimage.generic.factory.ground.01"/>
+				<sprite layer="5" sublayer="1" offset="0,0" attenuated="true" bottomColored="floor-fog" topColored="buildings" image="spriteimage.generic.factory.back.01"/>
 				<sprite layer="5" sublayer="2" offset="0,0" attenuated="true" bottomColored="floor-fog" topColored="buildings" animation="generic.factory.off.animation"/>
 				<sprite layer="5" sublayer="4" offset="0,0" attenuated="false" colored="buildings-alt" image="spriteimage.generic.factory.top.01"/>
 				<sprite layer="5" sublayer="5" offset="0,0" animation="generic.factory.glow.shutdown.animation"/>

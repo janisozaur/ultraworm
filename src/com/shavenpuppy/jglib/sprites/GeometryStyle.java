@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import org.lwjgl.util.ReadableColor;
 import org.lwjgl.util.ReadablePoint;
 import org.lwjgl.util.vector.ReadableVector2f;
-import org.lwjgl.util.vector.ReadableVector3f;
 
 import com.shavenpuppy.jglib.opengl.GLRenderable;
 import com.shavenpuppy.jglib.util.FloatList;
@@ -211,18 +210,10 @@ public abstract class GeometryStyle extends AbstractStyle implements SimpleRende
 
 	@Override
 	public short glVertex2f(float x, float y) {
-		return glVertex3f(x, y, 0.0f);
-	}
-
-	@Override
-	public short glVertex3f(float x, float y, float z) {
 		vertices.add(x);
 		vertices.add(y);
-		vertices.add(z);
 		vertices.add(u);
 		vertices.add(v);
-		vertices.add(0.0f); // tex1 coords
-		vertices.add(0.0f);
 		vertices.add(Float.intBitsToFloat(c));
 		return numVertices ++;
 	}
@@ -240,11 +231,6 @@ public abstract class GeometryStyle extends AbstractStyle implements SimpleRende
 	@Override
 	public short glVertex(ReadableVector2f vertex) {
 		return glVertex2f(vertex.getX(), vertex.getY());
-	}
-
-	@Override
-	public short glVertex(ReadableVector3f vertex) {
-		return glVertex3f(vertex.getX(), vertex.getY(), vertex.getZ());
 	}
 
 	@Override
@@ -291,9 +277,13 @@ public abstract class GeometryStyle extends AbstractStyle implements SimpleRende
 		glEnableClientState(GL_VERTEX_ARRAY);
 		if (hasColor) {
 			glEnableClientState(GL_COLOR_ARRAY);
+		} else {
+			glDisableClientState(GL_COLOR_ARRAY);
 		}
 		if (hasTexture) {
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		} else {
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 		int n = geometry.size();
 		for (int i = 0; i < n; i++) {
@@ -303,14 +293,14 @@ public abstract class GeometryStyle extends AbstractStyle implements SimpleRende
 		geometry.clear();
 		previous = null;
 		if (hasColor) {
-			glDisableClientState(GL_COLOR_ARRAY);
 			hasColor = false;
 		}
 		if (hasTexture) {
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 			hasTexture = false;
 		}
-		glDisableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+//		glDisableClientState(GL_VERTEX_ARRAY);
 
 	}
 

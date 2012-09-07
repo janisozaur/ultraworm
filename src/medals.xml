@@ -50,8 +50,8 @@
 	
 	<medal
 		name="medal.silver"
-		title="medal.silver"
-		description="medal.silver"
+		title="=$medal.silver.title"
+		description="=$medal.silver.description"
 		repeatable="true"
 		points="50"
 	>
@@ -1056,7 +1056,72 @@
 		</layers></appearance>
 	</medal>
 	
-		
+	<!-- Xmas medals -->
+	<medal
+		name="medal.xmas.1"
+		title="=$medal.xmas.1.title"
+		description="=$medal.xmas.1.description"
+		points="1000"
+		steam="true"
+		xmas="true"
+	>
+		<appearance><layers scale="0.4">
+			<sprite layer="9" bottomColored="info-floor" topColored="info-building" image="spriteimage.medal.xmas.01" />
+			<sprite layer="10" colored="text-bold" image="spriteimage.medal.xmas.glow.01" />
+		</layers></appearance>
+	</medal>
+	<medal
+		name="medal.xmas.2"
+		title="=$medal.xmas.2.title"
+		description="=$medal.xmas.2.description"
+		points="1000"
+		steam="true"
+		xmas="true"
+	>
+		<appearance><layers scale="0.4">
+			<sprite layer="9" bottomColored="info-floor" topColored="info-building" image="spriteimage.medal.xmas.02" />
+			<sprite layer="10" colored="text-bold" image="spriteimage.medal.xmas.glow.02" />
+		</layers></appearance>
+	</medal>
+	<medal
+		name="medal.xmas.3"
+		title="=$medal.xmas.3.title"
+		description="=$medal.xmas.3.description"
+		points="1000"
+		steam="true"
+		xmas="true"
+	>
+		<appearance><layers scale="0.4">
+			<sprite layer="9" bottomColored="info-floor" topColored="info-building" image="spriteimage.medal.xmas.03" />
+			<sprite layer="10" colored="text-bold" image="spriteimage.medal.xmas.glow.03" />
+		</layers></appearance>
+	</medal>
+	<medal
+		name="medal.xmas.4"
+		title="=$medal.xmas.4.title"
+		description="=$medal.xmas.4.description"
+		points="1000"
+		steam="true"
+		xmas="true"
+	>
+		<appearance><layers scale="0.4">
+			<sprite layer="9" bottomColored="info-floor" topColored="info-building" image="spriteimage.medal.xmas.04" />
+			<sprite layer="10" colored="text-bold" image="spriteimage.medal.xmas.glow.04" />
+ 		</layers></appearance>
+	</medal>
+	<medal
+		name="medal.xmas.victory"
+		title="=$medal.xmas.victory.title"
+		description="=$medal.xmas.victory.description"
+		points="1000"
+		steam="true"
+		xmas="true"
+	>
+		<appearance><layers scale="0.4">
+			<sprite layer="9" bottomColored="info-floor" topColored="info-building" image="spriteimage.medal.xmas.05" />
+			<sprite layer="10" colored="text-bold" image="spriteimage.medal.xmas.glow.05" />
+		</layers></appearance>
+	</medal>
 
 	
 	<area name="medal.slot.title.spec"

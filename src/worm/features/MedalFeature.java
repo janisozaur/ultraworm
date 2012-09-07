@@ -57,6 +57,7 @@ public class MedalFeature extends Feature {
 	private LayersFeature appearance;
 	private boolean suppressHint;
 	private boolean steam;
+	private boolean xmas;
 
 	private transient HintFeature hintFeature;
 
@@ -109,6 +110,10 @@ public class MedalFeature extends Feature {
 
 	public boolean isSteam() {
 	    return steam;
+    }
+
+	public boolean isXmas() {
+	    return xmas;
     }
 
 	@Override

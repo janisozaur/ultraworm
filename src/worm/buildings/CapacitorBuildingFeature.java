@@ -172,10 +172,10 @@ public class CapacitorBuildingFeature extends BuildingFeature {
 			if (lightSprite != null) {
 				float lx = GameScreen.getSpriteOffset().getX() + lightX;
 				float ly = GameScreen.getSpriteOffset().getY() + lightY;
-				lightSprite.setLocation(lx, ly, 0.0f);
+				lightSprite.setLocation(lx, ly);
 			}
 			if (beamSprite != null) {
-				beamSprite.setLocation(getScreenX() + getBeamOffsetX(), getScreenY() + getBeamOffsetY(), 0.0f);
+				beamSprite.setLocation(getScreenX() + getBeamOffsetX(), getScreenY() + getBeamOffsetY());
 			}
 		}
 
@@ -215,7 +215,7 @@ public class CapacitorBuildingFeature extends BuildingFeature {
 		@Override
 		protected void doBuildingUpdate() {
 			if (weaponInstance != null && reloadSprite != null) {
-				reloadSprite.setLocation(getScreenX(), getScreenY(), 0);
+				reloadSprite.setLocation(getScreenX(), getScreenY());
 			}
 
 			updateLight();

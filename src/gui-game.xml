@@ -667,8 +667,8 @@
 
 		<hotkey key="=$key.game.scanner" 		area="build_scanner"/>
 		<hotkey key="=$key.game.battery" 		area="build_battery"/>
-		<hotkey key="=$key.game.factory" 		area="build_coolingtower"/>
-		<hotkey key="=$key.game.coolingtower" 	area="build_autoloader"/>
+		<hotkey key="=$key.game.coolingtower" 	area="build_coolingtower"/>
+		<hotkey key="=$key.game.autoloader" 	area="build_autoloader"/>
 		<hotkey key="=$key.game.reactor" 		area="build_reactor"/>
 		
 		<!-- barricades -->
@@ -735,7 +735,7 @@
 
 		<!--  esc -->
 
-		<area id="shortcut_esc" inherit="quicklaunch.focus.spec" group="hud,hud_sides" mouseon="esc.on.animation" mouseoff="esc.off.animation" disabled="esc.disabled.animation" position="0,0">
+		<area id="shortcut_esc" inherit="quicklaunch.focus.spec" group="hud,hud_sides" mouseon="esc.on.animation" mouseoff="esc.off.animation" disabled="esc.disabled.animation" position="0,0" grab="true"  >
 			<anchor y="top" d="=-$hud_sides_y+$hud_esc_y" />
 		</area>
 
@@ -745,7 +745,7 @@
 		<!--  base status -->
 
 		<area id="shortcut_base_zoom" inherit="quicklaunch.focus.spec" group="base_button_group,hud,hud_sides" mouseon="quicklaunch.focus.base.on.animation" mouseoff="quicklaunch.focus.base.flash.animation" disabled="quicklaunch.focus.base.off.animation"
-			position="=0,$SCREEN_H-$hud_base_alert_y+$hud_alert_quicklaunch_offset" >
+			position="=0,$SCREEN_H-$hud_base_alert_y+$hud_alert_quicklaunch_offset" grab="true" >
 			<anchor y="top" d="=-$hud_sides_y+$hud_base_alert_y" />
 		</area>
 		
@@ -765,7 +765,7 @@
 		<area id="critical_alert_glow" group="hud,hud_sides,base_critical_alert" size="=$hud_alert_tooltip_criticalalert_w,$hud_alert_tooltip_h" inherit="base.alert.glow.spec" />	
 		
 		<!--  crystals status -->
-		<area id="shortcut_crystal_remaining" inherit="quicklaunch.focus.spec" color="gui-bright" textLayer="13" group="crystal_count_group,hud,hud_sides" textOffset="0,1" size="17,13" valign="centered" halign="centered" text="99" position="0,0" >
+		<area id="shortcut_crystal_remaining" inherit="quicklaunch.focus.spec" color="gui-bright" textLayer="13" group="crystal_count_group,hud,hud_sides" textOffset="0,1" size="17,13" valign="centered" halign="centered" text="99" position="0,0" grab="true" >
 			<anchor y="top" d="=-$hud_sides_y+$crystal_remaining_y+$crystal_remaining_o" />
 		</area>		
 		
@@ -777,7 +777,7 @@
 		</area>
 
 		<area id="shortcut_crystal_zoom" inherit="quicklaunch.focus.spec" group="crystal_button_group,hud,hud_sides" mouseon="quicklaunch.focus.crystal.on.animation" mouseoff="quicklaunch.focus.crystal.off.animation" disabled="quicklaunch.focus.crystal.disabled.animation" 
-			position="=0,$SCREEN_H-$hud_crystal_alert_y+$hud_alert_quicklaunch_offset" >
+			position="=0,$SCREEN_H-$hud_crystal_alert_y+$hud_alert_quicklaunch_offset" grab="true" >
 			<anchor y="top" d="=-$hud_sides_y+$hud_crystal_alert_y" />
 		</area>
 	
@@ -840,7 +840,7 @@
 		<!-- fast forward -->
 
 		<area id="shortcut_fastforward" inherit="time.button.spec" group="hud_sides"
-			visible="true" holdClick="true"
+			visible="true" holdClick="true" grab="true"
 			mouseon="fastforward.on.animation" mouseoff="fastforward.off.animation" disabled="fastforward.disabled.animation" 
 			position="=$SCREEN_W-$hud_ff_icon_x,$hud_sides_y+$hud_ff_icon_y" >
 			<anchor x="right" d="=0-$hud_ff_icon_x"/><anchor y="top" d="=0-$hud_sides_y+$hud_ff_icon_y"/>
@@ -1857,6 +1857,61 @@
 	
 	</instance>
 
+	<instance class="worm.screens.XmasMenuScreen"
+		name="xmasmenu.dialog"
+		maxsprites="512"
+		keyboardnavigation="false"
+		dialog="true"
+		transition="instant.transition"
+		centre="both"
+	>
+		<hotkey key="ESCAPE" area="cancel"/>
+		
+		<hotkey key="=$key.achievements" 	area="esc_medals"/>
+		<hotkey key="=$key.restart" 		area="esc_restart"/>
+		<hotkey key="=$key.newlevel" 		area="esc_newmap"/>
+		<hotkey key="=$key.quit"			area="esc_quit"/>
+		<hotkey key="=$key.saveandquit"		area="esc_savequit"/>
+		
+		<area id="background" inherit="dialog.ingame.background.spec"/>
+		<area id="background_glow" inherit="dialog.ingame.background.glow.spec"/>
+				
+		<area id="title" inherit="dialog.ingame.spec" position="=$esc_dialog_x,$esc_dialog_y" size="=$esc_dialog_w,$esc_dialog_h" />
+		<area id="dialog_background_glow" inherit="dialog.ingame.glow.spec" position="=$esc_dialog_x,$esc_dialog_y" size="=$esc_dialog_w,$esc_dialog_h" />
+
+		<area id="default_msg" text="=$survivalmenu.default_msg" group="default_msg" inherit="esc.menu.button.title.spec" color="text-darkest" textOffset="0,-5" halign="centered" font="bigfont.glfont"  />	
+
+		<area id="esc_medals" inherit="esc.menu.button.spec" position="=$esc_button_1_x,$esc_buttons_y"
+				mouseoff="menu.medals.off.animation" mouseon="menu.medals.on.animation" disabled="menu.medals.disabled.animation"/>
+		<area id="esc_medals_title" text="=$survivalmenu.esc_medals_title" mouseoff="=$key.achievements.icon" inherit="esc.menu.button.title.spec" />	
+		<area id="esc_medals_desc" text="=$survivalmenu.esc_medals_desc" inherit="esc.menu.button.desc.spec" />
+		
+		<area id="esc_restart" inherit="esc.menu.button.spec" position="=$esc_button_2_x,$esc_buttons_y"
+				mouseoff="menu.restart.off.animation" mouseon="menu.restart.on.animation" disabled="menu.restart.disabled.animation"/>
+		<area id="esc_restart_title" text="=$survivalmenu.esc_restart_title" mouseoff="=$key.restart.icon" inherit="esc.menu.button.title.spec"  />	
+		<area id="esc_restart_desc" text="=$survivalmenu.esc_restart_desc" inherit="esc.menu.button.desc.spec" />
+	
+		<area id="esc_newmap" inherit="esc.menu.button.spec" position="=$esc_button_3_x,$esc_buttons_y"
+				mouseoff="menu.newlevel.off.animation" mouseon="menu.newlevel.on.animation" disabled="menu.newlevel.disabled.animation"/>
+		<area id="esc_newmap_title" text="=$survivalmenu.esc_newmap_title" mouseoff="=$key.newlevel.icon" inherit="esc.menu.button.title.spec" />	
+		<area id="esc_newmap_desc" text="=$survivalmenu.esc_newmap_desc" inherit="esc.menu.button.desc.spec" />
+		
+			
+		<area id="esc_quit" inherit="esc.menu.button.spec" position="=$esc_button_5_x,$esc_buttons_y"
+				mouseoff="menu.quit.off.animation" mouseon="menu.quit.on.animation" disabled="menu.quit.disabled.animation"/>
+		<area id="esc_quit_title" text="=$survivalmenu.esc_quit_title" mouseoff="=$key.quit.icon" inherit="esc.menu.button.title.spec" />	
+		<area id="esc_quit_desc" text="=$survivalmenu.esc_quit_desc" inherit="esc.menu.button.desc.spec" />
+		
+		<area id="esc_savequit" inherit="esc.menu.button.spec" position="=$esc_button_6_x,$esc_buttons_y"
+				mouseoff="menu.saveandquit.off.animation" mouseon="menu.saveandquit.on.animation" disabled="menu.saveandquit.disabled.animation"/>
+		<area id="esc_savequit_title" text="=$survivalmenu.esc_savequit_title" mouseoff="=$key.saveandquit.icon" inherit="esc.menu.button.title.spec" />	
+		<area id="esc_savequit_desc" text="=$survivalmenu.esc_savequit_desc" inherit="esc.menu.button.desc.spec" />	
+		
+		<area id="cancel" text="=$survivalmenu.cancel" inherit="button.spec" 
+			size="=$esc_button_resume_w,$button_h" position="=$SCREEN_X-($esc_button_resume_w/2),$esc_dialog_y+$dialog_padding" />
+	
+	</instance>
+
 	
 
 	<!-- quicklaunch anims -->
@@ -2078,12 +2133,12 @@
 	</animation>
 
 	<animation name="label.off.animation">
+		<animcolor a="128" d="0"/>
 		<color c="gui-dark" d="0"/>
-		<animcolor a="128"/>
 	</animation>
 	<animation name="label.on.animation">
-		<color c="gui-dark" d="0"/>
 		<animcolor a="255"/>
+		<color c="gui-dark" d="0"/>
 	</animation>
 	<animation name="label.disabled.animation">
 		<animcolor a="255"/>

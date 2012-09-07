@@ -73,8 +73,8 @@ public class Unit extends Entity implements PlayerWeaponInstallation {
 	private static final ArrayList<Entity> COLLISIONS = new ArrayList<Entity>();
 
 	private static final int SPAWN_DURATION = 20;
-	private static final int RETARGET_TIME = 180;
-	private static final int SHOOT_INTERVAL = 60;
+	private static final int RETARGET_TIME = 300;
+	private static final int SHOOT_INTERVAL = 180;
 	private static final float MAX_WIDTH = 0.25f;
 	private static final float MAX_WOBBLE = 8.0f;
 	private static final float WOBBLE_FACTOR = 0.25f;

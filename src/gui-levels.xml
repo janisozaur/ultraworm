@@ -2459,16 +2459,17 @@
 			#                                            SANDBOX                                             #
 			################################################################################################## -->
 
-	<property key="sandbox_level_w" value="62" />
-	<property key="sandbox_level_h" value="=$sandbox_level_w" />
-	<property key="sandbox_level_o" value="=$sandbox_level_w/2" />
+	<property key="sandbox_level_w" value="300" />
+	<property key="sandbox_level_h" value="308" />
+	<property key="sandbox_level_x" value="=$sandbox_level_w/-2+$SCREEN_X" />
+	<property key="sandbox_level_y" value="=$sandbox_level_h/-2+$SCREEN_Y" />
+	<property key="sandbox_level_padding" value="16" />
 
-	<property key="sandbox_level_y" value="222" />
 
 	<area
 		name="sandbox.level.select.spec"
 		size="=$sandbox_level_w,$sandbox_level_h"
-		offset="=$sandbox_level_o,$sandbox_level_o"
+		offset="=$sandbox_level_padding,$sandbox_level_padding"
 		layer="12"
 		scale="0.5"
 	/>
@@ -2494,8 +2495,20 @@
 	>
 		<hotkey key="ESCAPE" area="abort"/>
 
-		<area id="abort" inherit="close.default.button.spec" position="=$SCREEN_W-20,$SCREEN_H" />
-		<area id="titlescreen_top_label" text="=$selectsandbox.titlescreen_top_label" inherit="dialog.closeable.spec" position="=0,$SCREEN_H" size="=$SCREEN_W-20,$SCREEN_H" />
+		<area
+			id="titlescreen_top_label"
+			text="=$selectsandbox.titlescreen_top_label"
+			inherit="dialog.closeable.spec"
+			position="=$sandbox_level_x,$sandbox_level_y"
+		/>
+
+		<area
+			id="close"
+			inherit="close.default.button.spec"
+			position="=$sandbox_level_x+$sandbox_level_w+$close_x_offset,$sandbox_level_y+$sandbox_level_h+$close_y_offset"
+		/>
+
+		<area id="edit" text="EDIT" inherit="button.continue.spec" />
 
 	</instance>
 

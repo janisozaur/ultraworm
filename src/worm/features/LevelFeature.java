@@ -41,9 +41,12 @@ import org.w3c.dom.Element;
 
 import worm.MapRenderer;
 import worm.Res;
+import worm.SandboxParams;
 import worm.SurvivalParams;
 import worm.Worm;
 import worm.WormGameState;
+import worm.Xmas;
+import worm.effects.WeatherEmitter;
 import worm.generator.BaseMapGenerator;
 import worm.generator.MapTemplate;
 
@@ -62,12 +65,17 @@ public class LevelFeature extends Feature {
 
 	private static final long serialVersionUID = 1L;
 
+	/** Autonaming hints counter */
+	private static int hintCount;
+
 	private static final String ENDLESS_INTRO = "endless.intro";
 	private static final String ENDLESS_STORY = "endless.story";
 	private static final String ENDLESS_SURROUNDED_STORY = "endless.surrounded.story";
 	private static final String ENDLESS_BOSS_STORY = "endless.boss.story";
 	private static final String ENDLESS_SURROUNDED_BOSS_STORY = "endless.surrounded-boss.story";
 	private static final String SURVIVAL_INTRO = "survival.intro";
+	private static final String XMAS_INTRO = "xmas.intro";
+
 	public static final int MIN_SIZE = 20;
 	public static final int MAX_SIZE = 72;
 
@@ -79,7 +87,7 @@ public class LevelFeature extends Feature {
 
 	private static final ArrayList<LevelFeature> LEVELS = new ArrayList<LevelFeature>(50);
 
-	// Note use of @Data as we need to copy LevelFeatures for Endlesss and Survival modes
+	// Note use of @Data as we need to copy LevelFeatures for Endless and Survival modes
 
 	/** Index */
 	protected int index;
@@ -122,6 +130,13 @@ public class LevelFeature extends Feature {
 	/** Bias */
 	protected int bias;
 
+	/** Xmas level */
+	private boolean xmas;
+
+	/** Weather emitter */
+	@Data
+	protected String weather;
+
 	/*
 	 * Transient data
 	 */
@@ -129,6 +144,7 @@ public class LevelFeature extends Feature {
 	protected transient WorldFeature worldFeature;
 	protected transient LevelColorsFeature colorsFeature;
 	protected transient SceneryFeature sceneryFeature;
+	protected transient WeatherEmitter weatherFeature;
 
 	/**
 	 * C'tor
@@ -150,14 +166,18 @@ public class LevelFeature extends Feature {
 
 	@Override
 	protected void doRegister() {
-		index = LEVELS.size();
-		LEVELS.add(this);
+		if (!xmas) {
+			index = LEVELS.size();
+			LEVELS.add(this);
+		}
 	}
 
 
 	@Override
 	protected void doDeregister() {
-		LEVELS.remove(this);
+		if (!xmas) {
+			LEVELS.remove(this);
+		}
 	}
 
 	@Override
@@ -182,13 +202,14 @@ public class LevelFeature extends Feature {
 				eventFeature[eventCount].register();
 			} else {
 				eventFeature[eventCount] = new HintFeature();
+				eventFeature[eventCount].setName("hintfeature."+(hintCount++));
 			}
 			eventFeature[eventCount].load(child, loader);
+			Resources.put(eventFeature[eventCount]);
 
 			eventCount ++;
 		}
 	}
-
 
 	/**
 	 * @return the events
@@ -259,6 +280,8 @@ public class LevelFeature extends Feature {
 		}
 
 		calculateDimensions();
+
+		assert weather == null || (weather != null && weatherFeature != null);
 	}
 
 	protected void calculateDimensions() {
@@ -381,6 +404,22 @@ public class LevelFeature extends Feature {
 		return ret;
 	}
 
+	/**
+	 * Generates an Xmas level
+	 * @return an unnamed LevelFeature
+	 */
+	public static LevelFeature generateXmas() {
+		LevelFeature ret = new XmasLevelFeature();
+		ret.create();
+		return ret;
+	}
+
+	public static LevelFeature generateSandbox(SandboxParams params) {
+		LevelFeature ret = new SandboxLevelFeature(params);
+		ret.create();
+		return ret;
+	}
+
 
 	public String getFormation() {
 		return formation;
@@ -449,6 +488,8 @@ public class LevelFeature extends Feature {
 			colors = src.colors;
 			scenery = src.scenery;
 			world = src.world;
+			weather = src.weather;
+			weatherFeature = src.weatherFeature;
 
 			boolean central = BaseMapGenerator.isBaseCentralForLevel(level, WormGameState.GAME_MODE_ENDLESS);
 			boolean bosses = hasBosses(level);
@@ -604,6 +645,8 @@ public class LevelFeature extends Feature {
 			LevelFeature src = LevelFeature.getLevel(Util.random(0, WormGameState.LEVELS_IN_WORLD - 1) + worldFeature.getIndex() * WormGameState.LEVELS_IN_WORLD);
 			colors = src.colors;
 			scenery = src.scenery;
+			weather = src.weather;
+			weatherFeature = src.weatherFeature;
 			world = worldFeature.getName();
 			storyFeature = new StoryFeature[] {(StoryFeature) Resources.get(SURVIVAL_INTRO)};
 			eventFeature = new HintFeature[0]; // No events
@@ -651,5 +694,139 @@ public class LevelFeature extends Feature {
 			return false;
 		}
 	}
+
+	/**
+	 * Xmas level
+	 */
+	public static class XmasLevelFeature extends LevelFeature {
+
+		private static final long serialVersionUID = 1L;
+
+		/**
+		 * C'tor
+		 */
+		public XmasLevelFeature() {
+			index = -1;
+			title = "XMAS";
+			worldFeature = Resources.get(Xmas.XMAS_WORLD);
+			LevelFeature src = Resources.get(Xmas.XMAS_LEVEL);
+			colors = src.colors;
+			scenery = src.scenery;
+			weather = src.weather;
+			weatherFeature = src.weatherFeature;
+			world = worldFeature.getName();
+			storyFeature = src.getStories();
+			eventFeature = src.getEvents();
+			formation = "";
+			width = Xmas.XMAS_WIDTH;
+			height = Xmas.XMAS_HEIGHT;
+			bias = 6; // Base in the south
+		}
+
+		@Override
+		public int getNumSpawnPoints() {
+			return 1; // 1 stream of gids
+		}
+
+		@Override
+		public MapTemplate getTemplate() {
+			return worldFeature.getTemplate();
+		}
+
+		@Override
+		protected void calculateDimensions() {
+			// Do nothing
+		}
+
+		@Override
+		public GidrahFeature getAngryGidrah(int type) {
+			return null;
+		}
+
+		@Override
+		public GidrahFeature getGidrah(int type) {
+			return null;
+		}
+	}
+
+	/**
+	 * Sandbox level
+	 */
+	public static class SandboxLevelFeature extends LevelFeature {
+
+		private static final long serialVersionUID = 1L;
+
+		private ArrayList<GidrahFeature> gidrahs = new ArrayList<GidrahFeature>(4);
+		private ArrayList<GidrahFeature> angryGidrahs = new ArrayList<GidrahFeature>(4);
+
+		private MapTemplate template;
+
+		/**
+		 * C'tor
+		 */
+		public SandboxLevelFeature(SandboxParams params) {
+			index = -1;
+			worldFeature = params.getWorld();
+			template = params.getTemplate();
+			title = "SANDBOX";
+			// Pick random colours
+			LevelFeature src = LevelFeature.getLevel(Util.random(0, WormGameState.LEVELS_IN_WORLD - 1) + worldFeature.getIndex() * WormGameState.LEVELS_IN_WORLD);
+			colors = src.colors;
+			scenery = src.scenery;
+			weatherFeature = src.weatherFeature;
+			world = worldFeature.getName();
+			storyFeature = new StoryFeature[0]; // No story
+			eventFeature = new HintFeature[0]; // No events
+			formation = "";
+			width = params.getSize();
+			height = params.getSize();
+			bias = -1;
+		}
+
+		@Override
+		public int getNumSpawnPoints() {
+			return 0; // none, we're going to add them later somehow
+		}
+
+		@Override
+		public MapTemplate getTemplate() {
+			return template;
+		}
+
+		@Override
+		protected void calculateDimensions() {
+			// Do nothing
+		}
+
+		@Override
+		public GidrahFeature getAngryGidrah(int type) {
+			GidrahFeature gf = angryGidrahs.get(type);
+			if (gf == null) {
+				return getGidrah(type);
+			}
+			return gf;
+		}
+
+		@Override
+		public GidrahFeature getGidrah(int type) {
+			GidrahFeature ret = gidrahs.get(type);
+			if (ret == null) {
+				throw new RuntimeException("Failed to get gidrah of type "+type);
+			}
+			return ret;
+		}
+
+		@Override
+		public boolean useFixedSpawnPoints() {
+			return false;
+		}
+	}
+
+	/**
+	 * @return the weather, if any
+	 */
+	public WeatherEmitter getWeather() {
+	    return weatherFeature;
+    }
 
 }

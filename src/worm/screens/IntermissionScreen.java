@@ -107,7 +107,7 @@ public class IntermissionScreen extends Screen {
 			sprite = layers.getSprites();
 			for (Sprite element : sprite) {
 				if (element != null) {
-					element.setLocation(x, y, 0.0f);
+					element.setLocation(x, y);
 					element.setScale(FPMath.fpValue(scale));
 				}
 			}

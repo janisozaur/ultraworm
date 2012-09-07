@@ -672,6 +672,9 @@
 	<animation name="menu.sandbox.on.animation">       		<frame i="spriteimage.menu.button.sandbox.on.01" d="0"/><frame i="menu.button.on.animation" d="0"/></animation>
 	<animation name="menu.sandbox.disabled.animation"> 		<frame i="spriteimage.menu.button.sandbox.disabled.01" d="0"/><frame i="menu.button.disabled.animation" d="0"/></animation>
 
+	<animation name="menu.xmas.off.animation">      		<frame i="spriteimage.menu.button.xmas.off.01" d="0"/><frame i="menu.button.off.animation" d="0"/></animation>
+	<animation name="menu.xmas.on.animation">       		<frame i="spriteimage.menu.button.xmas.on.01" d="0"/><frame i="menu.button.on.animation" d="0"/></animation>
+	<animation name="menu.xmas.disabled.animation"> 		<frame i="spriteimage.menu.button.xmas.disabled.01" d="0"/><frame i="menu.button.disabled.animation" d="0"/></animation>
 
 
 
@@ -1237,6 +1240,99 @@
 
 
 
+
+	<!--  XMAS titlescreen -->
+
+	<area name="xmas.titlescreen-middle.spec" inherit="titlescreen-middle.spec" layer="-3" mouseoff="spriteimage.titlescreen.xmas.middle.01">
+		<anchor x="mid" d="-120" /><anchor y="mid" d="-97" />
+	</area>
+
+	<area name="xmas.titlescreen-left.spec" inherit="xmas.titlescreen-middle.spec" mouseoff="spriteimage.titlescreen.xmas.left.01">
+		<anchor x="mid" d="-360" /><anchor y="mid" d="-97" />
+	</area>
+
+	<area name="xmas.titlescreen-right.spec" inherit="xmas.titlescreen-middle.spec" mouseoff="spriteimage.titlescreen.xmas.right.01">
+		<anchor x="mid" d="120" /><anchor y="mid" d="-97" />
+	</area>
+
+	<area name="xmas.titlescreen-middle-back.spec" inherit="titlescreen-middle.spec" layer="-5">
+		<anchor x="mid" d="-120" /><anchor y="mid" d="-97" />
+		<mouseOff>
+			<animation>
+				<animcolor a="255" d="0"/>
+				<frame i="spriteimage.titlescreen.xmas.middle.back.01" d="1"/>
+				<frame i="hud.phase.20%.animation" d="1"/>
+			</animation>
+		</mouseOff>
+	</area>
+
+	<area name="xmas.titlescreen-left-back.spec" inherit="xmas.titlescreen-middle-back.spec">
+		<anchor x="mid" d="-360" /><anchor y="mid" d="-97" />
+		<mouseOff>
+			<animation>
+				<animcolor a="255" d="0"/>
+				<frame i="spriteimage.titlescreen.xmas.left.back.01" d="1"/>
+				<frame i="hud.phase.20%.animation" d="1"/>
+			</animation>
+		</mouseOff>
+	</area>
+
+	<area name="xmas.titlescreen-right-back.spec" inherit="xmas.titlescreen-middle-back.spec">
+		<anchor x="mid" d="120" /><anchor y="mid" d="-97" />
+		<mouseOff>
+			<animation>
+				<animcolor a="255" d="0"/>
+				<frame i="spriteimage.titlescreen.xmas.right.back.01" d="1"/>
+				<frame i="hud.phase.20%.animation" d="1"/>
+			</animation>
+		</mouseOff>
+	</area>
+
+	<area name="xmas.titlescreen-special.spec" inherit="titlescreen-logo.spec" layer="-1">
+		<anchor x="mid" d="-60" /><anchor y="mid" d="-110" />
+		<mouseOff>
+			<animation>
+				<animcolor a="15" d="10"/>
+				<frame i="spriteimage.titlescreen.xmas.special.01" d="0"/>
+				<angle angle="1500" d="0"/>
+				<scale scale="5.7" d="2"/>
+				<animcolor a="45" d="0"/>
+				<scale scale="5.4" d="2"/>
+				<animcolor a="75" d="0"/>
+				<scale scale="5.0" d="2"/>
+				<animcolor a="105" d="0"/>
+				<scale scale="4.5" d="2"/>
+				<animcolor a="135" d="0"/>
+				<scale scale="3.9" d="2"/>
+				<animcolor a="165" d="0"/>
+				<scale scale="3.2" d="2"/>
+				<animcolor a="195" d="0"/>
+				<scale scale="2.4" d="2"/>
+				<animcolor a="225" d="0"/>
+				<scale scale="1.5" d="2"/>
+				<animcolor a="255" d="0"/>
+				<scale scale="0.5" d="2"/>
+			</animation>
+		</mouseOff>
+	</area>
+
+	<area name="xmas.titlescreen-special.static.spec" inherit="xmas.titlescreen-special.spec">
+		<mouseOff>
+			<animation>
+				<frame i="spriteimage.titlescreen.xmas.special.01" d="0"/>
+				<angle angle="1500" d="0"/>
+				<scale scale="0.5" d="0"/>
+			</animation>
+		</mouseOff>
+	</area>
+
+	<area name="titlescreen-snow-front.spec" emitter="a.snow.titles.front.emitter" group="xmas" noclick="true" layer="0" position="-140,320">
+			<anchor x="mid" d="-300" /><anchor y="top" d="0" />
+		</area>
+	<area name="titlescreen-snow-back.spec" inherit="titlescreen-snow-front.spec" emitter="a.snow.titles.back.emitter"/>
+
+
+
 	<!-- TITLE SCREEN ============================================================================================================================ -->
 	<instance
 		name="instant.transition"
@@ -1254,22 +1350,43 @@
 		centre="both"
 	>
 
-		<area id="version" position="69,82" size="182,12" noclick="true" font="tinyfont.glfont"  color="!0,255,200,255" halign="right">
-			<anchor x="mid" d="-91" /><anchor y="mid" d="-78" />
-		</area>
-
-		<area id="registration" position="50,30" size="220,50" noclick="true" font="tinyfont.glfont"  halign="centered" valign="centered" color="!114,255,255,255">
-			<anchor x="mid" d="-110" /><anchor y="bottom" d="30" />
-		</area>
-
 		<hotkey key="ESCAPE" area="exit"/>
 
 		<!-- standard titlescreen stuff -->
 
-		<area id="titlescreen-logo" inherit="titlescreen-logo.spec"/>
-		<area id="titlescreen-left" inherit="titlescreen-left.spec"/>
-		<area id="titlescreen-middle" inherit="titlescreen-middle.spec"/>
-		<area id="titlescreen-right" inherit="titlescreen-right.spec"/>
+		<area id="registration-not-xmas" group="not-xmas" position="50,30" size="220,50" noclick="true" font="tinyfont.glfont"  halign="centered" valign="centered" color="!114,255,255,255">
+			<anchor x="mid" d="-110" /><anchor y="bottom" d="30" />
+		</area>
+		
+		<area id="version-not-xmas" group="not-xmas" position="69,82" size="182,12" noclick="true" font="tinyfont.glfont"  color="!0,255,200,255" halign="right">
+			<anchor x="mid" d="-91" /><anchor y="mid" d="-78" />
+		</area>
+
+		<area id="titlescreen-logo" 	group="not-xmas" inherit="titlescreen-logo.spec"/>
+		<area id="titlescreen-left" 	group="not-xmas" inherit="titlescreen-left.spec"/>
+		<area id="titlescreen-middle" 	group="not-xmas" inherit="titlescreen-middle.spec"/>
+		<area id="titlescreen-right" 	group="not-xmas" inherit="titlescreen-right.spec"/> 
+
+		<!-- xmas titlescreen stuff -->
+
+		<area id="registration-xmas" group="xmas" position="50,10" size="350,50" noclick="true" font="tinyfont.glfont"  halign="centered" valign="centered" color="!114,255,128,128">
+			<anchor x="mid" d="-175" /><anchor y="bottom" d="11" />
+		</area>
+
+		<area id="version-xmas" group="xmas" position="69,82" size="182,12" noclick="true" font="tinyfont.glfont"  color="!0,255,200,255" halign="left">
+			<anchor x="mid" d="-110" /><anchor y="mid" d="-85" />
+		</area>
+
+		<area id="titlescreen-special" 		group="xmas" inherit="xmas.titlescreen-special.spec"/>
+		<area id="titlescreen-left" 		group="xmas" inherit="xmas.titlescreen-left.spec"/>
+		<area id="titlescreen-middle" 		group="xmas" inherit="xmas.titlescreen-middle.spec"/>
+		<area id="titlescreen-right" 		group="xmas" inherit="xmas.titlescreen-right.spec"/>
+		<area id="titlescreen-left-back" 	group="xmas" inherit="xmas.titlescreen-left-back.spec"/>
+		<area id="titlescreen-middle-back" 	group="xmas" inherit="xmas.titlescreen-middle-back.spec"/>
+		<area id="titlescreen-right-back" 	group="xmas" inherit="xmas.titlescreen-right-back.spec"/>	
+		<area id="titlescreen-snow-front"	group="xmas" inherit="titlescreen-snow-front.spec"/>
+		<area id="titlescreen-snow-back" 	group="xmas" inherit="titlescreen-snow-back.spec"/>
+
 
 		<!-- <area id="titlescreen_top" inherit="titlescreen_top.spec"/> -->
 		<area id="credits" inherit="credits.default.button.spec" />
@@ -1332,31 +1449,12 @@
 			</powerdisplay>
 		</sfxVolumePowerDisplay>
 
-		<mouseSpeedPowerDisplay>
-			<powerdisplay inherit="dialog.powerdisplay.spec" scale="0.5"
-				location="=$options_bar_x,$mousespeed_y" bounds="=$options_bar_x,$mousespeed_y,$options_bar_w,$options_item_h">
-				<bar on="volume.on.01.animation" off="volume.off.animation"/>
-				<bar on="volume.on.02.animation" off="volume.off.animation"/>
-				<bar on="volume.on.03.animation" off="volume.off.animation"/>
-				<bar on="volume.on.04.animation" off="volume.off.animation"/>
-				<bar on="volume.on.05.animation" off="volume.off.animation"/>
-				<bar on="volume.on.06.animation" off="volume.off.animation"/>
-				<bar on="volume.on.07.animation" off="volume.off.animation"/>
-				<bar on="volume.on.08.animation" off="volume.off.animation"/>
-				<bar on="volume.on.09.animation" off="volume.off.animation"/>
-				<bar on="volume.on.10.animation" off="volume.off.animation"/>
-			</powerdisplay>
-		</mouseSpeedPowerDisplay>
-
 		<area id="musicvolume" text="=$options.musicvolume" inherit="options.item.bar.spec" position="=$options_bar_x,$musicvolume_y" />
 		<area id="sfxvolume" text="=$options.sfxvolume" inherit="options.item.bar.spec" position="=$options_bar_x,$sfxvolume_y" />
-		<area id="mousespeed" text="=$options.mousespeed" inherit="options.item.bar.spec" position="=$options_bar_x,$mousespeed_y" />
 
 		<area id="fullscreen" inherit="options.item.button.spec" text="=$options.fullscreen" position="=$options_button_x,$fullscreen_y" />
 		<area id="fullscreen_on" inherit="options.checkbox.on.spec" position="=$options_button_x,$fullscreen_y" />
 		<area id="fullscreen_off" inherit="options.checkbox.off.spec" position="=$options_button_x,$fullscreen_y" />
-
-		<area id="resize" inherit="options.item.instruction.spec" text="=$options.resize" position="=$options_instruction_x,$resize_y" />
 
 		<area id="show_tooltips" inherit="options.item.button.spec" text="=$options.show_tooltips" position="=$options_button_x,$show_tooltips_y" />
 		<area id="show_tooltips_on" inherit="options.checkbox.on.spec" position="=$options_button_x,$show_tooltips_y" />
@@ -1384,12 +1482,25 @@
 
 		<area id="close" inherit="close.default.button.spec" position="=$options_x+$options_w+$close_x_offset,$options_y+$options_h+$close_y_offset" />
 
+
 		<!-- standard titlescreen stuff -->
 
-		<area id="titlescreen-logo" inherit="titlescreen-logo.spec"/>
-		<area id="titlescreen-left" inherit="titlescreen-left.spec"/>
-		<area id="titlescreen-middle" inherit="titlescreen-middle.spec"/>
-		<area id="titlescreen-right" inherit="titlescreen-right.spec"/>
+		<area id="titlescreen-logo" 	group="not-xmas" inherit="titlescreen-logo.spec"/>
+		<area id="titlescreen-left" 	group="not-xmas" inherit="titlescreen-left.spec"/>
+		<area id="titlescreen-middle" 	group="not-xmas" inherit="titlescreen-middle.spec"/>
+		<area id="titlescreen-right" 	group="not-xmas" inherit="titlescreen-right.spec"/> 
+
+		<!-- xmas titlescreen stuff -->
+
+		<area id="titlescreen-special" 		group="xmas" inherit="xmas.titlescreen-special.static.spec"/>
+		<area id="titlescreen-left" 		group="xmas" inherit="xmas.titlescreen-left.spec"/>
+		<area id="titlescreen-middle" 		group="xmas" inherit="xmas.titlescreen-middle.spec"/>
+		<area id="titlescreen-right" 		group="xmas" inherit="xmas.titlescreen-right.spec"/>
+		<area id="titlescreen-left-back" 	group="xmas" inherit="xmas.titlescreen-left-back.spec"/>
+		<area id="titlescreen-middle-back" 	group="xmas" inherit="xmas.titlescreen-middle-back.spec"/>
+		<area id="titlescreen-right-back" 	group="xmas" inherit="xmas.titlescreen-right-back.spec"/>	
+		<area id="titlescreen-snow-front"	group="xmas" inherit="titlescreen-snow-front.spec"/>
+		<area id="titlescreen-snow-back" 	group="xmas" inherit="titlescreen-snow-back.spec"/>
 
 		<area id="credits" inherit="credits.default.button.spec" />
 		<area id="options" inherit="options.active.button.spec" />
@@ -1426,10 +1537,24 @@
 
 		<area id="close" inherit="close.default.button.spec" position="=$credits_x+$credits_w+$close_x_offset,$credits_y+$credits_h+$close_y_offset" />
 
-		<area id="titlescreen-logo" inherit="titlescreen-logo.spec"/>
-		<area id="titlescreen-left" inherit="titlescreen-left.spec"/>
-		<area id="titlescreen-middle" inherit="titlescreen-middle.spec"/>
-		<area id="titlescreen-right" inherit="titlescreen-right.spec"/>
+		<!-- standard titlescreen stuff -->
+
+		<area id="titlescreen-logo" 	group="not-xmas" inherit="titlescreen-logo.spec"/>
+		<area id="titlescreen-left" 	group="not-xmas" inherit="titlescreen-left.spec"/>
+		<area id="titlescreen-middle" 	group="not-xmas" inherit="titlescreen-middle.spec"/>
+		<area id="titlescreen-right" 	group="not-xmas" inherit="titlescreen-right.spec"/> 
+
+		<!-- xmas titlescreen stuff -->
+
+		<area id="titlescreen-special" 		group="xmas" inherit="xmas.titlescreen-special.static.spec"/>
+		<area id="titlescreen-left" 		group="xmas" inherit="xmas.titlescreen-left.spec"/>
+		<area id="titlescreen-middle" 		group="xmas" inherit="xmas.titlescreen-middle.spec"/>
+		<area id="titlescreen-right" 		group="xmas" inherit="xmas.titlescreen-right.spec"/>
+		<area id="titlescreen-left-back" 	group="xmas" inherit="xmas.titlescreen-left-back.spec"/>
+		<area id="titlescreen-middle-back" 	group="xmas" inherit="xmas.titlescreen-middle-back.spec"/>
+		<area id="titlescreen-right-back" 	group="xmas" inherit="xmas.titlescreen-right-back.spec"/>	
+		<area id="titlescreen-snow-front"	group="xmas" inherit="titlescreen-snow-front.spec"/>
+		<area id="titlescreen-snow-back" 	group="xmas" inherit="titlescreen-snow-back.spec"/>
 
 		<area id="credits" inherit="credits.active.button.spec" />
 		<area id="options" inherit="options.default.button.spec" />
@@ -1686,6 +1811,41 @@
 
 	</instance>
 
+	<!-- Sandbox Nag Screen -->
+
+	<instance class="worm.screens.SandboxNagScreen"
+		name="sandbox.nag.screen"
+		autocreated="true"
+		transition="instant.transition"
+		centre="both"
+	>
+		<hotkey key="ESCAPE" area="later"/>
+		<hotkey key="RETURN" area="buy"/>
+
+		<area id="titlescreen" inherit="titlescreen.spec"><anchor y="mid" d="-50"/><anchor x="mid" d="0"/></area>
+
+		<area id="sandbox.register.nag" inherit="dialog.message.spec" leading="-1" position="=$b_nag_x+$b_nag_msg_x,$b_nag_y+$b_nag_msg_y" size="=$b_nag_msg_w,$b_nag_msg_h" valign="top" halign="left" text="=$sandbox.nag.message">
+ 			<background>
+				<widgetbackground inherit="human-speech-top-left-info.background"
+					color="dialog-glow"
+					insets="24,40,24,22"
+				/>
+			</background>
+ 		</area>
+
+		<area id="signupscreen" layer="0" position="=$b_nag_x+115,$b_nag_y-60" size="32,64" scale="0.5" mouseOff="spriteimage.nag.preorder.gid.01" noClick="true"/>
+ 		<area id="spotlight" layer="-1" position="=$b_nag_x+120,$b_nag_y-60" scale="0.7" mouseOff="spriteimage.story.spotlight.earth.01" noClick="true"/>
+
+
+		<area id="later" text="=$nag.later" inherit="button.red.spec" size="=$nag_later_button_w,$button_h"
+			position="=$continue_button_x,$continue_button_y"
+		><anchor x="right" d="=0-$nag_later_button_w-$continue_button_offset"/></area>
+
+		<area id="buy" text="=$nag.buy" inherit="button.nag.buy.spec" position="=$nag_x+$nag_msg_x+$nag_msg_w-$nag_later_button_w,$nag_y+$nag_msg_y" />
+
+ 		<area id="spotlight" layer="-1" position="=$nag_x+190,$nag_y+10" scale="0.7" mouseOff="spriteimage.story.spotlight.earth.01" noClick="true"/>
+
+	</instance>
 
 	<!-- register screen -->
 
@@ -1719,6 +1879,41 @@
 		<area id="email" color="0,0,0" inherit="textfield.spec" position="=70,$reg_input_y" size="180,16" />
 
 		<area id="registerscreen" inherit="titlescreen.spec"/>
+
+	</instance>
+
+	<!-- Sandbox Mode register screen -->
+
+	<instance class="worm.screens.SandboxRegisterScreen"
+		name="sandbox.register.screen"
+		keyboardnavigation="false"
+		transition="instant.transition"
+		color="0,0,0,255"
+		centre="both"
+		emailInsets="4,4,12,0"
+		font="tinyfont.glfont"
+	>
+
+		<hotkey key="ESCAPE" area="later"/>
+		<hotkey key="RETURN" area="register"/>
+
+		<area id="titlescreen" inherit="titlescreen.spec"/>
+
+		<area id="instructions" text="=$sandbox.register.instructions"
+			inherit="dialog.message.spec"
+			position="=$reg_msg_x,$reg_msg1_y" size="=$reg_msg_w,$reg_msg1_h" />
+		<area id="instructions2" text="=$sandbox.register.instructions2" inherit="dialog.message.spec"
+			position="=$reg_msg_x,$reg_msg2_y" size="=$reg_msg_w,$reg_msg2_h" />
+
+		<area id="title" text="=$sandbox.register.title" inherit="dialog.spec" position="=$reg_x,$reg_y" size="=$reg_w,$reg_h" />
+		<area id="dialog_background_glow" inherit="dialog.glow.spec" position="=$reg_x,$reg_y" size="=$reg_w,$reg_h" />
+
+		<area id="register" text="=$ok.label" inherit="button.spec" position="=$button_gap/-2-$button_w+$SCREEN_X,$reg_y+$dialog_padding" />
+		<area id="later" text="=$cancel.label" inherit="button.spec" position="=$button_gap/2+$SCREEN_X,$reg_y+$dialog_padding" />
+
+		<area id="email" color="0,0,0" inherit="textfield.spec" position="=70,$reg_input_y" size="180,16" />
+
+		<area id="sandboxregisterscreen" inherit="titlescreen.spec"/>
 
 	</instance>
 
@@ -1861,6 +2056,7 @@
 	</instance>
 
 
+
 	<!-- INFO SCREEN ....  just has an ok button -->
 
 	<instance class="net.puppygames.applet.screens.DialogScreen"
@@ -1885,6 +2081,31 @@
 
 	</instance>
 
+
+	<!-- IN-GAME INFO SCREEN - RESEARCH HINT etc. ....  just has an ok button -->
+
+	<instance class="net.puppygames.applet.screens.DialogScreen"
+		name="ingame.info.dialog"
+		keyboardnavigation="false"
+		dialog="true"
+		transition="instant.transition"
+		centre="both"
+		allCaps="true"
+	>
+		<hotkey key="RETURN" area="cancel"/>
+		<hotkey key="ESCAPE" area="cancel"/>
+
+		<area id="background" inherit="dialog.background.spec"/>
+		<area id="background_glow" inherit="dialog.background.glow.spec"/>
+
+		<area id="message" inherit="dialog.message.spec" position="=$info_dialog_msg_x,$info_dialog_msg_y" size="=$info_dialog_msg_w,$info_dialog_msg_h" />
+		<area id="title" inherit="dialog.spec" position="=$info_dialog_x,$info_dialog_y" size="=$info_dialog_w,$info_dialog_h" />
+		<area id="dialog_background_glow" inherit="dialog.glow.spec" position="=$info_dialog_x,$info_dialog_y" size="=$info_dialog_w,$info_dialog_h" />
+
+		<area id="cancel" text="=$ok.label" inherit="button.spec" position="=$button_w/-2+$SCREEN_X,$info_dialog_y+$dialog_padding" />
+
+	</instance>
+	
 
 	<!--  RESEARCH NAG SCREEN -->
 	<instance class="net.puppygames.applet.screens.DialogScreen"
@@ -1940,7 +2161,7 @@
 	/>
 
 
-
+	<!-- Live Version -->
 	<instance class="worm.screens.ChooseGameModeScreen"
 		name="choose-game-mode.screen"
 		keyboardnavigation="false"
@@ -1952,40 +2173,142 @@
 		<hotkey key="=$key.campaign" area="mode_campaign"/>
 		<hotkey key="=$key.endless" area="mode_endless"/>
 		<hotkey key="=$key.survival" area="mode_survival"/>
-		<!-- 
 		<hotkey key="=$key.sandbox" area="mode_sandbox"/>
- 		-->
- 		
+		
 		<area id="background" inherit="dialog.background.spec"/>
 		<area id="background_glow" inherit="dialog.background.glow.spec"/>
 
 		<area id="title" inherit="dialog.ingame.spec" position="=$dialog_wide_x,$mode_dialog_y" size="=$dialog_wide_w,$mode_dialog_h" />
 		<area id="dialog_background_glow" inherit="dialog.glow.spec" position="=$dialog_wide_x,$mode_dialog_y" size="=$dialog_wide_w,$mode_dialog_h" />
 
-		<area id="mode_campaign" inherit="mode.menu.button.spec" position="=$mode_button_1_x,$mode_buttons_y"
+		<area id="mode_campaign" inherit="mode.menu.button.spec" position="=$mode_button_1of3_x,$mode_buttons_y"
 				mouseoff="menu.campaign.off.animation" mouseon="menu.campaign.on.animation" disabled="menu.campaign.disabled.animation"/>
 		<area id="mode_campaign_title" text="=$choosegamemode.mode_campaign_title" mouseoff="=$key.campaign.icon" inherit="mode.menu.button.title.spec"
 			textOffset="=$mode_title_campaign_o_x,0" offset="=$mode_title_campaign_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
 		<area id="mode_campaign_desc" text="=$choosegamemode.mode_campaign_desc" inherit="mode.menu.button.desc.spec" />
 
-		<area id="mode_endless" inherit="mode.menu.button.spec" position="=$mode_button_2_x,$mode_buttons_y"
+		<area id="mode_endless" inherit="mode.menu.button.spec" position="=$mode_button_2of3_x,$mode_buttons_y"
 				mouseoff="menu.endless.off.animation" mouseon="menu.endless.on.animation" disabled="menu.endless.disabled.animation"/>
 		<area id="mode_endless_title" text="=$choosegamemode.mode_endless_title" mouseoff="=$key.endless.icon" inherit="mode.menu.button.title.spec"
 			textOffset="=$mode_title_endless_o_x,0" offset="=$mode_title_endless_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
 		<area id="mode_endless_desc" text="=$choosegamemode.mode_endless_desc" inherit="mode.menu.button.desc.spec" />
 
-		<area id="mode_survival" inherit="mode.menu.button.spec" position="=$mode_button_3_x,$mode_buttons_y"
+		<area id="mode_survival" inherit="mode.menu.button.spec" position="=$mode_button_3of3_x,$mode_buttons_y"
 				mouseoff="menu.survival.off.animation" mouseon="menu.survival.on.animation" disabled="menu.survival.disabled.animation"/>
 		<area id="mode_survival_title" text="=$choosegamemode.mode_survival_title" mouseoff="=$key.survival.icon" inherit="mode.menu.button.title.spec"
 			textOffset="=$mode_title_survival_o_x,0" offset="=$mode_title_survival_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
 		<area id="mode_survival_desc" text="=$choosegamemode.mode_survival_desc" inherit="mode.menu.button.desc.spec" />
 
-		<!-- 
-		<area id="mode_sandbox" inherit="mode.menu.button.spec" position="=$mode_button_4_x,$mode_buttons_y"
+		<area id="cancel" text="=$cancel.label" inherit="button.red.spec"
+			position="=$SCREEN_X-($button_w/2),$mode_dialog_y+$mode_dialog_padding" />
+
+		<area id="default_msg" text="=$choosegamemode.default_msg" group="default_msg" inherit="mode.menu.button.title.spec" color="text-darkest" textOffset="0,-5" halign="centered" font="bigfont.glfont"  />
+
+	</instance>
+
+	<!-- Xmas version! -->
+	<instance class="worm.screens.ChooseGameModeScreen"
+		name="choose-game-mode-xmas.screen"
+		keyboardnavigation="false"
+		dialog="true"
+		transition="instant.transition"
+		centre="both"
+	>
+		<hotkey key="ESCAPE" area="cancel"/>
+		<hotkey key="=$key.campaign" area="mode_campaign"/>
+		<hotkey key="=$key.endless" area="mode_endless"/>
+		<hotkey key="=$key.survival" area="mode_survival"/>
+		<hotkey key="=$key.sandbox" area="mode_sandbox"/>
+		<hotkey key="=$key.xmas" area="mode_xmas"/>
+		
+		<area id="background" inherit="dialog.background.spec"/>
+		<area id="background_glow" inherit="dialog.background.glow.spec"/>
+
+		<area id="title" inherit="dialog.ingame.spec" position="=$dialog_wide_x,$mode_dialog_y" size="=$dialog_wide_w,$mode_dialog_h" />
+		<area id="dialog_background_glow" inherit="dialog.glow.spec" position="=$dialog_wide_x,$mode_dialog_y" size="=$dialog_wide_w,$mode_dialog_h" />
+
+		<area id="mode_campaign" inherit="mode.menu.button.spec" position="=$mode_button_1of4_x,$mode_buttons_y"
+				mouseoff="menu.campaign.off.animation" mouseon="menu.campaign.on.animation" disabled="menu.campaign.disabled.animation"/>
+		<area id="mode_campaign_title" text="=$choosegamemode.mode_campaign_title" mouseoff="=$key.campaign.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_campaign_o_x,0" offset="=$mode_title_campaign_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
+		<area id="mode_campaign_desc" text="=$choosegamemode.mode_campaign_desc" inherit="mode.menu.button.desc.spec" />
+
+		<area id="mode_endless" inherit="mode.menu.button.spec" position="=$mode_button_2of4_x,$mode_buttons_y"
+				mouseoff="menu.endless.off.animation" mouseon="menu.endless.on.animation" disabled="menu.endless.disabled.animation"/>
+		<area id="mode_endless_title" text="=$choosegamemode.mode_endless_title" mouseoff="=$key.endless.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_endless_o_x,0" offset="=$mode_title_endless_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
+		<area id="mode_endless_desc" text="=$choosegamemode.mode_endless_desc" inherit="mode.menu.button.desc.spec" />
+
+		<area id="mode_survival" inherit="mode.menu.button.spec" position="=$mode_button_3of4_x,$mode_buttons_y"
+				mouseoff="menu.survival.off.animation" mouseon="menu.survival.on.animation" disabled="menu.survival.disabled.animation"/>
+		<area id="mode_survival_title" text="=$choosegamemode.mode_survival_title" mouseoff="=$key.survival.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_survival_o_x,0" offset="=$mode_title_survival_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
+		<area id="mode_survival_desc" text="=$choosegamemode.mode_survival_desc" inherit="mode.menu.button.desc.spec" />
+
+		<area id="mode_xmas" inherit="mode.menu.button.spec" position="=$mode_button_4of4_x,$mode_buttons_y"
+				mouseoff="menu.xmas.off.animation" mouseon="menu.xmas.on.animation" disabled="menu.xmas.disabled.animation"/>
+		<area id="mode_xmas_title" text="=$choosegamemode.mode_xmas_title" mouseoff="=$key.xmas.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_xmas_o_x,0" offset="=$mode_title_xmas_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
+		<area id="mode_xmas_desc" text="=$choosegamemode.mode_xmas_desc" inherit="mode.menu.button.desc.spec" />
+
+		<area id="cancel" text="=$cancel.label" inherit="button.red.spec"
+			position="=$SCREEN_X-($button_w/2),$mode_dialog_y+$mode_dialog_padding" />
+
+		<area id="default_msg" text="=$choosegamemode.default_msg" group="default_msg" inherit="mode.menu.button.title.spec" color="text-darkest" textOffset="0,-5" halign="centered" font="bigfont.glfont"  />
+
+	</instance>
+
+
+	<!-- Development Version -->
+	<instance class="worm.screens.ChooseGameModeScreen"
+		name="choose-game-mode.screen.debug"
+		keyboardnavigation="false"
+		dialog="true"
+		transition="instant.transition"
+		centre="both"
+	>
+		<hotkey key="ESCAPE" area="cancel"/>
+		<hotkey key="=$key.campaign" area="mode_campaign"/>
+		<hotkey key="=$key.endless" area="mode_endless"/>
+		<hotkey key="=$key.survival" area="mode_survival"/>
+		<hotkey key="=$key.sandbox" area="mode_sandbox"/>
+		<hotkey key="=$key.xmas" area="mode_xmas"/>
+		
+		<area id="background" inherit="dialog.background.spec"/>
+		<area id="background_glow" inherit="dialog.background.glow.spec"/>
+
+		<area id="title" inherit="dialog.ingame.spec" position="=$dialog_wider_x,$mode_dialog_y" size="=$dialog_wider_w,$mode_dialog_h" />
+		<area id="dialog_background_glow" inherit="dialog.glow.spec" position="=$dialog_wider_x,$mode_dialog_y" size="=$dialog_wider_w,$mode_dialog_h" />
+
+		<area id="mode_campaign" inherit="mode.menu.button.spec" position="=$mode_button_1of5_x,$mode_buttons_y"
+				mouseoff="menu.campaign.off.animation" mouseon="menu.campaign.on.animation" disabled="menu.campaign.disabled.animation"/>
+		<area id="mode_campaign_title" text="=$choosegamemode.mode_campaign_title" mouseoff="=$key.campaign.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_campaign_o_x,0" offset="=$mode_title_campaign_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
+		<area id="mode_campaign_desc" text="=$choosegamemode.mode_campaign_desc" inherit="mode.menu.button.desc.spec" />
+
+		<area id="mode_endless" inherit="mode.menu.button.spec" position="=$mode_button_2of5_x,$mode_buttons_y"
+				mouseoff="menu.endless.off.animation" mouseon="menu.endless.on.animation" disabled="menu.endless.disabled.animation"/>
+		<area id="mode_endless_title" text="=$choosegamemode.mode_endless_title" mouseoff="=$key.endless.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_endless_o_x,0" offset="=$mode_title_endless_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
+		<area id="mode_endless_desc" text="=$choosegamemode.mode_endless_desc" inherit="mode.menu.button.desc.spec" />
+
+		<area id="mode_survival" inherit="mode.menu.button.spec" position="=$mode_button_3of5_x,$mode_buttons_y"
+				mouseoff="menu.survival.off.animation" mouseon="menu.survival.on.animation" disabled="menu.survival.disabled.animation"/>
+		<area id="mode_survival_title" text="=$choosegamemode.mode_survival_title" mouseoff="=$key.survival.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_survival_o_x,0" offset="=$mode_title_survival_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
+		<area id="mode_survival_desc" text="=$choosegamemode.mode_survival_desc" inherit="mode.menu.button.desc.spec" />
+
+		<area id="mode_sandbox" inherit="mode.menu.button.spec" position="=$mode_button_4of5_x,$mode_buttons_y"
 				mouseoff="menu.sandbox.off.animation" mouseon="menu.sandbox.on.animation" disabled="menu.sandbox.disabled.animation"/>
-		<area id="mode_sandbox_title" text="=$choosegamemode.mode_sandbox_title" mouseoff="=$key.sandbox.icon" inherit="mode.menu.button.title.spec" />
+		<area id="mode_sandbox_title" text="=$choosegamemode.mode_sandbox_title" mouseoff="=$key.sandbox.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_sandbox_o_x,0" offset="=$mode_title_sandbox_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
 		<area id="mode_sandbox_desc" text="=$choosegamemode.mode_sandbox_desc" inherit="mode.menu.button.desc.spec" />
- 		-->
+
+		<area id="mode_xmas" inherit="mode.menu.button.spec" position="=$mode_button_5of5_x,$mode_buttons_y"
+				mouseoff="menu.xmas.off.animation" mouseon="menu.xmas.on.animation" disabled="menu.xmas.disabled.animation"/>
+		<area id="mode_xmas_title" text="=$choosegamemode.mode_xmas_title" mouseoff="=$key.xmas.icon" inherit="mode.menu.button.title.spec"
+			textOffset="=$mode_title_xmas_o_x,0" offset="=$mode_title_xmas_o_x-$mode_title_shortcut_o_x,$mode_title_shortcut_o_y"/>
+		<area id="mode_xmas_desc" text="=$choosegamemode.mode_xmas_desc" inherit="mode.menu.button.desc.spec" />
 
 		<area id="cancel" text="=$cancel.label" inherit="button.red.spec"
 			position="=$SCREEN_X-($button_w/2),$mode_dialog_y+$mode_dialog_padding" />

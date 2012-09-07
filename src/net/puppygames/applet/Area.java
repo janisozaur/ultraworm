@@ -42,7 +42,6 @@ import net.puppygames.applet.effects.Emitter;
 import net.puppygames.applet.effects.EmitterFeature;
 import net.puppygames.applet.effects.SFX;
 
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -248,6 +247,9 @@ public class Area extends Feature implements Tickable, Bounded {
 	/** All caps */
 	private boolean allCaps;
 
+	/** Grab on click */
+	private boolean grab;
+
 	/*
 	 * Transient data
 	 */
@@ -378,7 +380,7 @@ public class Area extends Feature implements Tickable, Bounded {
 			sprite.setAppearance(mouseOffResource);
 			sprite.rewind();
 			if (offset != null) {
-				sprite.setOffset(offset.getX(), offset.getY(), 0);
+				sprite.setOffset(offset.getX(), offset.getY());
 			}
 			updateScale();
 		}
@@ -553,12 +555,12 @@ public class Area extends Feature implements Tickable, Bounded {
 			sprite = screen.allocateSprite(this);
 			sprite.setAlpha(alpha);
 			sprite.setLayer(layer);
-			sprite.setLocation(bounds.getX(), bounds.getY(), 0);
+			sprite.setLocation(bounds.getX(), bounds.getY());
 			sprite.setMirrored(mirrored);
 			sprite.setFlipped(flipped);
 			sprite.setVisible(visible);
 			if (getOffset() != null) {
-				sprite.setOffset(getOffset().getX(), getOffset().getY(), 0);
+				sprite.setOffset(getOffset().getX(), getOffset().getY());
 			}
 			updateScale();
 		} else {
@@ -688,11 +690,21 @@ public class Area extends Feature implements Tickable, Bounded {
 		return false;
 	}
 
-	/**
-	 * Tick the area
-	 */
 	@Override
 	public void tick() {
+		List<MouseEvent> mouseEvents = Game.getMouseEvents();
+		int n = mouseEvents.size();
+		if (n == 0) {
+			doTick(null);
+		} else {
+			for (int i = 0; i < n; i ++) {
+				MouseEvent event = mouseEvents.get(i);
+				doTick(event);
+			}
+		}
+	}
+
+	private void doTick(MouseEvent event) {
 		if (!screen.isOpen()) {
 			return;
 		}
@@ -719,58 +731,56 @@ public class Area extends Feature implements Tickable, Bounded {
 			}
 		}
 
-		boolean clicked = false;
-		selectDown = false;
 		armed = false;
 		if (isVisible()) {
-			if (screen.isKeyboardNavigationEnabled()) {
-				selectDown = Keyboard.isKeyDown(Keyboard.KEY_SPACE) || Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RETURN)
-								|| Binding.isBindingDown(Binding.SELECT) || Binding.isBindingDown(Binding.SELECT_ALT);
-				armed = isFocused() && isFocusable();
-				if (selectDown && armed) {
-					clicked = true;
-				} else {
-					selectDown = mouseDown;
-					boolean mouseArmed = isInHitZone(screen.getMouseX(), screen.getMouseY());
-					if (selectDown && mouseArmed) {
-						clicked = true;
-						if (enabled && screen.isEnabled()) {
-							requestFocus();
-						}
-					} else {
-						armed |= mouseArmed;
-					}
-				}
+			if (event != null && event.getButton() == 0) {
+				processMouseChange(event.isButtonDown());
 			} else {
-				selectDown = mouseDown;
-				armed = isInHitZone(screen.getMouseX(), screen.getMouseY());
-
-				if (selectDown && armed) {
-					clicked = true;
-				}
+				processMouseChange(selectDown);
 			}
+		}
+	}
 
-			if (!enabled) {
-				setState(STATE_DISABLED);
-			} else if (screen.isEnabled()) {
-				if (armed) {
-					setState(STATE_MOUSEON);
-				} else {
-					setState(STATE_MOUSEOFF);
-				}
+	/**
+	 * Helper function to process mouse events.
+	 * @param mouseDown
+	 * @see #tick()
+	 */
+	private void processMouseChange(boolean mouseDown) {
+		boolean clicked = false;
+
+		armed = isInHitZone(screen.getMouseX(), screen.getMouseY());
+		selectDown = mouseDown && armed;
+
+		if (selectDown && armed) {
+			clicked = true;
+			if (grab) {
+				screen.setGrabbed(this);
+			}
+		} else if (grab && !selectDown) {
+			screen.setGrabbed(null);
+		}
+
+		if (!enabled) {
+			setState(STATE_DISABLED);
+		} else if (screen.isEnabled()) {
+			if (armed) {
+				setState(STATE_MOUSEON);
 			} else {
 				setState(STATE_MOUSEOFF);
 			}
+		} else {
+			setState(STATE_MOUSEOFF);
+		}
 
-			if (selectDown && visible && armed && !noClick && !ignoreMouse && enabled && screen.isEnabled() && clicked) {
-				if (!holdClick) {
-					SFX.buttonClick();
-					ignoreMouse = true;
-				}
-				doClick();
-			} else if (!selectDown) {
-				ignoreMouse = false;
+		if (selectDown && visible && armed && !noClick && !ignoreMouse && enabled && screen.isEnabled() && clicked) {
+			if (!holdClick) {
+				SFX.buttonClick();
+				ignoreMouse = true;
 			}
+			doClick();
+		} else if (!selectDown) {
+			ignoreMouse = false;
 		}
 	}
 
@@ -1271,7 +1281,7 @@ public class Area extends Feature implements Tickable, Bounded {
 	public void setBounds(int x, int y, int w, int h) {
 		bounds.setBounds(x, y, w, h);
 		if (sprite != null) {
-			sprite.setLocation(x, y, 0);
+			sprite.setLocation(x, y);
 		}
 		if (hasSize) {
 			size.setSize(w, h);
@@ -1590,7 +1600,7 @@ public class Area extends Feature implements Tickable, Bounded {
 			this.offset = new Point(x, y);
 		}
 		if (sprite != null) {
-			sprite.setOffset(x, y, 0);
+			sprite.setOffset(x, y);
 		}
 	}
 

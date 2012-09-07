@@ -228,7 +228,7 @@ public class SettingFeature extends Feature {
 			bounds.setBounds(x, y, w, h);
 			if (backgroundLayers != null && backgroundLayers.getSprites() != null) {
 				for (int i = 0; i < backgroundLayers.getSprites().length; i ++) {
-					backgroundLayers.getSprite(i).setLocation(x, y, 0.0f);
+					backgroundLayers.getSprite(i).setLocation(x, y);
 				}
 			}
 		}

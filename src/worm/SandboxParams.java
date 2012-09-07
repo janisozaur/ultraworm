@@ -55,22 +55,13 @@ public class SandboxParams implements Serializable {
 	 * C'tor
 	 * @param world
 	 * @param template
-	 * @param difficulty
 	 * @param size
-	 * @param generateNew TODO
 	 */
-	public SandboxParams(int templateIndex, WorldFeature world, MapTemplate template, float difficulty, int size, boolean generateNew) {
-		this.templateIndex = templateIndex;
+	public SandboxParams(WorldFeature world, MapTemplate template, int size) {
 		this.world = world;
 		this.template = template;
-		this.difficulty = difficulty;
 		this.size = size;
-		this.generateNew = generateNew;
 	}
-
-	public int getTemplateIndex() {
-	    return templateIndex;
-    }
 
 	@Override
 	public String toString() {
@@ -79,29 +70,11 @@ public class SandboxParams implements Serializable {
 		buffer.append(world);
 		buffer.append(", template=");
 		buffer.append(template);
-		buffer.append(", difficulty=");
-		buffer.append(difficulty);
 		buffer.append(", size=");
 		buffer.append(size);
-		buffer.append(", generateNew=");
-		buffer.append(generateNew);
 		buffer.append("]");
 		return buffer.toString();
 	}
-
-	/**
-	 * @return whether to generate a new map
-	 */
-	public boolean getGenerateNew() {
-		return generateNew;
-	}
-
-	/**
-	 * @param generateNew true to generate a new map
-	 */
-	public void setGenerateNew(boolean generateNew) {
-	    this.generateNew = generateNew;
-    }
 
 	/**
 	 * @return the world
@@ -109,13 +82,6 @@ public class SandboxParams implements Serializable {
 	public WorldFeature getWorld() {
 		return world;
 	}
-
-	/**
-	 * @return the difficulty offset
-	 */
-	public float getDifficulty() {
-	    return difficulty;
-    }
 
 	/**
 	 * @return the template
@@ -130,5 +96,4 @@ public class SandboxParams implements Serializable {
 	public int getSize() {
 		return size;
 	}
-
 }

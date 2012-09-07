@@ -665,7 +665,7 @@ public abstract class Entity implements Tickable, Serializable, ReadablePosition
 
 			for (Sprite element : sprite) {
 
-				element.setLocation(screenX, screenY, 0);
+				element.setLocation(screenX, screenY);
 				if (element.getLayer() > Layers.SHADOW) {
 					element.setFlash(flash);
 				}
@@ -718,7 +718,7 @@ public abstract class Entity implements Tickable, Serializable, ReadablePosition
 					if (doOffset) {
 						for (int j = i+1; j < sprite.length; j ++) {
 							if (sprite[j].isDoChildOffset()) {
-								sprite[j].setLocation(screenX + xOffsetTotal, screenY + yOffsetTotal, 0);
+								sprite[j].setLocation(screenX + xOffsetTotal, screenY + yOffsetTotal);
 								sprite[j].setYSortOffset(-yOffsetTotal-j); // the '-j' is chaz hack! budge layers YSortOffset a tad to force render ok
 							}
 						}

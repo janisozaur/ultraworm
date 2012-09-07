@@ -166,7 +166,7 @@ public class ArrowEffect extends Effect {
 		}
 
 		for (int i = 0; i < layers.getSprites().length; i ++) {
-			layers.getSprite(i).setLocation(screenX, screenY, 0);
+			layers.getSprite(i).setLocation(screenX, screenY);
 		}
 	}
 

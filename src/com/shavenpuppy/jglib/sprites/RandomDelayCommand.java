@@ -66,7 +66,7 @@ public class RandomDelayCommand extends Command {
 	public boolean execute(Sprite target) {
 
 		int tick = target.getTick();
-		// If the tick is currently zero it means this is the first execution of
+		// If the tick is currently 0 it means this is the first execution of
 		// the command, so we should pick a random value.
 		if (tick == 0) {
 			tick = Util.random(minDelay, maxDelay);

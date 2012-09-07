@@ -34,7 +34,6 @@ package com.shavenpuppy.jglib.sprites;
 import org.lwjgl.util.ReadableColor;
 import org.lwjgl.util.ReadablePoint;
 import org.lwjgl.util.vector.ReadableVector2f;
-import org.lwjgl.util.vector.ReadableVector3f;
 
 import com.shavenpuppy.jglib.opengl.GLRenderable;
 
@@ -45,10 +44,8 @@ public interface SimpleRenderer {
 
 	short getVertexOffset();
 	short glVertex2f(float x, float y);
-	short glVertex3f(float x, float y, float z);
 	short glVertex(ReadablePoint vertex);
 	short glVertex(ReadableVector2f vertex);
-	short glVertex(ReadableVector3f vertex);
 	void glTexCoord2f(float u, float v);
 	void glColor4ub(byte r, byte g, byte b, byte a);
 	void glColor3ub(byte r, byte g, byte b);

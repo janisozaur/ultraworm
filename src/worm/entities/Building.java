@@ -983,12 +983,12 @@ public abstract class Building extends Entity {
 	protected final void doUpdate() {
 		if (shieldedLayers != null) {
 			for (int i = 0; i < shieldedLayers.getSprites().length; i ++) {
-				shieldedLayers.getSprite(i).setLocation(getScreenX(), getScreenY(), 0.0f);
+				shieldedLayers.getSprite(i).setLocation(getScreenX(), getScreenY());
 			}
 		}
 		if (hoveredLayers != null) {
 			for (int i = 0; i < hoveredLayers.getSprites().length; i ++) {
-				hoveredLayers.getSprite(i).setLocation(getScreenX(), getScreenY(), 0.0f);
+				hoveredLayers.getSprite(i).setLocation(getScreenX(), getScreenY());
 			}
 		}
 		doBuildingUpdate();
@@ -1377,5 +1377,12 @@ public abstract class Building extends Entity {
 
 	public boolean canSell() {
 		return isActive() && phase == PHASE_NORMAL;
+	}
+
+	/**
+	 * @return the building's agitation factor
+	 */
+	public float getAgitation() {
+		return feature.getAgitation();
 	}
 }

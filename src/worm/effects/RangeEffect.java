@@ -32,13 +32,13 @@
 package worm.effects;
 
 import net.puppygames.applet.effects.Effect;
+import net.puppygames.applet.widgets.Ring;
 
 import org.lwjgl.util.ReadableColor;
 
 import worm.Layers;
 import worm.Res;
 
-import com.shavenpuppy.jglib.opengl.ColorUtil;
 import com.shavenpuppy.jglib.opengl.GLRenderable;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -48,20 +48,10 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class RangeEffect extends Effect {
 
-	private static final int STEPS = 64;
 	private static final int ALPHA_DELTA = 8;
 	private static final float THICKNESS = 2.0f;
-	private static final short[] INDICES;
-	static {
-		INDICES = new short[STEPS * 2 + 2];
-		for (short i = 0; i < STEPS * 2; i ++) {
-			INDICES[i] = i;
-		}
-		INDICES[STEPS * 2] = 0;
-		INDICES[STEPS * 2 + 1] = 1;
-	}
 
-	private final ReadableColor color;
+	private final Ring ring;
 
 	private float radius;
 	private float mapX, mapY;
@@ -75,7 +65,9 @@ public class RangeEffect extends Effect {
 	 * C'tor
 	 */
 	public RangeEffect(ReadableColor color) {
-		this.color = color;
+		ring = new Ring();
+		ring.setColor(color);
+		ring.setThickness(THICKNESS);
 	}
 
 	/**
@@ -119,35 +111,32 @@ public class RangeEffect extends Effect {
 
 	@Override
 	protected void render() {
-		if (!RangeEffect.this.isVisible()) {
+		if (!isVisible()) {
 			return;
 		}
-		float x = getOffset().getX() + mapX;
-		float y = getOffset().getY() + mapY;
 		glRender(new GLRenderable() {
 			@Override
 			public void render() {
 				glEnable(GL_BLEND);
-				glDisable(GL_TEXTURE_2D);
-				glEnable(GL_TEXTURE_1D);
+				glEnable(GL_TEXTURE_2D);
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 				glBlendFunc(GL_ONE, GL_ONE);
-				Res.getRangeTexture().bind();
+				Res.getSolidTexture().bind();
 			}
 		});
-		ColorUtil.setGLColorPre(color, alpha, this);
-		for (int i = 0; i < STEPS; i ++) {
-			double angle = i * Math.PI * 2.0 / STEPS;
-			glTexCoord2f(0.0f, 0.0f);
-			glVertex2f(x + (float) Math.cos(angle) * radius, y + (float) Math.sin(angle) * radius);
-			glTexCoord2f(1.0f, 0.0f);
-			glVertex2f(x + (float) Math.cos(angle) * (radius - THICKNESS), y + (float) Math.sin(angle) * (radius - THICKNESS));
-		}
-		glRender(GL_TRIANGLE_STRIP, INDICES);
+
+		float x = getOffset().getX() + mapX;
+		float y = getOffset().getY() + mapY;
+
+		ring.setAlpha(alpha);
+		ring.setLocation(x, y);
+		ring.setRadius(radius);
+		ring.render(this);
+
 		glRender(new GLRenderable() {
 			@Override
 			public void render() {
-				glDisable(GL_TEXTURE_1D);
+				glDisable(GL_TEXTURE_2D);
 			}
 		});
 	}

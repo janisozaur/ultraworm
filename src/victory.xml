@@ -876,11 +876,11 @@
 
 
 	
-		<area id="victory-fireworks-right" inherit="victory-right.spec" layer="9" mouseoff="victory.fireworks.right.anim"  />
-		<area id="victory-fireworks-left" inherit="victory-left.spec" layer="9" mouseoff="victory.fireworks.left.anim"  />
+		<area id="victory-fireworks-right" inherit="victory-right.spec" layer="10" mouseoff="victory.fireworks.right.anim"  />
+		<area id="victory-fireworks-left" inherit="victory-left.spec" layer="10" mouseoff="victory.fireworks.left.anim"  />
 
-		<area id="victory-fireworks-finale.right" inherit="victory-right.spec" layer="9" mouseoff="victory.fireworks.finale.right.anim"  />
-		<area id="victory-fireworks-finale.left" inherit="victory-left.spec" layer="9" mouseoff="victory.fireworks.finale.left.anim"  />
+		<area id="victory-fireworks-finale.right" inherit="victory-right.spec" layer="10" mouseoff="victory.fireworks.finale.right.anim"  />
+		<area id="victory-fireworks-finale.left" inherit="victory-left.spec" layer="10" mouseoff="victory.fireworks.finale.left.anim"  />
 
 		<area id="victory-blasters" inherit="victory-left.spec" layer="9" mouseoff="blasters.anim"  />
 		<area id="victory-blasters-distant" inherit="victory-left.spec" lazyer="9" mouseoff="blasters.distant.anim"  />

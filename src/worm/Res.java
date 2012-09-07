@@ -89,8 +89,10 @@ public class Res extends net.puppygames.applet.Res {
 		;
 
 	private String
-		beam = "beam.01.texture",
 		range = "range.texture",
+		solid = "solid.texture",
+		dash = "dash.texture",
+		beam = "beam.texture",
 		laserTexture = "laser.texture"
 		;
 
@@ -122,6 +124,7 @@ public class Res extends net.puppygames.applet.Res {
 		mousePointerBlastmine = "mousepointer.blastmine.layers",
 		mousePointerSellOff = "mousepointer.sell.off.layers",
 		mousePointerSellOn = "mousepointer.sell.on.layers",
+		mousePointerGrabOn = "mousepointer.grab.on.layers",
 		buildIndicator = "spriteimage.buildindicator",
 		beamStart = "spriteimage.proximity.start.01",
 		beamEnd = "spriteimage.proximity.end.01"
@@ -176,13 +179,17 @@ public class Res extends net.puppygames.applet.Res {
 		arrowSouthEast = "arrow.southeast.layers",
 		arrowMidSpawner = "arrow.midspawner.layers",
 		survivalMapTemplate = "survival.templates",
-		survivalBosses = "survival.bosses.array"
+		survivalBosses = "survival.bosses.array",
+		xmasBosses = "xmas.bosses.array",
+		xmasGidrahs = "xmas.gidrahs.array",
+		xmasAngryGidrahs = "xmas.angrygidrahs.array"
 		;
 
 	private String
 		researchNagDialog = "research-nag.dialog",
-		modeLockedDialog = "mode-locked.dialog";
-
+		modeLockedDialog = "mode-locked.dialog",
+		ingameInfoDialog = "ingame.info.dialog";
+	
 	private String factoryMining = "factoryMining.buffer";
 
 	/*
@@ -192,7 +199,10 @@ public class Res extends net.puppygames.applet.Res {
 	private transient GLBaseTexture
 		smartBombTextureResource,
 		explosionTextureResource,
+		solidTextureResource,
+		dashTextureResource,
 		rangeTextureResource,
+		beamTextureResource,
 		laserTextureResource
 		;
 	private transient ALBuffer
@@ -213,7 +223,6 @@ public class Res extends net.puppygames.applet.Res {
 		iceShardsSmallEmitterFeature,
 		iceShardsAngryEmitterFeature,
 		iceShardsBossEmitterFeature,
-
 		deflectEmitterFeature,
 		buildingSmokeEmitterFeature,
 		buildingFlamesEmitterFeature
@@ -243,7 +252,8 @@ public class Res extends net.puppygames.applet.Res {
 		mousePointerSmartbombResource,
 		mousePointerBlastmineResource,
 		mousePointerSellOnResource,
-		mousePointerSellOffResource
+		mousePointerSellOffResource,
+		mousePointerGrabOnResource
 		;
 
 	private transient LayersFeature
@@ -264,7 +274,6 @@ public class Res extends net.puppygames.applet.Res {
 		;
 
 	private transient EmitterFeature
-
 		repairEmitterFeature,
 		repairAllEmitterFeature
 		;
@@ -282,7 +291,10 @@ public class Res extends net.puppygames.applet.Res {
 		southSpawnPointResource,
 		westSpawnPointResource,
 		survivalMapTemplateResource,
-		survivalBossesResource
+		survivalBossesResource,
+		xmasBossesResource,
+		xmasGidrahsResource,
+		xmasAngryGidrahsResource
 		;
 
 	private transient ResourceArray[]
@@ -304,7 +316,7 @@ public class Res extends net.puppygames.applet.Res {
 
 	private transient TileSetFeature floorEdgeTransitionResource;
 
-	private transient DialogScreen researchNagDialogResource, modeLockedDialogResource;
+	private transient DialogScreen researchNagDialogResource, modeLockedDialogResource, ingameInfoDialogResource;
 
 	private transient Animation[] quicklaunchCountOff, quicklaunchCountOn, quicklaunchCount10Off, quicklaunchCount10On;
 
@@ -637,6 +649,9 @@ public class Res extends net.puppygames.applet.Res {
 	public static DialogScreen getModeLockedDialog() {
 		return instance.modeLockedDialogResource;
 	}
+	public static DialogScreen getIngameInfoDialog() {
+		return instance.ingameInfoDialogResource;
+	}
 	public static ALBuffer getFactoryMiningBuffer() {
 		return instance.factoryMiningBuffer;
 	}
@@ -658,6 +673,12 @@ public class Res extends net.puppygames.applet.Res {
 	public static ResourceArray getSurvivalAngryGidrahs(int type) {
 		return instance.survivalAngryGidrahsResource[type];
 	}
+	public static ResourceArray getXmasGidrahs() {
+		return instance.xmasGidrahsResource;
+	}
+	public static ResourceArray getXmasAngryGidrahs() {
+		return instance.xmasAngryGidrahsResource;
+	}
 	public static MapTemplate getSurvivalMapTemplate(int worldIndex, int templateIndex) {
 		ResourceArray templates = (ResourceArray) instance.survivalMapTemplateResource.getResource(worldIndex);
 		return (MapTemplate) templates.getResource(templateIndex);
@@ -665,8 +686,18 @@ public class Res extends net.puppygames.applet.Res {
 	public static GidrahFeature getSurvivalBoss(int n) {
 		return (GidrahFeature) instance.survivalBossesResource.getResource(n);
 	}
+	public static GidrahFeature getXmasBoss(int n) {
+		return (GidrahFeature) instance.xmasBossesResource.getResource(n);
+	}
 	public static int getNumSurvivalBosses() {
 		return instance.survivalBossesResource.getNumResources();
+	}
+	public static int getNumXmasBosses() {
+		return instance.xmasBossesResource.getNumResources();
+	}
+	public static MapTemplate getSandboxMapTemplate(int worldIndex, int templateIndex) {
+		ResourceArray templates = (ResourceArray) instance.survivalMapTemplateResource.getResource(worldIndex);
+		return (MapTemplate) templates.getResource(0);
 	}
 
 	public static ALBuffer getFreezeSound() {
@@ -683,8 +714,24 @@ public class Res extends net.puppygames.applet.Res {
 	public static ALBuffer getRepairZapSound() {
 		return instance.repairZapSoundBuffer;
 	}
+
 	public static GLBaseTexture getLaserTexture() {
 	    return instance.laserTextureResource;
     }
 
+	public static LayersFeature getMousePointerGrab() {
+	    return instance.mousePointerGrabOnResource;
+    }
+
+	public static GLBaseTexture getSolidTexture() {
+	    return instance.solidTextureResource;
+    }
+
+	public static GLBaseTexture getDashTexture() {
+	    return instance.dashTextureResource;
+    }
+
+	public static GLBaseTexture getBeamTexture() {
+	    return instance.beamTextureResource;
+    }
 }

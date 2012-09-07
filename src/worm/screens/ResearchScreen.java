@@ -369,7 +369,7 @@ public class ResearchScreen extends Screen {
 					l.createSprites(this, layers);
 					Sprite[] sprite = layers.getSprites();
 					for (Sprite element : sprite) {
-						element.setLocation(spriteX, spriteY, 0);
+						element.setLocation(spriteX, spriteY);
 					}
 				}
 //				if (researched) {
@@ -405,7 +405,7 @@ public class ResearchScreen extends Screen {
 		ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get(world+".colormap"));
 
 		if (gameState.getLevel() == 1) {
-			net.puppygames.applet.Res.getInfoDialog().doModal(Game.getMessage("ultraworm.researchscreen.hint_title"), Game.getMessage("ultraworm.researchscreen.hint_message"), null);
+			Res.getIngameInfoDialog().doModal(Game.getMessage("ultraworm.researchscreen.hint_title"), Game.getMessage("ultraworm.researchscreen.hint_message"), null);
 		}
 
 

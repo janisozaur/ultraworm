@@ -75,6 +75,9 @@ public class GameConfiguration extends Feature {
 	/** Base difficulty factor in $ */
 	private float difficultyFactor;
 
+	/** Crystal agitation factor, for Survival, Sandbox, and Endless modes */
+	private float crystalAgitationFactor;
+
 	/** Adds to the base difficulty factor each level */
 	private float difficultyFactorPerLevel;
 
@@ -115,6 +118,10 @@ public class GameConfiguration extends Feature {
 	private float survivalDifficultyAdjuster; // adds to difficulty factor every time we can't unlock a gidrah
 	private float[] difficultyAttempts; // Reduce difficulty after repeated attempts
 	private int[] survivalInitialMoney;
+	private int xmasCrystalInterval; // Every 60 seconds, spawn a crystal
+	private int xmasCrystalIntervalAdjust; // ...plus 2 seconds each time
+	private int xmasInitialMoney;
+	private float xmasDifficultyFactor;
 
 	/**
 	 * C'tor
@@ -245,6 +252,14 @@ public class GameConfiguration extends Feature {
     	return survivalCrystalIntervalAdjust;
     }
 
+	public int getXmasCrystalInterval() {
+    	return xmasCrystalInterval;
+    }
+
+	public int getXmasCrystalIntervalAdjust() {
+    	return xmasCrystalIntervalAdjust;
+    }
+
 	public int getSurvivalBossInterval() {
     	return survivalBossInterval;
     }
@@ -265,6 +280,14 @@ public class GameConfiguration extends Feature {
     	return survivalInitialMoney;
     }
 
+	public int getXmasInitialMoney() {
+    	return xmasInitialMoney;
+    }
+
+	public float getXmasDifficultyFactor() {
+    	return xmasDifficultyFactor;
+    }
+
 	public float getCentralDifficultyAdjustPerLevel() {
 	    return centralDifficultyAdjustPerLevel;
     }
@@ -275,5 +298,9 @@ public class GameConfiguration extends Feature {
 
 	public float getRepairCost() {
 	    return repairCost;
+    }
+
+	public float getCrystalAgitationFactor() {
+	    return crystalAgitationFactor;
     }
 }

@@ -54,6 +54,8 @@ import worm.features.LayersFeature;
 import worm.screens.GameScreen;
 
 import com.shavenpuppy.jglib.Resources;
+import com.shavenpuppy.jglib.interpolators.ColorInterpolator;
+import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
 import com.shavenpuppy.jglib.opengl.GLRenderable;
 import com.shavenpuppy.jglib.opengl.GLTexture;
 import com.shavenpuppy.jglib.resources.MappedColor;
@@ -284,12 +286,12 @@ public class MapRenderer implements MapListener {
 									if (df != null) {
 										decalSprite[i][j] = screen.allocateSprite(screen);
 
-										df.getAppearance().toSprite(decalSprite[i][j]);
 										decalSprite[i][j].setScale(FPMath.fpValue(df.getScale()));
 										decalSprite[i][j].setLayer(df.getLayer());
 										decalSprite[i][j].setSubLayer(df.getSubLayer());
 										decalSprite[i][j].setYSortOffset(df.getYSortOffset());
 										decalOffset[i][j] = df.getOffset();
+										df.getAppearance().toSprite(decalSprite[i][j]);
 									}
 								}
 							}
@@ -345,12 +347,12 @@ public class MapRenderer implements MapListener {
 									DecalFeature df = decals.get(j);
 									if (df != null) {
 										decalSprite[i][j] = screen.allocateSprite(screen);
-										df.getAppearance().toSprite(decalSprite[i][j]);
 										decalSprite[i][j].setLayer(df.getLayer());
 										decalSprite[i][j].setSubLayer(df.getSubLayer());
 										decalSprite[i][j].setYSortOffset(df.getYSortOffset());
 										decalSprite[i][j].setScale(FPMath.fpValue(df.getScale()));
 										decalOffset[i][j] = df.getOffset();
+										df.getAppearance().toSprite(decalSprite[i][j]);
 									}
 								}
 							}
@@ -437,7 +439,7 @@ public class MapRenderer implements MapListener {
 			if (tileSprite != null) {
 				for (Sprite element : tileSprite) {
 					if (element != null) {
-						element.setLocation(sx, sy, 0);
+						element.setLocation(sx, sy);
 					}
 				}
 			}
@@ -446,7 +448,7 @@ public class MapRenderer implements MapListener {
 					if (decalSprite[i] != null) {
 						for (int j = 0; j < decalSprite[i].length; j ++) {
 							if (decalSprite[i][j] != null) {
-								decalSprite[i][j].setLocation(sx + decalOffset[i][j].getX(), sy + decalOffset[i][j].getY(), 0);
+								decalSprite[i][j].setLocation(sx + decalOffset[i][j].getX(), sy + decalOffset[i][j].getY());
 							}
 						}
 					}
@@ -465,85 +467,85 @@ public class MapRenderer implements MapListener {
 		 * Debugging
 		 */
 		void postRender() {
-//			if (debug) {
-//				if (map == null) {
-//					return;
-//				}
-//				Tile t0 = map.getTile(mapx, mapy, 0);
-//				Tile t1 = map.getTile(mapx, mapy, 1);
-//				Tile t2 = map.getTile(mapx, mapy, 2);
-//				if (t0 != null && t0.isImpassable() || t1 != null && t1.isImpassable() || t2 != null && t2.isImpassable()) {
-//					glDisable(GL_TEXTURE_2D);
-//					glDisable(GL_BLEND);
-//					glLineWidth(1.0f);
-//					// We need to work out the screen coordinates of the tile
-//					ColorUtil.setGLColor(ReadableColor.RED);
-//					glBegin(GL_LINE_LOOP);
-//					glVertex2i(screenx, screeny);
-//					glVertex2i(screenx + TILE_SIZE, screeny);
-//					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
-//					glVertex2i(screenx, screeny + TILE_SIZE);
-//					glEnd();
-//				}
-//				if (t0 != null && !t0.isBulletThrough() || t1 != null && !t1.isBulletThrough() || t2 != null && !t2.isBulletThrough()) {
-//					glDisable(GL_TEXTURE_2D);
-//					glDisable(GL_BLEND);
-//					glLineWidth(1.0f);
-//					// We need to work out the screen coordinates of the tile
-//					ColorUtil.setGLColor(ReadableColor.RED);
-//					glBegin(GL_LINES);
-//					glVertex2i(screenx, screeny);
-//					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
-//					glEnd();
-//				}
-//
-//				if (map.isAttacking(mapx, mapy)) {
-//					glDisable(GL_TEXTURE_2D);
-//					glDisable(GL_BLEND);
-//					glLineWidth(1.0f);
-//					// We need to work out the screen coordinates of the tile
-//					ColorUtil.setGLColor(ReadableColor.GREEN);
-//					glBegin(GL_LINE_LOOP);
-//					glVertex2i(screenx + 1, screeny + 1);
-//					glVertex2i(screenx - 1 + TILE_SIZE, screeny + 1);
-//					glVertex2i(screenx - 1+ TILE_SIZE, screeny + TILE_SIZE - 1);
-//					glVertex2i(screenx + 1, screeny + TILE_SIZE - 1);
-//					glEnd();
-//				}
-//				if (map.isOccupied(mapx, mapy)) {
-//					glDisable(GL_TEXTURE_2D);
-//					glDisable(GL_BLEND);
-//					glLineWidth(1.0f);
-//					// We need to work out the screen coordinates of the tile
-//					ColorUtil.setGLColor(ReadableColor.BLUE);
-//					glBegin(GL_LINE_LOOP);
-//					glVertex2i(screenx + 2, screeny + 2);
-//					glVertex2i(screenx - 2 + TILE_SIZE, screeny + 2);
-//					glVertex2i(screenx - 2 + TILE_SIZE, screeny + TILE_SIZE - 2);
-//					glVertex2i(screenx + 2, screeny + TILE_SIZE - 2);
-//					glEnd();
-//				}
-//
-//				int danger = map.getDanger(mapx, mapy);
-//				if (danger > 0) {
-//					glDisable(GL_TEXTURE_2D);
-//					glEnable(GL_BLEND);
-//					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//
-//					float alpha = 0.5f;
-//					float ratio = danger / 64.0f;
-//					Color c = ColorInterpolator.interpolate(ReadableColor.BLACK, ReadableColor.WHITE, ratio, LinearInterpolator.instance, new Color());
-//					ColorUtil.setGLColor(c, (int) (alpha * 255));
-//					//glColor4f(danger < 25 ? danger / 25.0f : danger == 0 ? 0.0f : 1.0f, danger >= 25 && danger < 50 ? (danger - 25.0f) / 25.0f : danger >= 50 ? 1.0f : 0.0f, danger >= 50 && danger < 100 ? (danger - 50.0f) / 50.0f : danger >= 100 ? 1.0f : 0.0f, alpha);
-//					glBegin(GL_QUADS);
-//					glVertex2i(screenx, screeny);
-//					glVertex2i(screenx + TILE_SIZE, screeny);
-//					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
-//					glVertex2i(screenx, screeny + TILE_SIZE);
-//					glEnd();
-//
-//				}
-//			}
+			if (debug) {
+				if (map == null) {
+					return;
+				}
+				Tile t0 = map.getTile(mapx, mapy, 0);
+				Tile t1 = map.getTile(mapx, mapy, 1);
+				Tile t2 = map.getTile(mapx, mapy, 2);
+				if (t0 != null && t0.isImpassable() || t1 != null && t1.isImpassable() || t2 != null && t2.isImpassable()) {
+					glDisable(GL_TEXTURE_2D);
+					glDisable(GL_BLEND);
+					glLineWidth(1.0f);
+					// We need to work out the screen coordinates of the tile
+					glColor3f(1,0,0);
+					glBegin(GL_LINE_LOOP);
+					glVertex2i(screenx, screeny);
+					glVertex2i(screenx + TILE_SIZE, screeny);
+					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
+					glVertex2i(screenx, screeny + TILE_SIZE);
+					glEnd();
+				}
+				if (t0 != null && !t0.isBulletThrough() || t1 != null && !t1.isBulletThrough() || t2 != null && !t2.isBulletThrough()) {
+					glDisable(GL_TEXTURE_2D);
+					glDisable(GL_BLEND);
+					glLineWidth(1.0f);
+					// We need to work out the screen coordinates of the tile
+					glColor3f(1,0,0);
+					glBegin(GL_LINES);
+					glVertex2i(screenx, screeny);
+					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
+					glEnd();
+				}
+
+				if (map.isAttacking(mapx, mapy)) {
+					glDisable(GL_TEXTURE_2D);
+					glDisable(GL_BLEND);
+					glLineWidth(1.0f);
+					// We need to work out the screen coordinates of the tile
+					glColor3f(0,1,0);
+					glBegin(GL_LINE_LOOP);
+					glVertex2i(screenx + 1, screeny + 1);
+					glVertex2i(screenx - 1 + TILE_SIZE, screeny + 1);
+					glVertex2i(screenx - 1+ TILE_SIZE, screeny + TILE_SIZE - 1);
+					glVertex2i(screenx + 1, screeny + TILE_SIZE - 1);
+					glEnd();
+				}
+				if (map.isOccupied(mapx, mapy)) {
+					glDisable(GL_TEXTURE_2D);
+					glDisable(GL_BLEND);
+					glLineWidth(1.0f);
+					// We need to work out the screen coordinates of the tile
+					glColor3f(0,0,1);
+					glBegin(GL_LINE_LOOP);
+					glVertex2i(screenx + 2, screeny + 2);
+					glVertex2i(screenx - 2 + TILE_SIZE, screeny + 2);
+					glVertex2i(screenx - 2 + TILE_SIZE, screeny + TILE_SIZE - 2);
+					glVertex2i(screenx + 2, screeny + TILE_SIZE - 2);
+					glEnd();
+				}
+
+				int danger = map.getDanger(mapx, mapy);
+				if (danger > 0) {
+					glDisable(GL_TEXTURE_2D);
+					glEnable(GL_BLEND);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+					float alpha = 0.5f;
+					float ratio = danger / 64.0f;
+					Color c = ColorInterpolator.interpolate(ReadableColor.BLACK, ReadableColor.WHITE, ratio, LinearInterpolator.instance, new Color());
+					glColor4ub(c.getRedByte(), c.getGreenByte(), c.getBlueByte(), (byte) (alpha * 255));
+					//glColor4f(danger < 25 ? danger / 25.0f : danger == 0 ? 0.0f : 1.0f, danger >= 25 && danger < 50 ? (danger - 25.0f) / 25.0f : danger >= 50 ? 1.0f : 0.0f, danger >= 50 && danger < 100 ? (danger - 50.0f) / 50.0f : danger >= 100 ? 1.0f : 0.0f, alpha);
+					glBegin(GL_QUADS);
+					glVertex2i(screenx, screeny);
+					glVertex2i(screenx + TILE_SIZE, screeny);
+					glVertex2i(screenx + TILE_SIZE, screeny + TILE_SIZE);
+					glVertex2i(screenx, screeny + TILE_SIZE);
+					glEnd();
+
+				}
+			}
 		}
 
 	}

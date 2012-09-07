@@ -39,6 +39,7 @@ import org.lwjgl.util.Rectangle;
 import worm.CrystalResource;
 import worm.Entity;
 import worm.EntitySpawningFeature;
+import worm.GameConfiguration;
 import worm.Layers;
 import worm.MapRenderer;
 import worm.Res;
@@ -134,7 +135,8 @@ public class CrystalFeature extends BuildingFeature implements EntitySpawningFea
 			gameState.addInitialCrystals(1);
 			gameState.addUnminedCrystal(this);
 			// Only really need to rethink routes in survival mode because crystals only spawn dynamically in survival:
-			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
+			int gameMode = gameState.getGameMode();
+			if (gameMode == WormGameState.GAME_MODE_SURVIVAL || gameMode == WormGameState.GAME_MODE_XMAS) {
 				int tx = (int) (getMapX() / MapRenderer.TILE_SIZE);
 				int ty = (int) (getMapY() / MapRenderer.TILE_SIZE);
 				Gidrah.rethinkRoutes(new Rectangle(tx, ty, size == 1 ? 1 : 2, 1));
@@ -195,15 +197,8 @@ public class CrystalFeature extends BuildingFeature implements EntitySpawningFea
 						}
 
 						// Clear obstacle on map
-						int tx = (int) (getMapX() / MapRenderer.TILE_SIZE);
-						int ty = (int) (getMapY() / MapRenderer.TILE_SIZE);
 						WormGameState gameState = Worm.getGameState();
-						gameState.getMap().clearItem(tx, ty);
-						if (size > 1) {
-							gameState.getMap().clearItem(tx + 1, ty);
-						}
-						// Update gidrah routes
-						Gidrah.rethinkRoutes(new Rectangle(tx, ty, size == 1 ? 1 : 2, 1));
+						clearMap();
 						gameState.addCrystals(-1);
 						gameState.removeUnminedCrystal(this);
 
@@ -239,6 +234,19 @@ public class CrystalFeature extends BuildingFeature implements EntitySpawningFea
 				default:
 					assert false : "Unknown phase "+phase;
 			}
+		}
+
+		@Override
+        public void clearMap() {
+			int tx = (int) (getMapX() / MapRenderer.TILE_SIZE);
+			int ty = (int) (getMapY() / MapRenderer.TILE_SIZE);
+			WormGameState gameState = Worm.getGameState();
+			gameState.getMap().clearItem(tx, ty);
+			if (size > 1) {
+				gameState.getMap().clearItem(tx + 1, ty);
+			}
+			// Update gidrah routes
+			Gidrah.rethinkRoutes(new Rectangle(tx, ty, size == 1 ? 1 : 2, 1));
 		}
 
 		@Override
@@ -384,7 +392,15 @@ public class CrystalFeature extends BuildingFeature implements EntitySpawningFea
 			}
 		}
 
-
+		@Override
+		public float getAgitation() {
+			int gameMode = Worm.getGameState().getGameMode();
+			if (gameMode == WormGameState.GAME_MODE_CAMPAIGN || gameMode == WormGameState.GAME_MODE_ENDLESS) {
+				return 0.0f;
+			} else {
+				return getRemaining() * GameConfiguration.getInstance().getCrystalAgitationFactor();
+			}
+		}
 	}
 
 	/**

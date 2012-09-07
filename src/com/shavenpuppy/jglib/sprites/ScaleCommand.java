@@ -63,15 +63,12 @@ public class ScaleCommand extends Command {
 		super();
 	}
 
-	/**
-	 * @see com.shavenpuppy.jglib.sprites.Command#execute(com.shavenpuppy.jglib.sprites.Animated)
-	 */
 	@Override
 	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
-		int currentTick = target.getTick();
+		int currentTick = target.getTick() + 1;
 
-		if (currentTick == 0) {
+		if (currentTick == 1) {
 			int newScaleX, newScaleY;
 			if (relativex) {
 				newScaleX = target.getXScale() + FPMath.fpValue(xdelta);
@@ -85,19 +82,16 @@ public class ScaleCommand extends Command {
 			}
 			target.setScale(newScaleX, newScaleY);
 		}
-		if (currentTick >= duration) {
+		if (currentTick > duration) {
 			target.setSequence(++currentSequence);
 			target.setTick(0);
 			return true; // Execute the next command
 		}
 
-		target.setTick(++currentTick);
+		target.setTick(currentTick);
 		return false; // Don't execute the next command
 	}
 
-	/**
-	 * @see com.shavenpuppy.jglib.Resource#load(org.w3c.dom.Element, Loader)
-	 */
 	@Override
 	public void load(Element element, Resource.Loader loader) throws Exception {
 		String sdelta = XMLUtil.getString(element, "scale", "!");

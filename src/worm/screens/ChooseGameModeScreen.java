@@ -45,14 +45,13 @@ public class ChooseGameModeScreen extends Screen {
 
 	private static final long serialVersionUID = 1L;
 
-	private static ChooseGameModeScreen instance;
-
 	private static final String ID_CANCEL = "cancel";
 	private static final String ID_RESTORE = "mode_restore";
 	private static final String ID_CAMPAIGN = "mode_campaign";
 	private static final String ID_ENDLESS = "mode_endless";
 	private static final String ID_SURVIVAL = "mode_survival";
 	private static final String ID_SANDBOX = "mode_sandbox";
+	private static final String ID_XMAS = "mode_xmas";
 
 	private static final String ID_BUTTON = "mode_";
 	private static final String ID_TITLE = "_title";
@@ -68,20 +67,6 @@ public class ChooseGameModeScreen extends Screen {
 	public ChooseGameModeScreen(String name) {
 		super(name);
 		setAutoCreated();
-	}
-
-	public static void show() {
-		instance.open();
-	}
-
-	@Override
-	protected void doRegister() {
-		instance = this;
-	}
-
-	@Override
-	protected void doDeregister() {
-		instance = null;
 	}
 
 	@Override
@@ -117,8 +102,15 @@ public class ChooseGameModeScreen extends Screen {
 				Worm.newGame(WormGameState.GAME_MODE_SURVIVAL);
 			}
 		} else if (ID_SANDBOX.equals(id)) {
+			if (Worm.isSandboxRegistered()) {
+				close();
+				SelectSandboxLevelScreen.show();
+			} else {
+				SandboxRegisterScreen.show();
+			}
+		} else if (ID_XMAS.equals(id)) {
 			close();
-			Worm.newGame(WormGameState.GAME_MODE_SANDBOX);
+			Worm.newGame(WormGameState.GAME_MODE_XMAS);
 		}
 	}
 

@@ -32,8 +32,14 @@
 package worm.effects;
 
 import net.puppygames.applet.effects.Effect;
+import net.puppygames.applet.widgets.Beam;
+import net.puppygames.applet.widgets.Ring;
+
+import org.lwjgl.util.Color;
+
 import worm.CrystalResource;
 import worm.Layers;
+import worm.Res;
 import worm.SFX;
 
 import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
@@ -57,7 +63,7 @@ public class CrystalSpawnEffect extends Effect {
 	private static final int WAIT_DURATION = 300;
 	private static final int RES_OUT_DURATION = 60;
 
-	private static final float ALPHA = 0.25f;
+	private static final float ALPHA = 0.5f;
 	private static final float OUTER_ALPHA_MULT = 0.75f;
 
 	/** Size of the outer circle */
@@ -77,38 +83,10 @@ public class CrystalSpawnEffect extends Effect {
 	private static final float LINE_LENGTH = 8.0f;
 
 	/** line widths */
-	private static final float LINE_WIDTH =  4.0f;
+	private static final float LINE_WIDTH =  2.0f;
 
 	/** Length of crosshair lines on inner circle */
 	private static final float INNER_LINE_RADIUS = INNER_SIZE - LINE_LENGTH;
-
-	private static final int SEGMENTS = 32;
-	private static final int OUTER_CROSSHAIR_STEP = 8;
-	private static final int INNER_CROSSHAIR_STEP = 4;
-	private static final short[] OUTER_CIRCLE_INDICES, CROSSHAIR_INDICES, INNER_CIRCLE_INDICES, INNER_CROSSHAIR_INDICES;
-	static {
-		OUTER_CIRCLE_INDICES = new short[SEGMENTS];
-		for (short i = 0; i < SEGMENTS; i ++) {
-			OUTER_CIRCLE_INDICES[i] = i;
-		}
-
-		CROSSHAIR_INDICES = new short[2 * SEGMENTS / OUTER_CROSSHAIR_STEP];
-		for (short i = 0; i < CROSSHAIR_INDICES.length; i ++) {
-			CROSSHAIR_INDICES[i] = (short) (i + OUTER_CIRCLE_INDICES[SEGMENTS - 1] + 1);
-		}
-
-		INNER_CIRCLE_INDICES = new short[SEGMENTS];
-		for (short i = 0; i < SEGMENTS; i ++) {
-			INNER_CIRCLE_INDICES[i] = (short) (i + CROSSHAIR_INDICES[2 * SEGMENTS / OUTER_CROSSHAIR_STEP - 1] + 1);
-		}
-
-		INNER_CROSSHAIR_INDICES = new short[2 * SEGMENTS / INNER_CROSSHAIR_STEP];
-		for (short i = 0; i < INNER_CROSSHAIR_INDICES.length; i ++) {
-			INNER_CROSSHAIR_INDICES[i] = (short) (i + INNER_CIRCLE_INDICES[SEGMENTS - 1] + 1);
-		}
-
-	}
-
 
 	/** Tick */
 	private int tick;
@@ -128,38 +106,28 @@ public class CrystalSpawnEffect extends Effect {
 	private static final int PHASE_WAIT = 1;
 	private static final int PHASE_RES_OUT = 2;
 
+	private final Ring outerRing = new Ring();
+	private final Ring innerRing = new Ring();
+	private final Beam beam = new Beam();
+
+	private transient float x, y, alpha, radius;
+
+
 	/**
 	 * C'tor
 	 * @param crystal
 	 */
 	public CrystalSpawnEffect(CrystalResource crystal) {
 		this.crystal = crystal;
+		innerRing.setColor(new Color(0, 255, 173));
+		innerRing.setThickness(LINE_WIDTH);
+		innerRing.setDash(16.0f);
+		outerRing.setColor(new Color(0, 255, 173));
+		outerRing.setThickness(LINE_WIDTH);
 	}
 
 	@Override
 	protected void render() {
-		final float x = crystal.getMapX() + crystal.getCollisionX();
-		final float y = crystal.getMapY() + crystal.getCollisionY();
-		float alpha;
-		float radius;
-		switch (phase) {
-			case PHASE_RES_IN:
-				radius = LinearInterpolator.instance.interpolate(OUTER_START_SIZE, OUTER_END_SIZE, tick / (float) RES_IN_DURATION);
-				alpha = LinearInterpolator.instance.interpolate(0.0f, ALPHA, tick / (float) RES_IN_DURATION);
-				break;
-			case PHASE_WAIT:
-				radius = OUTER_END_SIZE;
-				alpha = ALPHA;
-				break;
-			case PHASE_RES_OUT:
-				radius = LinearInterpolator.instance.interpolate(OUTER_END_SIZE, OUTER_START_SIZE, tick / (float) RES_OUT_DURATION);
-				alpha = LinearInterpolator.instance.interpolate(ALPHA, 0.0f, tick / (float) RES_OUT_DURATION);
-				break;
-			default:
-				assert false;
-				radius = 0.0f;
-				alpha = 0.0f;
-		}
 
 		float lineRadius = radius + LINE_LENGTH;
 
@@ -167,35 +135,37 @@ public class CrystalSpawnEffect extends Effect {
 		glRender(new GLRenderable() {
 			@Override
 			public void render() {
+//				glEnable(GL_STENCIL_TEST);
+//				glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+//				glStencilFunc(GL_NOTEQUAL, 1, 1);
 				glEnable(GL_BLEND);
-				glDisable(GL_TEXTURE_2D);
+				glEnable(GL_TEXTURE_2D);
+				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-				glLineWidth(LINE_WIDTH);
 				glPushMatrix();
 				glTranslatef(getOffset().getX() + x, getOffset().getY() + y, 0.0f);
-				glEnableClientState(GL_COLOR_ARRAY);
+				Res.getSolidTexture().render();
 			}
 		});
-		glColor4f(0.0f, 1.0f, 0.68f, alpha);
-		for (int i = 0; i < SEGMENTS; i++) {
-			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * radius, (float) Math.sin(i * Math.PI / 16.0) * radius);
-		}
-		glRender(GL_LINE_LOOP, OUTER_CIRCLE_INDICES);
+
+		outerRing.setRadius(radius);
+		outerRing.setAlpha((int) (255.0f * alpha));
+		outerRing.render(this);
 
 		// Draw crosshair lines at the edge of the circle
 		glRender(new GLRenderable() {
 			@Override
 			public void render() {
 				glRotatef(outerAngle, 0.0f, 0.0f, 1.0f);
+				Res.getBeamTexture().render();
 			}
 		});
-		for (int i = 0; i < SEGMENTS; i += OUTER_CROSSHAIR_STEP) {
-			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * radius, (float) Math.sin(i * Math.PI / 16.0) * radius);
-			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * lineRadius, (float) Math.sin(i * Math.PI / 16.0) * lineRadius);
+		beam.setWidth(LINE_WIDTH + 1.0f);
+		for (int i = 0; i < 32; i += 8) {
+			beam.setLocation((float) Math.cos(i * Math.PI / 16.0) * (radius + 0.5f), (float) Math.sin(i * Math.PI / 16.0) * (radius + 0.5f), (float) Math.cos(i * Math.PI / 16.0) * lineRadius, (float) Math.sin(i * Math.PI / 16.0) * lineRadius);
+			beam.render(this);
 		}
-		glRender(GL_LINES, CROSSHAIR_INDICES);
 
-		// Draw inner circle
 		glRender(new GLRenderable() {
 			@Override
 			public void render() {
@@ -203,33 +173,31 @@ public class CrystalSpawnEffect extends Effect {
 				glPushMatrix();
 				glTranslatef(getOffset().getX() + x, getOffset().getY() + y, 0.0f);
 				glRotatef(innerAngle, 0.0f, 0.0f, 1.0f);
-				glLineStipple(1, (short) 0xFF00);
-				glEnable(GL_LINE_STIPPLE);
+				Res.getDashTexture().render();
 			}
 		});
-		glColor4f(0.0f, 1.0f, 0.68f, alpha * OUTER_ALPHA_MULT);
-		for (int i = 0; i < SEGMENTS; i ++) {
-			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_SIZE, (float) Math.sin(i * Math.PI / 16.0) * INNER_SIZE);
-		}
-		glRender(GL_LINE_LOOP, INNER_CIRCLE_INDICES);
 
-		// Draw inner crosshair lines
+		innerRing.setRadius(INNER_SIZE);
+		innerRing.setAlpha((int) (255.0f * alpha * OUTER_ALPHA_MULT));
+		innerRing.render(this);
+
 		glRender(new GLRenderable() {
 			@Override
 			public void render() {
-				glDisable(GL_LINE_STIPPLE);
+				Res.getBeamTexture().render();
 			}
 		});
-		for (int i = 0; i < SEGMENTS; i += INNER_CROSSHAIR_STEP) {
-			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_SIZE, (float) Math.sin(i * Math.PI / 16.0) * INNER_SIZE);
-			glVertex2f((float) Math.cos(i * Math.PI / 16.0) * INNER_LINE_RADIUS, (float) Math.sin(i * Math.PI / 16.0) * INNER_LINE_RADIUS);
+
+		for (int i = 0; i < 32; i += 4) {
+			beam.setLocation((float) Math.cos(i * Math.PI / 16.0) * (INNER_SIZE - LINE_WIDTH - 0.5f), (float) Math.sin(i * Math.PI / 16.0) * (INNER_SIZE - LINE_WIDTH - 0.5f), (float) Math.cos(i * Math.PI / 16.0) * INNER_LINE_RADIUS, (float) Math.sin(i * Math.PI / 16.0) * INNER_LINE_RADIUS);
+			beam.render(this);
 		}
-		glRender(GL_LINES, INNER_CROSSHAIR_INDICES);
+
 		glRender(new GLRenderable() {
 			@Override
 			public void render() {
 				glPopMatrix();
-				glLineWidth(1.0f);
+//				glDisable(GL_STENCIL_TEST);
 			}
 		});
 	}
@@ -243,13 +211,14 @@ public class CrystalSpawnEffect extends Effect {
 	protected void doTick() {
 		innerAngle += INNER_ROTATION;
 		outerAngle += OUTER_ROTATION;
-
+		x = crystal.getMapX() + crystal.getCollisionX();
+		y = crystal.getMapY() + crystal.getCollisionY();
 		switch (phase) {
 			case PHASE_RES_IN:
 				tick ++;
+				radius = LinearInterpolator.instance.interpolate(OUTER_START_SIZE, OUTER_END_SIZE, tick / (float) RES_IN_DURATION);
+				alpha = LinearInterpolator.instance.interpolate(0.0f, ALPHA, tick / (float) RES_IN_DURATION);
 				if (tick == RES_IN_DURATION) {
-					final float x = crystal.getMapX() + crystal.getCollisionX();
-					final float y = crystal.getMapY() + crystal.getCollisionY();
 					SFX.crystalSpawned(x, y);
 				}
 				if (crystal.isReady() && tick > RES_IN_DURATION) {
@@ -259,6 +228,8 @@ public class CrystalSpawnEffect extends Effect {
 				break;
 			case PHASE_WAIT:
 				tick ++;
+				radius = OUTER_END_SIZE;
+				alpha = ALPHA;
 				if (tick == WAIT_DURATION) {
 					phase = PHASE_RES_OUT;
 					tick = 0;
@@ -266,9 +237,13 @@ public class CrystalSpawnEffect extends Effect {
 				break;
 			case PHASE_RES_OUT:
 				tick ++;
+				radius = LinearInterpolator.instance.interpolate(OUTER_END_SIZE, OUTER_START_SIZE, tick / (float) RES_OUT_DURATION);
+				alpha = LinearInterpolator.instance.interpolate(ALPHA, 0.0f, tick / (float) RES_OUT_DURATION);
 				break;
 			default:
 				assert false;
+				radius = 0.0f;
+				alpha = 0.0f;
 		}
 	}
 

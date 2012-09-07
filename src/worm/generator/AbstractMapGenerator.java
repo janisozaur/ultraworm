@@ -78,6 +78,9 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 	/* chaz hack - amount of random tile 2 */
 	private static final double RANDOM_ROCKY_THRESHOLD = 0.05;
 
+	/** Bucket of common properties for generator classes */
+	protected final MapGeneratorParams mapGeneratorParams;
+
 	/** The template; this provides tile sets for various features */
 	protected final MapTemplate template;
 
@@ -135,14 +138,15 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 	 * @param levelInWorld
 	 * @param levelFeature
 	 */
-	public AbstractMapGenerator(MapTemplate template, int level, int levelInWorld, LevelFeature levelFeature) {
+	public AbstractMapGenerator(MapTemplate template, MapGeneratorParams mapGeneratorParams) {
+		this.mapGeneratorParams = mapGeneratorParams;
 		this.template = template;
-		this.level = level;
-		this.levelInWorld = levelInWorld;
-		this.levelFeature = levelFeature;
+		this.level = mapGeneratorParams.getLevel();
+		this.levelInWorld = mapGeneratorParams.getLevelInWorld();
+		this.levelFeature = mapGeneratorParams.getLevelFeature();
 		this.scenery = levelFeature.getScenery();
 
-		if (Worm.getGameState().getGameMode() != WormGameState.GAME_MODE_SURVIVAL) {
+		if (mapGeneratorParams.getGameMode() != WormGameState.GAME_MODE_SURVIVAL && mapGeneratorParams.getGameMode() != WormGameState.GAME_MODE_XMAS) {
 			Util.setSeed(getSeed());
 		}
 	}
@@ -223,8 +227,7 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 
 	protected final long getSeed() {
 		String levelName = levelFeature.getTitle();
-		WormGameState gameState = Worm.getGameState();
-		int gameMode = gameState.getGameMode();
+		int gameMode = mapGeneratorParams.getGameMode();
 		duff = Worm.getExtraLevelData(Game.getPlayerSlot(), level, gameMode, "duff_" + levelName, 0);
 		long unique = Game.getPlayerSlot().getPreferences().getLong("unique_"+gameMode, 0L);
 		if (unique == 0L) {
@@ -235,16 +238,16 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 		long seed =
 					((Game.getPlayerSlot().getName().hashCode() + duff + WormGameState.getDifficultyAdjust(level, gameMode)))
 				|
-					(((long) Float.floatToRawIntBits(gameState.getBasicDifficulty())) << 32L);
+					(((long) Float.floatToRawIntBits(mapGeneratorParams.getBasicDifficulty())) << 32L);
 
-		seed ^= gameState.getResearchHash();
+		seed ^= mapGeneratorParams.getResearchHash();
 		seed ^= unique;
 		return seed;
 	}
 
 	private String getFileName() {
 		String levelName = levelFeature.getTitle();
-		int gameMode = Worm.getGameState().getGameMode();
+		int gameMode = mapGeneratorParams.getGameMode();
 		long seed = getSeed();
 		return Game.getPlayerDirectoryPrefix()+levelName.replace(' ', '_')+"_"+gameMode+"_"+Long.toHexString(seed)+".dat";
 	}
@@ -637,6 +640,10 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 	 * @return true if the map is valid, false if not
 	 */
 	private boolean isValid() {
+		if (spawnPoints.size() == 0 && levelFeature.useFixedSpawnPoints()) {
+			System.out.println("NO SPAWNPOINTS!");
+			return false;
+		}
 		IntList path = new IntList(true, getWidth() + getHeight());
 		int[] steps = new int[1];
 		SolidCheck check = new SolidCheck() {
@@ -1129,7 +1136,7 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 							char type = formation[currentFormation ++];
 							Res.getSouthSpawnPoint(type - '1').toMap(ret, x, y, true);
 						} else if (y == map.getHeight() - 1) {
-							char type = formation[currentFormation ++];
+							char type = mapGeneratorParams.getGameMode() == WormGameState.GAME_MODE_XMAS ? '1' : formation[currentFormation ++]; // Xmas Hax!
 							Res.getNorthSpawnPoint(type - '1').toMap(ret, x, y, true);
 						} else {
 							template.getMidSpawn().toMap(ret, x, y, true);
@@ -1216,7 +1223,7 @@ abstract class AbstractMapGenerator implements MapGenerator, SimpleTiles {
 			Thread.yield();
 		}
 
-		if (level != -1) {
+		if (mapGeneratorParams.getGameMode() == WormGameState.GAME_MODE_CAMPAIGN || mapGeneratorParams.getGameMode() == WormGameState.GAME_MODE_ENDLESS) {
 			try {
 				save(ret);
 			} catch (IOException e) {

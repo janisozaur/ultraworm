@@ -117,4 +117,14 @@ public interface Medals {
 	String TIGHT_FISTED			  = "medal.tight_fisted";
 	String THRIFTY					  = "medal.thrifty";
 	String SHORT_ARMS_DEEP_POCKETS	  = "medal.short_arms_deep_pockets";
+
+	/*
+	 * Xmas!
+	 */
+
+	String XMAS_1			= "medal.xmas.1";
+	String XMAS_2			= "medal.xmas.2";
+	String XMAS_3			= "medal.xmas.3";
+	String XMAS_4			= "medal.xmas.4";
+	String XMAS_VICTORY		= "medal.xmas.victory";
 }

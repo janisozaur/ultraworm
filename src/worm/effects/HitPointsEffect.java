@@ -99,7 +99,7 @@ public class HitPointsEffect extends Effect {
 	protected void doUpdate() {
 		if (layers != null) {
 			for (int i = 0; i < layers.getSprites().length; i ++) {
-				layers.getSprite(i).setLocation(building.getScreenX(), building.getScreenY(), 0.0f);
+				layers.getSprite(i).setLocation(building.getScreenX(), building.getScreenY());
 			}
 		}
 	}

@@ -143,7 +143,7 @@ public class PowerDisplayFeature extends Feature {
 			}
 
 			void setLocation(float x, float y) {
-				sprite.setLocation(x, y, 0);
+				sprite.setLocation(x, y);
 			}
 		}
 

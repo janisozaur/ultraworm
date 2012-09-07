@@ -555,7 +555,8 @@ public abstract class MiniGame extends Game {
 		flushPrefs();
 	}
 
-	@Override
+	@SuppressWarnings("unused")
+    @Override
 	protected void onPreRegisteredStartup() {
 		if (IGNORESIGNUP && DEBUG) {
 			showTitleScreen();

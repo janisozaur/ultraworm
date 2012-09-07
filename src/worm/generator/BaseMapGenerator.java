@@ -112,8 +112,8 @@ public abstract class BaseMapGenerator extends AbstractMapGenerator {
 	 * @param level
 	 * @param levelFeature TODO
 	 */
-	public BaseMapGenerator(MapTemplate template, int level, int levelInWorld, LevelFeature levelFeature) {
-		super(template, level, levelInWorld, levelFeature);
+	public BaseMapGenerator(MapTemplate template, MapGeneratorParams mapGeneratorParams) {
+		super(template, mapGeneratorParams);
 	}
 
 	public static boolean isBaseCentralForLevel(int level, int gameMode) {
@@ -169,11 +169,10 @@ public abstract class BaseMapGenerator extends AbstractMapGenerator {
 
 		// Choose a set of points, then centre them according to level bias.
 		int x = Util.random(3, ww / 3 - 6) + ox + BASE_MARGIN;
-		int y = Util.random(3, hh / 3 - 6) + oy + BASE_MARGIN;
+		int y = mapGeneratorParams.getGameMode() == WormGameState.GAME_MODE_XMAS ? BASE_MARGIN + 3 : Util.random(3, hh / 3 - 6) + oy + BASE_MARGIN;
 
 		// Ensure not proximal to any other base.
 		boolean ok;
-		int attempts = 0;
 		do {
 			ok = 	isEmpty(x, y, used)
 				&& 	isEmpty(x + 1, y, used)
@@ -185,7 +184,6 @@ public abstract class BaseMapGenerator extends AbstractMapGenerator {
 				&& 	isEmpty(x, y + 2, used)
 				&& 	isEmpty(x, y + 1, used)
 				;
-			attempts ++;
 			Thread.yield();
 		} while (!ok);
 
@@ -350,11 +348,13 @@ public abstract class BaseMapGenerator extends AbstractMapGenerator {
 
 		// Choose formation
 		int totalSpawners = levelFeature.getNumSpawnPoints();
-		int totalMid = Worm.getGameState().getGameMode() == WormGameState.GAME_MODE_CAMPAIGN ? Math.max(0, level - (MID_SPAWNERS_THRESHOLD - MID_SPAWNERS_DIVISOR)) / MID_SPAWNERS_DIVISOR
-				: Worm.getGameState().getGameMode() == WormGameState.GAME_MODE_ENDLESS ? (Worm.getGameState().getWorld().getIndex() > 1 ? Math.max(0, level - (MID_SPAWNERS_THRESHOLD - MID_SPAWNERS_DIVISOR)) / MID_SPAWNERS_DIVISOR : 0)
+		int totalMid = mapGeneratorParams.getGameMode() == WormGameState.GAME_MODE_CAMPAIGN ? Math.max(0, level - (MID_SPAWNERS_THRESHOLD - MID_SPAWNERS_DIVISOR)) / MID_SPAWNERS_DIVISOR
+				: mapGeneratorParams.getGameMode() == WormGameState.GAME_MODE_ENDLESS ? (mapGeneratorParams.getWorldFeature().getIndex() > 1 ? Math.max(0, level - (MID_SPAWNERS_THRESHOLD - MID_SPAWNERS_DIVISOR)) / MID_SPAWNERS_DIVISOR : 0)
 						: 0;
 		int totalEdge = Math.max(0, totalSpawners - totalMid);
-
+		assert totalSpawners > 0;
+		assert totalEdge > 0;
+		//System.out.println(totalEdge+", "+totalSpawners);
 		for (int i = 0; i < totalEdge; i ++) {
 			int x, y;
 			do {
@@ -400,7 +400,7 @@ public abstract class BaseMapGenerator extends AbstractMapGenerator {
 						break;
 
 					case 6:
-						if (Util.random(0, 20) < level / WormGameState.LEVELS_IN_WORLD) {
+						if (Util.random(0, 20) < level / WormGameState.LEVELS_IN_WORLD && mapGeneratorParams.getGameMode() != WormGameState.GAME_MODE_XMAS) { // Xmas: always from the north.
 							edge = Util.random() < 0.5 ? 1 : 3;
 						} else {
 							edge = 0;
@@ -778,12 +778,12 @@ public abstract class BaseMapGenerator extends AbstractMapGenerator {
 	}
 
 	private int getCrystalMinDistance(int size) {
-		return (int) LinearInterpolator.instance.interpolate(MIN_CRYSTAL_DISTANCE + size, MIN_CRYSTAL_DISTANCE * size + size, Worm.getGameState().getBasicDifficulty());
+		return (int) LinearInterpolator.instance.interpolate(MIN_CRYSTAL_DISTANCE + size, MIN_CRYSTAL_DISTANCE * size + size, mapGeneratorParams.getBasicDifficulty());
 	}
 
 	private int getCrystalMaxDistance(int size) {
 		int crystalMinDistance = (int) (getCrystalMinDistance(size) * 1.5f);
-		return (int) LinearInterpolator.instance.interpolate(crystalMinDistance, Math.max(crystalMinDistance, Math.max(getHeight(), getWidth()) * 0.7f), Worm.getGameState().getBasicDifficulty());
+		return (int) LinearInterpolator.instance.interpolate(crystalMinDistance, Math.max(crystalMinDistance, Math.max(getHeight(), getWidth()) * 0.7f), mapGeneratorParams.getBasicDifficulty());
 	}
 
 	/**
@@ -845,14 +845,14 @@ public abstract class BaseMapGenerator extends AbstractMapGenerator {
 			return 0; // No crystals on first level
 		} else {
 			num = BASE_CRYSTALS;
-			if (Worm.getGameState().getLevelFeature().getBosses() != null) {
-				num += EXTRA_CRYSTALS_BOSS + Worm.getGameState().getLevelFeature().getBosses().getNumResources();
+			if (mapGeneratorParams.getLevelFeature().getBosses() != null) {
+				num += EXTRA_CRYSTALS_BOSS + mapGeneratorParams.getLevelFeature().getBosses().getNumResources();
 			}
 			if (levelFeature.getBias() == -1) {
 				num += EXTRA_CRYSTALS_CENTRAL;
 			}
 		}
-		int money = Worm.getGameState().getMoney();
+		int money = mapGeneratorParams.getMoney();
 		float ratio = money - MAX_MONEY > 0 ? Math.min(ABS_MAX_MONEY, (money - MAX_MONEY)) / ABS_MAX_MONEY : 0.0f;
 		int worldIndex = level / WormGameState.LEVELS_IN_WORLD;
 		float baseCrystals = BASE_CRYSTALS_PER_LEVEL * level + num + worldIndex * BASE_CRYSTALS_PER_WORLD;

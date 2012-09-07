@@ -32,23 +32,25 @@
 package worm;
 
 import java.io.Serializable;
+import java.util.Calendar;
 
 import net.puppygames.applet.Game;
 import net.puppygames.applet.GameState;
 import net.puppygames.applet.MiniGame;
 import net.puppygames.applet.PlayerSlot;
+import net.puppygames.applet.Screen;
 import net.puppygames.applet.effects.LabelEffect;
 import net.puppygames.applet.effects.Particle;
 import net.puppygames.applet.screens.DialogScreen;
 import net.puppygames.applet.screens.NagScreen;
+import net.puppygames.gamecommerce.shared.RegistrationDetails;
 import net.puppygames.steam.NotificationPosition;
 import net.puppygames.steam.Steam;
 import net.puppygames.steam.SteamException;
 
 import org.lwjgl.Sys;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.util.Rectangle;
+import org.lwjgl.util.Point;
 
 import worm.animation.SimpleThingWithLayers;
 import worm.features.LayersFeature;
@@ -67,18 +69,16 @@ import com.shavenpuppy.jglib.sprites.SpriteAllocator;
 import com.shavenpuppy.jglib.sprites.SpriteEngine;
 import com.shavenpuppy.jglib.sprites.SpriteImage;
 import com.shavenpuppy.jglib.sprites.StaticSpriteEngine;
-import com.shavenpuppy.jglib.util.Util;
 
 /**
- * $Id: Worm.java,v 1.56 2010/11/06 17:20:03 foo Exp $
- * The Puppytron game
- * <p>
- * @author $Author: foo $
- * @version $Revision: 1.56 $
+ * Revenge of the Titans game
  */
 public class Worm extends MiniGame {
 
 	private static final long serialVersionUID = 1L;
+
+	private static final boolean TEST_XMAS = true; // Only honoured if DEBUG is also true
+	private static final boolean FORCE_XMAS = true; // Force Xmas to this value when TEST_XMAS is true
 
 	public static final float MAX_LOUD_ATTENUATION_DISTANCE = 1280.0f;
 	public static final float MAX_ATTENUATION_DISTANCE = 720.f;
@@ -99,8 +99,9 @@ public class Worm extends MiniGame {
 	public static final Attenuator ATTENUATOR = new Attenuator() {
 		@Override
 		public float getVolume(float x, float y) {
-			double ddx = -GameScreen.getSpriteOffset().getX() + Game.getWidth() / 2.0f - x;
-			double ddy = -GameScreen.getSpriteOffset().getY() + Game.getHeight() / 2.0f  - y;
+			Point spriteOffset = GameScreen.getSpriteOffset();
+			double ddx = -spriteOffset.getX() + Game.getWidth() / 2.0f - x;
+			double ddy = -spriteOffset.getY() + Game.getHeight() / 2.0f  - y;
 			double dist = Math.sqrt(ddx * ddx + ddy * ddy);
 			return LinearInterpolator.instance.interpolate(1.0f, MIN_ATTENUATION_GAIN, (float) dist / MAX_ATTENUATION_DISTANCE);
 		}
@@ -108,8 +109,9 @@ public class Worm extends MiniGame {
 	public static final Attenuator LOUD_ATTENUATOR = new Attenuator() {
 		@Override
 		public float getVolume(float x, float y) {
-			double ddx = -GameScreen.getSpriteOffset().getX() + Game.getWidth() / 2.0f - x;
-			double ddy = -GameScreen.getSpriteOffset().getY() + Game.getHeight() / 2.0f  - y;
+			Point spriteOffset = GameScreen.getSpriteOffset();
+			double ddx = -spriteOffset.getX() + Game.getWidth() / 2.0f - x;
+			double ddy = -spriteOffset.getY() + Game.getHeight() / 2.0f  - y;
 			double dist = Math.sqrt(ddx * ddx + ddy * ddy);
 			return LinearInterpolator.instance.interpolate(1.0f, MIN_ATTENUATION_GAIN, (float) dist / MAX_LOUD_ATTENUATION_DISTANCE);
 		}
@@ -133,10 +135,19 @@ public class Worm extends MiniGame {
 		}
 	};
 
+	private static boolean xmas;
+
 	static {
 		Resources.put(ATTENUATOR_FEATURE);
 		Resources.put(LOUD_ATTENUATOR_FEATURE);
 		Resources.put(DEFAULT_ATTENUATOR_FEATURE);
+
+		Calendar c = Calendar.getInstance();
+		int month = c.get(Calendar.MONTH);
+		int day = c.get(Calendar.DAY_OF_MONTH);
+		if ((month == Calendar.DECEMBER && day >= 19) || (month == Calendar.JANUARY && day < 9) || (TEST_XMAS && DEBUG)) {
+			xmas = TEST_XMAS && DEBUG ? FORCE_XMAS : true;
+		}
 	}
 
 	private static final SpriteAllocator MOUSE_SPRITE_ALLOCATOR = new SpriteAllocator() {
@@ -148,24 +159,11 @@ public class Worm extends MiniGame {
 		}
 	};
 
-	/** Max mouse speed */
-	public static final int MOUSE_MAX_SCALE = 10;
-
-	/** Mouse speed multiplier */
-	public static final int MOUSE_SPEED_MULTIPLIER = 3;
-
-	/** Mouse speed */
-	private static int mouseSpeed = MOUSE_MAX_SCALE / MOUSE_SPEED_MULTIPLIER;
-
 	/** Global mouse pointers rendered using this very small sprite engine */
 	private transient SpriteEngine mouseSpriteEngine;
 
 	/** Mouse pointer */
 	private transient SimpleThingWithLayers mouseLayers;
-
-	/** Current scaled mouse coordinates */
-	private transient float mouseDX, mouseDY, mouseX, mouseY;
-
 
 	/*
 	 * Options
@@ -191,11 +189,13 @@ public class Worm extends MiniGame {
 	}
 
 	private void updateMouse() {
+		boolean insideWindow = Mouse.isInsideWindow() && !Game.isPaused();
 		if (mouseLayers.getSprites() != null) {
 			float lx = physicalXtoLogicalX(getMouseX());
 			float ly = physicalYtoLogicalY(getMouseY());
 			for (int i = 0; i < mouseLayers.getSprites().length; i++) {
-				mouseLayers.getSprite(i).setLocation(lx, ly, 0.0f);
+				mouseLayers.getSprite(i).setLocation(lx, ly);
+				mouseLayers.getSprite(i).setVisible(insideWindow);
 			}
 		}
 		mouseSpriteEngine.tick();
@@ -244,7 +244,6 @@ public class Worm extends MiniGame {
 		mouseLayers = new SimpleThingWithLayers(MOUSE_SPRITE_ALLOCATOR);
 
 		setMouseAppearance(Res.getMousePointer());
-		mouseSpeed = getLocalPreferences().getInt("mouseSpeed", mouseSpeed);
 
 		Particle.setMaxParticles(4096);
 		SoundCommand.setDefaultAttenuator(DEFAULT_ATTENUATOR_FEATURE);
@@ -252,7 +251,7 @@ public class Worm extends MiniGame {
 		if (isUsingSteam() && Steam.isCreated() && Steam.isSteamRunning()) {
 			Steam.getUtils().setOverlayNotificationPosition(NotificationPosition.TopRight);
 			try {
-				Steam.getUserStats().requestCurrentStats();
+			Steam.getUserStats().requestCurrentStats();
 			} catch (SteamException e) {
 				System.err.println("Failed to request user stats due to "+e);
 			}
@@ -280,31 +279,6 @@ public class Worm extends MiniGame {
 
 	@Override
 	protected void doTick() {
-		int newMouseDX = Mouse.getDX() * MOUSE_SPEED_MULTIPLIER * getMouseSpeed();
-		int newMouseDY = Mouse.getDY() * MOUSE_SPEED_MULTIPLIER * getMouseSpeed();
-		float newMouseX = mouseX + newMouseDX;
-		float newMouseY = mouseY + newMouseDY;
-		Rectangle viewPort = getViewPort();
-		int minX = viewPort.getX() * Worm.MOUSE_MAX_SCALE;
-		int maxX = (viewPort.getWidth() + viewPort.getX()) * Worm.MOUSE_MAX_SCALE  - 1;
-		mouseX = Math.max(minX, Math.min(maxX, newMouseX));
-		int minY = viewPort.getY() * Worm.MOUSE_MAX_SCALE;
-		int maxY = (viewPort.getHeight() + viewPort.getY()) * Worm.MOUSE_MAX_SCALE - 1;
-		mouseY = Math.max(minY, Math.min(maxY, newMouseY));
-		mouseDX = 0.0f;
-		mouseDY = 0.0f;
-		if (!isCatchUp()) {
-			if (newMouseX < minX) {
-				mouseDX = (newMouseX - minX) * getWidth() / (Worm.MOUSE_MAX_SCALE * viewPort.getWidth());
-			} else if (newMouseX >= maxX) {
-				mouseDX = (newMouseX - maxX) * getWidth() / (Worm.MOUSE_MAX_SCALE * viewPort.getWidth());
-			}
-			if (newMouseY < minY) {
-				mouseDY = (newMouseY - minY) * getHeight() / (Worm.MOUSE_MAX_SCALE * viewPort.getHeight());
-			} else if (newMouseY >= maxY) {
-				mouseDY = (newMouseY - maxY) * getHeight() / (Worm.MOUSE_MAX_SCALE * viewPort.getHeight());
-			}
-		}
 		updateMouse();
 
 		GameScreen gameScreen = GameScreen.getInstance();
@@ -314,61 +288,12 @@ public class Worm extends MiniGame {
 			}
 			gameScreen.clearFastForward();
 		}
-
-		if (DEBUG) {
-			if (wasKeyPressed(Keyboard.KEY_F2)) {
-				//setSize(Util.random(640, 960), 640);
-				//setSize(1138,640); //16:9 widescreen
-				setSize(569,320); //16:9 widescreen
-			}
-
-			if (wasKeyPressed(Keyboard.KEY_F3)) {
-				setSize(640,Util.random(640, 960) );
-			}
-
-			if (wasKeyPressed(Keyboard.KEY_F4)) {
-				setSize(640,640);
-			}
-
-			if (wasKeyPressed(Keyboard.KEY_F5)) {
-				setSize(816, 640);
-			}
-
-		}
 	}
 
 	@Override
-	protected int doGetMouseX() {
-		return (int) (mouseX / Worm.MOUSE_MAX_SCALE);
-	}
-
-	@Override
-	protected int doGetMouseY() {
-		return (int) (mouseY / Worm.MOUSE_MAX_SCALE);
-	}
-
-	public static float getMouseDX() {
-		return instance.mouseDX;
-	}
-
-	public static float getMouseDY() {
-		return instance.mouseDY;
-	}
-
-	/**
-	 * @return the mouse speed (0..{@link #MOUSE_MAX_SCALE})
-	 */
-	public static int getMouseSpeed() {
-		return mouseSpeed;
-	}
-
-	/**
-	 * @param newSpeed
-	 */
-	public static void setMouseSpeed(int newSpeed) {
-		mouseSpeed = newSpeed;
-		getLocalPreferences().putInt("mouseSpeed", newSpeed);
-		flushPrefs();
+	protected void onPaused() {
+		updateMouse();
+		Screen.tickAllScreens();
 	}
 
 	/**
@@ -623,7 +548,11 @@ public class Worm extends MiniGame {
 	@Override
 	protected void onBeginNewGame() {
 		// Open the game mode choice dialog
-		ChooseGameModeScreen.show();
+		if (xmas) {
+			((ChooseGameModeScreen)Resources.get("choose-game-mode-xmas.screen")).open();
+		} else {
+			((ChooseGameModeScreen)Resources.get("choose-game-mode.screen")).open();
+		}
 	}
 
 	@Override
@@ -670,5 +599,24 @@ public class Worm extends MiniGame {
 	protected void onRestoreGameFailed(Exception e) {
 		// Clean up the GameScreen
 		GameScreen.getInstance().panic();
+	}
+
+	/**
+	 * Registration check for allowing Sandbox mode.
+	 */
+	public static boolean isSandboxRegistered() {
+		RegistrationDetails sandboxRegistrationDetails = null;
+		try {
+			sandboxRegistrationDetails = RegistrationDetails.checkRegistration("Sandbox Mode");
+		} catch (Exception e) {
+		}
+		return (sandboxRegistrationDetails!=null ? true : false);
+	}
+
+	/**
+	 * @return true if it's Christmas!
+	 */
+	public static boolean isXmas() {
+		return xmas;
 	}
 }

@@ -62,34 +62,28 @@ public class AngleCommand extends Command {
 		super();
 	}
 
-	/**
-	 * @see com.shavenpuppy.jglib.sprites.Command#execute(com.shavenpuppy.jglib.sprites.Animated)
-	 */
 	@Override
 	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
-		int currentTick = target.getTick();
+		int currentTick = target.getTick() + 1;
 
-		if (currentTick == 0) {
+		if (currentTick == 1) {
 			if (relative) {
 				target.adjustAngle(delta);
 			} else {
 				target.setAngle(delta);
 			}
 		}
-		if (currentTick >= duration) {
+		if (currentTick > duration) {
 			target.setSequence(++currentSequence);
 			target.setTick(0);
 			return true; // Execute the next command
 		}
 
-		target.setTick(++currentTick);
+		target.setTick(currentTick);
 		return false; // Don't execute the next command
 	}
 
-	/**
-	 * @see com.shavenpuppy.jglib.Resource#load(org.w3c.dom.Element, Loader)
-	 */
 	@Override
 	public void load(Element element, Resource.Loader loader) throws Exception {
 		String sdelta = XMLUtil.getString(element, "angle");
@@ -102,9 +96,6 @@ public class AngleCommand extends Command {
 		duration = XMLUtil.getInt(element, "d", 0);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.shavenpuppy.jglib.Resource#doToXML(com.shavenpuppy.jglib.XMLResourceWriter)
-	 */
 	@Override
 	protected void doToXML(XMLResourceWriter writer) throws IOException {
 		if (relative) {

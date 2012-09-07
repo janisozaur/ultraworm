@@ -272,22 +272,24 @@ public class LayersFeature extends Feature {
 		}
 		owner.setSprites(s);
 		for (int i = 0; i < s.length; i ++) {
-			if (sprite[i].animationResource != null) {
-				s[i].setAnimation(sprite[i].animationResource);
-			} else {
-				s[i].setImage(sprite[i].imageResource);
+			if (scale != 1.0f) {
+				s[i].setScale(FPMath.fpValue(scale));
 			}
 			s[i].setLayer(sprite[i].layer);
 			s[i].setSubLayer(sprite[i].subLayer);
-			s[i].setScale(FPMath.fpValue(scale));
 			if (sprite[i].offset != null) {
-				s[i].setOffset((sprite[i].offset.getX() + ox) * scale, (sprite[i].offset.getY() + oy) * scale, 0.0f);
+				s[i].setOffset((sprite[i].offset.getX() + ox) * scale, (sprite[i].offset.getY() + oy) * scale);
 			} else {
-				s[i].setOffset(ox * scale, oy * scale, 0.0f);
+				s[i].setOffset(ox * scale, oy * scale);
 			}
 			s[i].setYSortOffset((ySortOffset + sprite[i].ySortOffset) * scale);
 			if (sprite[i].doChildOffset) {
 				s[i].setDoChildOffset(true);
+			}
+			if (sprite[i].animationResource != null) {
+				s[i].setAnimation(sprite[i].animationResource);
+			} else {
+				s[i].setImage(sprite[i].imageResource);
 			}
 		}
 		createColors(s);
@@ -296,7 +298,7 @@ public class LayersFeature extends Feature {
 
 	public void updateLocation(Sprite[] existingSprite, float x, float y) {
 		for (Sprite element : existingSprite) {
-			element.setLocation(x, y, 0.0f);
+			element.setLocation(x, y);
 		}
 	}
 
@@ -356,7 +358,7 @@ public class LayersFeature extends Feature {
 		for (int i = 0; i < existingSprites.length; i ++) {
 			existingSprites[i].setScale(FPMath.fpValue(newScale * scale));
 			if (sprite[i].offset != null) {
-				existingSprites[i].setOffset(sprite[i].offset.getX() * newScale * scale, sprite[i].offset.getY() * newScale * scale, 0.0f);
+				existingSprites[i].setOffset(sprite[i].offset.getX() * newScale * scale, sprite[i].offset.getY() * newScale * scale);
 			}
 			existingSprites[i].setYSortOffset(sprite[i].ySortOffset * newScale * scale);
 		}

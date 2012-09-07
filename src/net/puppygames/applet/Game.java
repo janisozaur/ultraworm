@@ -32,20 +32,14 @@
 
 package net.puppygames.applet;
 
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.Insets;
-import java.awt.LayoutManager;
-import java.awt.Toolkit;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowStateListener;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -74,7 +68,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -88,16 +81,16 @@ import net.puppygames.gamecommerce.shared.GameInfoServerRemote;
 import net.puppygames.gamecommerce.shared.RegistrationDetails;
 import net.puppygames.steam.Steam;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.LWJGLUtil;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Controllers;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.openal.AL;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.util.Point;
-import org.lwjgl.util.ReadablePoint;
 import org.lwjgl.util.Rectangle;
 import org.lwjgl.util.Timer;
 
@@ -130,10 +123,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.openal.AL10.*;
 
 /**
- * $Id: Game.java,v 1.56 2010/10/17 21:04:01 foo Exp $ Abstract base class for a "game"
- *
- * @author $Author: foo $
- * @version $Revision: 1.56 $
+ * The main Game class
  */
 public abstract class Game extends Feature {
 
@@ -154,6 +144,9 @@ public abstract class Game extends Feature {
 	/** Keydown state tracking */
 	private static final boolean[] KEYDOWN = new boolean[Keyboard.KEYBOARD_SIZE];
 	private static final boolean[] KEYWASDOWN = new boolean[Keyboard.KEYBOARD_SIZE];
+
+	/** Mouse events */
+	private static final List<MouseEvent> MOUSEEVENTS = new ArrayList<MouseEvent>();
 
 	/** Restore filename */
 	protected static final String RESTORE_FILE = "restore.dat";
@@ -263,17 +256,12 @@ public abstract class Game extends Feature {
 	/** Mod name */
 	private static String modName;
 
-	/** Frame for windowed mode */
-	private static Frame window;
-
-	/** Canvas for windowed mode */
-	private static Canvas canvas;
-
 	/** Frame mouse visibility */
 	private static boolean mouseVisible = true;
 
-	/** Resize requested */
-	private static final AtomicReference<ReadablePoint> resize = new AtomicReference<ReadablePoint>();
+	/** Current FPS */
+	private static final int[] FPS = new int[60];
+	private static int fps = 0, currentFPS = 60;
 
 	static {
 		Image.setDecompressor(new JPEGDecompressor() {
@@ -831,10 +819,15 @@ public abstract class Game extends Feature {
 
 
 		// Load roaming prefs from backup file
+		ROAMINGPREFS = Preferences.userNodeForPackage(Game.class).node(title);
 		GameInputStream gis = null;
 		RoamingFile prefsFile = new RoamingFile(getRoamingPrefsFileName());
-		boolean zapPrefs = false;
+		boolean zapPrefs = false, backupDone = false;
+		ByteArrayOutputStream baos = new ByteArrayOutputStream(1024 * 1024);
 		if (prefsFile.exists()) {
+			// Back up the prefs before we attempt to import it
+			writePrefs(baos);
+			backupDone = true;
 			try {
 				gis = new GameInputStream(getRoamingPrefsFileName());
 				Preferences.importPreferences(gis);
@@ -856,13 +849,21 @@ public abstract class Game extends Feature {
 			System.out.println("Preferences file "+getRoamingPrefsFileName()+" does not exist.");
 			zapPrefs = true;
 		}
-		ROAMINGPREFS = Preferences.userNodeForPackage(Game.class).node(title);
 		if (zapPrefs) {
-			ROAMINGPREFS.removeNode();
-			ROAMINGPREFS.flush();
-			ROAMINGPREFS = null;
-			ROAMINGPREFS = Preferences.userNodeForPackage(Game.class).node(title);
-			doFlushPrefs();
+			try {
+				ROAMINGPREFS.removeNode();
+				ROAMINGPREFS.flush();
+				ROAMINGPREFS = null;
+				ROAMINGPREFS = Preferences.userNodeForPackage(Game.class).node(title);
+				// Restore backup
+				if (backupDone) {
+					Preferences.importPreferences(new ByteArrayInputStream(baos.toByteArray()));
+				}
+				doFlushPrefs();
+			} catch (Exception e) {
+				e.printStackTrace(System.err);
+				// Carry on anyway
+			}
 		}
 
 		prefsSaver = new PrefsSaverThread();
@@ -1217,7 +1218,6 @@ public abstract class Game extends Feature {
 	 * GameInfo, and send it to the server. If we're offline or unsuccessful we'll write it to disk for a rainy day. The log is
 	 * deleted once it's sent successfully.
 	 */
-	@SuppressWarnings("unchecked")
 	private static void writeLog() {
 		if (gameInfo == null) {
 			System.out.println("No game info log");
@@ -1386,26 +1386,10 @@ public abstract class Game extends Feature {
 			prefsSaver = null;
 		}
 
-		if (window != null) {
-			window.setVisible(false);
-		}
 
-		try {
-	        Display.setParent(null);
-        } catch (LWJGLException e) {
-	        e.printStackTrace(System.err);
-        }
-
-		// Shutdown Steam
 		Steam.destroy();
-
+		AL.destroy();
 		Display.destroy();
-
-		if (window != null) {
-			window.setVisible(false);
-			window.dispose();
-			window = null;
-		}
 		System.exit(0);
 	}
 
@@ -1614,131 +1598,70 @@ public abstract class Game extends Feature {
 		}
 	}
 
+	private static ByteBuffer imageToBuffer(BufferedImage src, int size) {
+		ColorModel ccm = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB), true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
+		ByteBuffer ret = BufferUtils.createByteBuffer(size * size * 4);
+		BufferedImage scaledImage = new BufferedImage(ccm, ccm.createCompatibleWritableRaster(size, size), false, null);
+		Graphics2D g2d = (Graphics2D) scaledImage.getGraphics();
+		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g2d.drawImage(src, 0, 0, size, size, null);
+		g2d.dispose();
+		byte[] data = (byte[]) scaledImage.getData().getDataElements(0, 0, size, size, new byte[size * size * 4]);
+		ret.put(data);
+		ret.rewind();
+		return ret;
+	}
+
 	/**
 	 * Creates the AWT display
 	 * @throws LWJGLException
 	 */
 	private static void createDisplay() throws LWJGLException {
-		if (canvas != null) {
-			return;
-		}
-		Toolkit.getDefaultToolkit().setDynamicLayout(true);
-		canvas = new Canvas();
-		window = new Frame(getDisplayTitle());
-		window.setLayout(new LayoutManager() {
-			@Override
-			public void removeLayoutComponent(Component comp) {
-			}
-
-			@Override
-			public Dimension preferredLayoutSize(Container parent) {
-				return null;
-			}
-
-			@Override
-			public Dimension minimumLayoutSize(Container parent) {
-				return null;
-			}
-
-			@Override
-			public void layoutContainer(Container parent) {
-				Insets i = window.getInsets();
-				int w = window.getWidth() - (i.left + i.right);
-				int h = window.getHeight() - (i.bottom + i.top);
-				canvas.setBounds(i.left, i.top, w, h);
-				requestResize(w, h);
-			}
-
-			@Override
-			public void addLayoutComponent(String name, Component comp) {
-			}
-		});
-		window.setResizable(true);
-
 		// Load window size from prefs, or choose something sensible based on initial desktop display resolution
+		setWindowSizeFromPreferences();
+
+		Display.setResizable(true);
+		try {
+	        BufferedImage iconImage = ImageIO.read(Thread.currentThread().getContextClassLoader().getResource(game.icon));
+			ByteBuffer[] imageBuffer = null;
+			switch (LWJGLUtil.getPlatform()) {
+				case LWJGLUtil.PLATFORM_WINDOWS:
+					// Create 16x16 and 32x32 icons, as well as the original one
+					imageBuffer = new ByteBuffer[3];
+					imageBuffer[0] = imageToBuffer(iconImage, iconImage.getWidth());
+					imageBuffer[1] = imageToBuffer(iconImage, 16);
+					imageBuffer[2] = imageToBuffer(iconImage, 32);
+					break;
+				case LWJGLUtil.PLATFORM_MACOSX:
+					// One 128x128 icon
+					imageBuffer = new ByteBuffer[1];
+					imageBuffer[0] = imageToBuffer(iconImage, 128);
+					break;
+				case LWJGLUtil.PLATFORM_LINUX:
+					// One 32x32 icon
+					imageBuffer = new ByteBuffer[1];
+					imageBuffer[0] = imageToBuffer(iconImage, 32);
+					break;
+			}
+
+			if (imageBuffer != null) {
+				Display.setIcon(imageBuffer);
+			}
+		} catch (IOException e) {
+			e.printStackTrace(System.err);
+		}
+		Display.setTitle(getDisplayTitle());
+		Display.create();
+	}
+
+	private static void setWindowSizeFromPreferences() throws LWJGLException {
 		int desktopWidth = Display.getDesktopDisplayMode().getWidth();
 		int desktopHeight = Display.getDesktopDisplayMode().getHeight();
 		int width = Math.max(game.scale, Math.min(desktopWidth, getLocalPreferences().getInt("window.width", (desktopWidth * 4) / 5)));
 		int height = Math.max(game.scale, Math.min(desktopHeight, getLocalPreferences().getInt("window.height", (desktopHeight * 4) / 5)));
 		game.width = width;
 		game.height = height;
-
-		window.setSize(width, height);
-		try {
-	        window.setIconImage(ImageIO.read(Thread.currentThread().getContextClassLoader().getResource(game.icon)));
-        } catch (Exception e) {
-	        e.printStackTrace(System.err);
-        }
-
-		String strX = getLocalPreferences().get("window.x", null);
-        String strY = getLocalPreferences().get("window.y", null);
-        if(strX != null && strY != null) {
-            try {
-                int x = Math.max(0, Math.min(desktopWidth  - width,  Integer.parseInt(strX)));
-                int y = Math.max(0, Math.min(desktopHeight - height, Integer.parseInt(strY)));
-                window.setLocation(x, y);
-            } catch(NumberFormatException ex) {
-            	window.setLocationRelativeTo(null);
-            }
-        } else {
-        	window.setLocationRelativeTo(null);
-        }
-        String strState = getLocalPreferences().get("window.state", null);
-        if (strState != null) {
-            try {
-            	int state = Integer.parseInt(strState);
-            	window.setExtendedState(state);
-            } catch (NumberFormatException e) {
-            }
-        }
-
-		canvas.setBackground(Color.BLACK);
-		window.add(canvas);
-		window.setVisible(true);
-		window.addWindowFocusListener(new WindowAdapter() {
-			@Override
-			public void windowGainedFocus(WindowEvent e) {
-				canvas.requestFocusInWindow();
-			}
-		});
-		window.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				finished = true;
-			}
-		});
-		window.addWindowStateListener(new WindowStateListener() {
-			@Override
-			public void windowStateChanged(WindowEvent e) {
-				getLocalPreferences().putInt("window.state", window.getExtendedState());
-				flushPrefs();
-			}
-		});
-		window.addComponentListener(new ComponentAdapter() {
-			@Override
-			public void componentResized(ComponentEvent e) {
-				if ((window.getExtendedState() & Frame.MAXIMIZED_BOTH) == 0) {
-					getLocalPreferences().putInt("window.width", window.getWidth());
-					getLocalPreferences().putInt("window.height", window.getHeight());
-					flushPrefs();
-				}
-			}
-			@Override
-			public void componentMoved(ComponentEvent e) {
-				if ((window.getExtendedState() & Frame.MAXIMIZED_BOTH) == 0) {
-					getLocalPreferences().putInt("window.x", window.getX());
-					getLocalPreferences().putInt("window.y", window.getY());
-					flushPrefs();
-				}
-			}
-		});
-
-		// And now redirect LWJGL display to this canvas:
-		Display.setParent(canvas);
-		Display.setDisplayMode(new DisplayMode(canvas.getWidth(),canvas.getHeight()));
-		Display.setTitle(getTitle() + " [Fullscreen]");
-		Display.create();
-
+		Display.setDisplayMode(new DisplayMode(width, height));
 	}
 
 	/**
@@ -1817,14 +1740,13 @@ public abstract class Game extends Feature {
 
 			// Use the desktop display mode
 			if (fullscreen) {
-				game.width = Display.getDesktopDisplayMode().getWidth();
-				game.height = Display.getDesktopDisplayMode().getHeight();
 				Display.setDisplayModeAndFullscreen(Display.getDesktopDisplayMode());
 			} else {
-				game.width = canvas.getWidth();
-				game.height = canvas.getHeight();
 				Display.setFullscreen(false);
+				setWindowSizeFromPreferences();
 			}
+			game.width = Display.getWidth();
+			game.height = Display.getHeight();
 			if (Display.isCreated()) {
 				Display.update();
 			}
@@ -1844,11 +1766,15 @@ public abstract class Game extends Feature {
 			}
 
 			// Properly clear the entire display
-			viewPort = new Rectangle(0, 0, Display.getDisplayMode().getWidth(), Display.getDisplayMode().getHeight());
+			viewPort = new Rectangle(0, 0, Display.getWidth(), Display.getHeight());
 			resetViewport();
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			Display.update();
+			Display.setResizable(false);
+			if (!fullscreen) {
+				Display.setResizable(true);
+			}
 
 			doResize();
 
@@ -1873,10 +1799,6 @@ public abstract class Game extends Feature {
 		} else {
 			Display.setVSyncEnabled(true);
 		}
-	}
-
-	private static void requestResize(int w, int h) {
-		resize.set(new Point(w, h));
 	}
 
 	private static void doResize() {
@@ -1906,7 +1828,7 @@ public abstract class Game extends Feature {
 		if (Display.isFullscreen()) {
 			viewPort = new Rectangle(viewportXoffset, viewportYoffset, viewportWidth, viewportHeight);
 		} else {
-			viewPort = new Rectangle(0, 0, canvas.getWidth(), canvas.getHeight());
+			viewPort = new Rectangle(0, 0, Display.getWidth(), Display.getHeight());
 		}
 		resetViewport();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -2068,23 +1990,23 @@ public abstract class Game extends Feature {
 	 */
 	@SuppressWarnings("unused")
     private void run() {
-    	// Linux hack
-		if (LWJGLUtil.getPlatform() == LWJGLUtil.PLATFORM_LINUX && !Boolean.getBoolean("net.puppygames.applet.Game.dontAlwaysRun")) {
-			setAlwaysRun(true);
-		}
+//    	// Linux hack
+//		if (LWJGLUtil.getPlatform() == LWJGLUtil.PLATFORM_LINUX && !Boolean.getBoolean("net.puppygames.applet.Game.dontAlwaysRun")) {
+//			setAlwaysRun(true);
+//		}
 
 		int ticksToDo = 1;
 		long then = Sys.getTime() & 0x7FFFFFFFFFFFFFFFL;
 		long framesTicked = 0;
 		long timerResolution = Sys.getTimerResolution();
 		while (!finished) {
-			ReadablePoint newSize = resize.getAndSet(null);
-			if (newSize != null) {
-				if (!Display.isFullscreen()) {
-					game.width = newSize.getX();
-					game.height = newSize.getY();
-					doResize();
-				}
+			if (!Display.isFullscreen() && (Display.getWidth() != game.width || Display.getHeight() != game.height)) {
+				game.width = Display.getWidth();
+				game.height = Display.getHeight();
+				doResize();
+				getLocalPreferences().putInt("window.width", game.width);
+				getLocalPreferences().putInt("window.height", game.height);
+				flushPrefs();
 			}
 
 			if (Display.isCloseRequested()) {
@@ -2092,7 +2014,7 @@ public abstract class Game extends Feature {
 				break;
 			}
 
-			if (window.isActive() || Display.isFullscreen() || alwaysRun) {
+			if (Display.isDirty() || Display.isActive() || alwaysRun) {
 				// The window is in the foreground, so we should play the game
 				long now = Sys.getTime() & 0x7FFFFFFFFFFFFFFFL;
 				long currentTimerResolution = Sys.getTimerResolution();
@@ -2156,7 +2078,19 @@ public abstract class Game extends Feature {
 						}
 						Thread.yield();
 					}
-					framesTicked += ticksToDo;
+					if (ticksToDo > 0) {
+						fps ++;
+						if (fps == FPS.length) {
+							fps = 0;
+						}
+						FPS[fps] = getFrameRate() / ticksToDo;
+						int totalF = 0;
+						for (int i = 0; i < FPS.length; i ++) {
+							totalF += FPS[i];
+						}
+						currentFPS = totalF / FPS.length;
+						framesTicked += ticksToDo;
+					}
 					render();
 					// Steam support
 					if (isUsingSteam()) {
@@ -2227,6 +2161,12 @@ public abstract class Game extends Feature {
 		return game.catchUp;
 	}
 
+	/**
+	 * @return mouse events since last update
+	 */
+	public static List<MouseEvent> getMouseEvents() {
+		return MOUSEEVENTS;
+	}
 
 	/**
 	 * Tick. Called every frame.
@@ -2234,6 +2174,14 @@ public abstract class Game extends Feature {
 	private void tick() {
 		// Process key & mouse bindings
 		Binding.poll();
+
+		// Process mouse events
+		MOUSEEVENTS.clear();
+		while (Mouse.next()) {
+			MouseEvent event = new MouseEvent();
+			event.fromMouse();
+			MOUSEEVENTS.add(event);
+		}
 
 		// Process keydowns
 		for (int i = 0; i < Keyboard.KEYBOARD_SIZE; i++) {
@@ -2267,10 +2215,10 @@ public abstract class Game extends Feature {
 
 		if (!paused) {
 			Timer.tick();
-			// Tick screens
-			Screen.tickAllScreens();
 			// Custom ticking
 			doTick();
+			// Tick screens
+			Screen.tickAllScreens();
 			// Now tick the sound engine
 			if (org.lwjgl.openal.AL.isCreated()) {
 				int n = soundPlayers.size();
@@ -2287,12 +2235,12 @@ public abstract class Game extends Feature {
 		if (game != null) {
 			if (paused) {
 				game.wasGrabbed = Mouse.isGrabbed();
-				Mouse.setGrabbed(false);
-				window.setTitle(getDisplayTitle() + " [PAUSED]");
+				//Mouse.setGrabbed(false);
+				Display.setTitle(getDisplayTitle() + " [PAUSED]");
 				game.onPaused();
 			} else {
-				Mouse.setGrabbed(game.wasGrabbed);
-				window.setTitle(getDisplayTitle());
+				//Mouse.setGrabbed(game.wasGrabbed);
+				Display.setTitle(getDisplayTitle());
 				game.onResumed();
 			}
 		}
@@ -2311,7 +2259,7 @@ public abstract class Game extends Feature {
 	 */
 	private void render() {
 		Screen.updateAllScreens();
-
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glPushMatrix();
 		glTranslatef((float)(-logicalWidth / 2.0), (float)(-logicalHeight / 2.0), -256);
@@ -2489,6 +2437,23 @@ public abstract class Game extends Feature {
 	 * Flushes all preferences (synchronously)
 	 */
 	private static void doFlushPrefs() {
+		GameOutputStream gos;
+        try {
+	        gos = new GameOutputStream(getRoamingPrefsFileName());
+			writePrefs(gos);
+			if (DEBUG) {
+				System.out.println("Saved preferences file "+getRoamingPrefsFileName());
+			}
+        } catch (IOException e) {
+	        e.printStackTrace(System.err);
+        }
+	}
+
+	/**
+	 * Synchronously write preferences to an output stream
+	 * @param os
+	 */
+	private static void writePrefs(OutputStream os) {
 		if (GLOBALPREFS != null) {
 			synchronized (GLOBALPREFS) {
 				try {
@@ -2502,21 +2467,15 @@ public abstract class Game extends Feature {
 					e.printStackTrace(System.err);
 				}
 
-				// Now write backup file for the roaming prefs
-				GameOutputStream gos = null;
 				try {
-					gos = new GameOutputStream(getRoamingPrefsFileName());
-					ROAMINGPREFS.exportSubtree(gos);
-					gos.flush();
-					if (DEBUG) {
-						System.out.println("Saved preferences file "+getRoamingPrefsFileName());
-					}
+					ROAMINGPREFS.exportSubtree(os);
+					os.flush();
 				} catch (Exception e) {
 					e.printStackTrace(System.err);
 				} finally {
-					if (gos != null) {
+					if (os != null) {
 						try {
-							gos.close();
+							os.close();
 						} catch (IOException e) {
 							e.printStackTrace(System.err);
 						}
@@ -2874,4 +2833,11 @@ public abstract class Game extends Feature {
 	private static void initSteam() {
 		Steam.init(Game.appID);
 	}
+
+	/**
+	 * @return the on-the-fly FPS counter
+	 */
+	public static int getFPS() {
+	    return currentFPS;
+    }
 }

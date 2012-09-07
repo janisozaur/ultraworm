@@ -102,6 +102,7 @@ import worm.powerups.ShieldGeneratorPowerupFeature;
 import worm.powerups.ShieldPowerupFeature;
 import worm.powerups.SmartbombPowerupFeature;
 import worm.screens.CompleteGameScreen;
+import worm.screens.CompleteXmasScreen;
 import worm.screens.GameScreen;
 import worm.screens.IntermissionScreen;
 import worm.screens.MenuScreen;
@@ -114,6 +115,7 @@ import worm.screens.SelectSurvivalLevelScreen;
 import worm.screens.SelectWorldScreen;
 import worm.screens.StoryScreen;
 import worm.screens.SurvivalMenuScreen;
+import worm.screens.XmasMenuScreen;
 import worm.tiles.Crystal;
 import worm.tiles.Exclude;
 
@@ -139,6 +141,10 @@ public class WormGameState extends GameState {
 	public static final int GAME_MODE_ENDLESS = 1;
 	public static final int GAME_MODE_SURVIVAL = 2;
 	public static final int GAME_MODE_SANDBOX = 3;
+	public static final int GAME_MODE_XMAS = 4;
+
+	/** Mouse dragging speed */
+	private static final float MOUSE_DRAG_SPEED = 2.0f;
 
 	/** Absolute max map size in tiles */
 	public static final int ABS_MAX_SIZE = 96;
@@ -153,7 +159,7 @@ public class WormGameState extends GameState {
 	public static final int MAP_RESOLUTION = MapRenderer.TILE_SIZE / 4;
 
 	/** Maximum number of gidrahs allowed */
-	public static final int MAX_GIDRAHS = 200;
+	public static final int MAX_GIDRAHS = 160;
 
 	/** Number of levels in a world */
 	public static final int LEVELS_IN_WORLD = 10;
@@ -182,6 +188,9 @@ public class WormGameState extends GameState {
 	/** After this interval (ticks) of nothing happening, we mention the fast forward button */
 	private static final int INTERESTING_INTERVAL = 500;
 
+	/** Right mouse button drag sensitivity */
+	private static final int RMB_DRAG_SENSITIVITY = 3;
+
 	/** Game configuration */
 	private final GameConfiguration config;
 
@@ -194,6 +203,9 @@ public class WormGameState extends GameState {
 	/** Save game stuff */
 	private transient int saveTick;
 	private transient boolean saving;
+
+	/** Xmas reset */
+	private transient boolean xmasReset;
 
 
 	/**
@@ -251,6 +263,9 @@ public class WormGameState extends GameState {
 		/** Survival params */
 		private SurvivalParams survivalParams;
 
+		/** Sandbox params */
+		private SandboxParams sandboxParams;
+
 		/** Powerups shuffle */
 		private ArrayList<Integer> shuffle;
 		private ArrayList<Integer> crappyShuffle;
@@ -302,7 +317,19 @@ public class WormGameState extends GameState {
 			} else {
 				availableStock.clear();
 			}
-			money = gameMode == GAME_MODE_SURVIVAL && survivalParams != null ? GameConfiguration.getInstance().getSurvivalInitialMoney()[survivalParams.getWorld().getIndex()] : GameConfiguration.getInstance().getNormalInitialMoney();
+			switch (gameMode) {
+				case GAME_MODE_SURVIVAL:
+					if (survivalParams != null) {
+						money = GameConfiguration.getInstance().getSurvivalInitialMoney()[survivalParams.getWorld().getIndex()];
+					}
+					break;
+				case GAME_MODE_XMAS:
+					money = GameConfiguration.getInstance().getXmasInitialMoney();
+					break;
+				default:
+					money = GameConfiguration.getInstance().getNormalInitialMoney();
+					break;
+			}
 			score = 0;
 			rank = RankFeature.getRank(0);
 			shuffle = new ArrayList<Integer>(MAX_RANDOM);
@@ -463,7 +490,7 @@ public class WormGameState extends GameState {
          * @return an exotic powerup
          */
         private PowerupFeature getExoticPowerup() {
-        	if (gameMode == GAME_MODE_SURVIVAL || level < 4) {
+        	if (gameMode == GAME_MODE_SURVIVAL || gameMode == GAME_MODE_XMAS || level < 4) {
         		return getPowerup();
         	}
         	PowerupFeature ret = null;
@@ -564,20 +591,20 @@ public class WormGameState extends GameState {
         		case 15:
         		case 16:
         		case 17:
-        			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL && gameState.isResearched(ResearchFeature.MINES)) {
+        			if ((gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL || gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) && gameState.isResearched(ResearchFeature.MINES)) {
         				return ResourcePowerupFeature.getInstance("mines.powerup");
         			} else {
         				return getPowerup(); // Recurse
         			}
         		case 18:
         		case 19:
-        			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL && gameState.isResearched(ResearchFeature.CLUSTERMINES)) {
+        			if ((gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL || gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) && gameState.isResearched(ResearchFeature.CLUSTERMINES)) {
         				return ResourcePowerupFeature.getInstance("clustermines.powerup");
         			} else {
         				return getPowerup(); // Recurse
         			}
         		case 20:
-        			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL && gameState.isResearched(ResearchFeature.BLASTMINES)) {
+        			if ((gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL || gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) && gameState.isResearched(ResearchFeature.BLASTMINES)) {
         				return ResourcePowerupFeature.getInstance("blastmines.powerup");
         			} else {
         				return getPowerup(); // Recurse
@@ -585,7 +612,7 @@ public class WormGameState extends GameState {
         		case 21:
         		case 22:
         		case 23:
-        			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL && gameState.isResearched(ResearchFeature.CONCRETE)) {
+        			if ((gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL || gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) && gameState.isResearched(ResearchFeature.CONCRETE)) {
         				return ResourcePowerupFeature.getInstance("concrete.powerup");
         			} else {
         				return getPowerup(); // Recurse
@@ -593,20 +620,20 @@ public class WormGameState extends GameState {
         		case 24:
         		case 25:
         		case 26:
-        			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL && gameState.isResearched(ResearchFeature.STEEL)) {
+        			if ((gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL || gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) && gameState.isResearched(ResearchFeature.STEEL)) {
         				return ResourcePowerupFeature.getInstance("steel.powerup");
         			} else {
         				return getPowerup(); // Recurse
         			}
         		case 27:
         		case 28:
-        			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL && gameState.isResearched(ResearchFeature.TITANIUM)) {
+        			if ((gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL || gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) && gameState.isResearched(ResearchFeature.TITANIUM)) {
         				return ResourcePowerupFeature.getInstance("titanium.powerup");
         			} else {
         				return getPowerup(); // Recurse
         			}
         		case 29:
-        			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL && gameState.isResearched(ResearchFeature.NANOMESH)) {
+        			if ((gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL || gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) && gameState.isResearched(ResearchFeature.NANOMESH)) {
         				return ResourcePowerupFeature.getInstance("nanomesh.powerup");
         			} else {
         				return getPowerup(); // Recurse
@@ -988,6 +1015,9 @@ public class WormGameState extends GameState {
 	/** Back button runnable */
 	private transient Runnable backButtonRunnable;
 
+	/** RMB scroll */
+	private transient boolean rmbScroll;
+
 	/** Unmined crystals */
 	private final ArrayList<Building> unminedCrystalList = new ArrayList<Building>();
 
@@ -1013,8 +1043,14 @@ public class WormGameState extends GameState {
 	/** Input mode (see {@link Mode} */
 	private int mode;
 
+	/** Scroll origin */
+	private transient int scrollOriginX, scrollOriginY;
+
 	/** Are we in range of a capacitor? */
-	private boolean capacitorRange;
+	private transient boolean capacitorRange;
+
+	/** RMB drag sensor */
+	private transient int rmbDragSensor;
 
 	/** Hint map maps HintFeatures to Integers, which is the number of times that hint has been shown in sequence */
 	private final Map<HintFeature, Integer> hintMap = new HashMap<HintFeature, Integer>();
@@ -1024,6 +1060,9 @@ public class WormGameState extends GameState {
 
 	/** Survival init params */
 	private SurvivalParams survivalParams;
+
+	/** Sandbox init params */
+	private SandboxParams sandboxParams;
 
 
 	/** Suppress medals display on game screen */
@@ -1105,6 +1144,15 @@ public class WormGameState extends GameState {
 				return !stop;
 			}
 
+			if (getGameMode() == GAME_MODE_XMAS) {
+				if (levelTick % Xmas.BOSS_INTERVAL == 0 && levelTick > 0) {
+					// Every 5 minutes spawn a boss
+					type = 2;
+				} else if (levelTick % Xmas.ANGRY_INTERVAL == 0 && levelTick > 0 && type == 0) {
+					type = 1;
+				}
+			}
+
 			if (gidrahs.size() >= MAX_GIDRAHS) {
 				return !stop;
 			}
@@ -1136,19 +1184,24 @@ public class WormGameState extends GameState {
 				} else if (--gidrahTick <= 0) {
 					// Get next item
 					gidrahsSpawned ++;
-					//System.out.println("Spawnpoint wave length "+getWaveLength()+" (type "+type+", morealiens="+moreAliens+")");
-					if (gidrahsSpawned >= getWaveLength()) {
-						// We've got to the end. Go into a very long delay and start again at the beginning
-						gidrahTick = getLongGidrahDelay();
-						gidrahsSpawned = 0;
-						// In Survival mode, we move the spawnpoint around, and choose a new alien to spawn
-						if (getGameMode() == GAME_MODE_SURVIVAL) {
-							moveSpawnPoint();
-						} else {
-							moreAliens = Math.min(3, moreAliens + 1);
-						}
-					} else {
+
+					// xmas mode: continuous stream
+					if (getGameMode() == GAME_MODE_XMAS) {
 						spawnGidrah();
+					} else {
+						if (gidrahsSpawned >= getWaveLength()) {
+							// We've got to the end. Go into a very long delay and start again at the beginning
+							gidrahTick = getLongGidrahDelay();
+							gidrahsSpawned = 0;
+							// In Survival we move the spawnpoint around, and choose a new alien to spawn
+							if (getGameMode() == GAME_MODE_SURVIVAL) {
+								moveSpawnPoint();
+							} else {
+								moreAliens = Math.min(3, moreAliens + 1);
+							}
+						} else {
+							spawnGidrah();
+						}
 					}
 				}
 			}
@@ -1192,6 +1245,7 @@ public class WormGameState extends GameState {
 		}
 
 		void chooseType() {
+			assert getGameMode() == GAME_MODE_SURVIVAL;
 			int maxType = 0;
 			for (int i = survivalGidrahUnlock.length; -- i >= 0; ) {
 				if (survivalGidrahUnlock[i] != 0) {
@@ -1200,7 +1254,12 @@ public class WormGameState extends GameState {
 				}
 			}
 			type = Util.random(0, maxType);
-			subType = Util.random(0, Math.min(Res.getSurvivalGidrahs(type).getNumResources() - 1, survivalGidrahUnlock[type] - 1));
+			subType = Util.random(0, Math.min(getNumTypes(type) - 1, survivalGidrahUnlock[type] - 1));
+		}
+
+		int getNumTypes(int type) {
+			assert getGameMode() == GAME_MODE_SURVIVAL;
+			return Res.getSurvivalGidrahs(type).getNumResources();
 		}
 
 		int getWaveLength() {
@@ -1211,6 +1270,9 @@ public class WormGameState extends GameState {
 					return metaState.level / LEVELS_IN_WORLD + 10 + moreAliens - Math.min(9, type * 3);
 				case GAME_MODE_SURVIVAL:
 					return config.getSurvivalWaveLength() - Math.max(0, type * 3 - Math.max(0, getLevelTick() - config.getSurvivalWaveLengthTimeOffset()) / config.getSurvivalWaveLengthTimeAdjust());
+				case GAME_MODE_XMAS:
+					assert false;
+					return -1; // Constant stream
 				case GAME_MODE_SANDBOX:
 					return metaState.level / LEVELS_IN_WORLD + 10 + moreAliens - Math.min(9, type * 3);
 				default:
@@ -1221,7 +1283,11 @@ public class WormGameState extends GameState {
 
 		void spawnGidrah() {
 			if (map.isOccupied(tileX, tileY)) {
-				waitingToSpawn = config.getSpawnDelay();
+				if (metaState.gameMode == GAME_MODE_XMAS) {
+					waitingToSpawn = 1;
+				} else {
+					waitingToSpawn = config.getSpawnDelay();
+				}
 			} else {
 				waitingToSpawn = 0;
 				if (boss != null) {
@@ -1230,40 +1296,55 @@ public class WormGameState extends GameState {
 					gidrahTick = Util.random(getInitialLevelDelay(map.getWidth(), map.getHeight()), getInitialLevelDelay(map.getWidth(), map.getHeight()) + 600);
 				} else {
 					GidrahFeature gf;
-					if ((getGameMode() == GAME_MODE_SURVIVAL || metaState.level > 2) && gidrahsSpawned == 1) {
-						// Maybe an angry gidrah?
+					if (getGameMode() == GAME_MODE_XMAS) {
+						// Choose gidrah based on level duration so far
+						float ratio = levelTick == getLevelDuration() ? 0.99999f : (float) levelTick / (float) getLevelDuration();
+						int gidIndex = Util.random(0, (int) LinearInterpolator.instance.interpolate(0.0f, Res.getXmasGidrahs().getNumResources(), ratio));
+						switch (type) {
+							case 0: // Ordinary gid
+								gf = (GidrahFeature) Res.getXmasGidrahs().getResource(gidIndex);
+								break;
+							case 1: // Angry gid
+								gf = (GidrahFeature) Res.getXmasAngryGidrahs().getResource(gidIndex);
+								type = 0;
+								break;
+							case 2: // Boss
+								gf = Res.getXmasBoss(survivalBoss ++);
+								doBossWarning(1);
+								// Stop when last boss made
+								if (survivalBoss == Xmas.MAX_BOSSES) {
+									stop = true;
+								}
+								type = 0;
+								break;
+							default:
+								assert false;
+								return;
+						}
+					} else if ((getGameMode() == GAME_MODE_SURVIVAL || metaState.level > 2) && gidrahsSpawned == 1) {
+						// Maybe an angry gidrah at the head of the column?
 						if (Util.random() < getDifficulty()) {
 							gf = getAngryGidrah(type, subType);
-							if (gf == null) {
-								System.err.println("No angry gidrah type "+type);
-							}
 						} else {
 							gf = getGidrah(type, subType);
-							if (gf == null) {
-								System.err.println("No normal gidrah type "+type);
-							}
-						}
-						if (gf != null) {
-							gf.spawn(GameScreen.getInstance(), tileX, tileY, type);
 						}
 					} else {
 						gf = getGidrah(type, subType);
-						if (gf == null) {
-							System.err.println("No gidrah type "+type);
-						} else {
-							gf.spawn(GameScreen.getInstance(), tileX, tileY, type);
-						}
 					}
+					gf.spawn(GameScreen.getInstance(), tileX, tileY, type);
 					gidrahTick = 1;
 				}
 			}
 		}
 
 		int getLongGidrahDelay() {
-			if (getGameMode() == GAME_MODE_SURVIVAL) {
-				return config.getLongDelay() + (int) LinearInterpolator.instance.interpolate(config.getSpawnpointDelayAdjust() * 5.0f, 0.0f, getDifficulty());
-			} else {
-				return getShortGidrahDelay() * 2;
+			switch (getGameMode()) {
+				case GAME_MODE_SURVIVAL:
+					return config.getLongDelay() + (int) LinearInterpolator.instance.interpolate(config.getSpawnpointDelayAdjust() * 5.0f, 0.0f, getDifficulty());
+				case GAME_MODE_XMAS:
+					return 0; // No delay
+				default:
+					return getShortGidrahDelay() * 2;
 			}
 		}
 
@@ -1298,18 +1379,22 @@ public class WormGameState extends GameState {
 	}
 
 	private GidrahFeature getAngryGidrah(int type, int subType) {
-		if (getGameMode() == GAME_MODE_SURVIVAL) {
-			return (GidrahFeature) Res.getSurvivalAngryGidrahs(type).getResource(subType);
-		} else {
-			return getLevelFeature().getAngryGidrah(type);
+		assert getGameMode() != GAME_MODE_XMAS;
+		switch (getGameMode()) {
+			case GAME_MODE_SURVIVAL:
+				return (GidrahFeature) Res.getSurvivalAngryGidrahs(type).getResource(subType);
+			default:
+				return getLevelFeature().getAngryGidrah(type);
 		}
 	}
 
 	private GidrahFeature getGidrah(int type, int subType) {
-		if (getGameMode() == GAME_MODE_SURVIVAL) {
-			return (GidrahFeature) Res.getSurvivalGidrahs(type).getResource(subType);
-		} else {
-			return getLevelFeature().getGidrah(type);
+		assert getGameMode() != GAME_MODE_XMAS;
+		switch (getGameMode()) {
+			case GAME_MODE_SURVIVAL:
+				return (GidrahFeature) Res.getSurvivalGidrahs(type).getResource(subType);
+			default:
+				return getLevelFeature().getGidrah(type);
 		}
 	}
 
@@ -1470,7 +1555,7 @@ public class WormGameState extends GameState {
 
 	public void addCrystals(int n) {
 		crystals += n;
-		if (crystals == 0 && getGameMode() != GAME_MODE_SURVIVAL) {
+		if (crystals == 0 && getGameMode() != GAME_MODE_SURVIVAL && getGameMode() != GAME_MODE_XMAS) {
 			// Mined all crystals before timer expires?
 			if (levelTick < getLevelDuration() && beginLevel) {
 				awardMedal(Medals.EFFICIENT);
@@ -1802,7 +1887,7 @@ public class WormGameState extends GameState {
 	private void calcLevelDuration(int w, int h) {
 		switch (metaState.gameMode) {
 			case GAME_MODE_CAMPAIGN:
-				float min, max;
+				float min, max; // In seconds
 				switch (getLevel() / LEVELS_IN_WORLD) {
 					case 0: // Earth
 						min = 30.0f;
@@ -1828,20 +1913,20 @@ public class WormGameState extends GameState {
 						assert false : "Bad world for campaign: "+metaState.level;
 						min = max = 300.0f;
 				}
-				levelDuration = (int) LinearInterpolator.instance.interpolate(min, max, getLevelInWorld() / (LEVELS_IN_WORLD - 1.0f)) * 60 + getInitialLevelDelay(w, h);
+				levelDuration = (int) LinearInterpolator.instance.interpolate(min, max, getLevelInWorld() / (LEVELS_IN_WORLD - 1.0f)) * 60 + getInitialLevelDelay(w, h); // *60 converts seconds to ticks
 				return;
 
 			case GAME_MODE_ENDLESS:
 				levelDuration = getInitialLevelDelay(w, h) + getLevel() * 300 + 1800; // 5 seconds per level
 				return;
 
-
 			case GAME_MODE_SURVIVAL:
+			case GAME_MODE_SANDBOX:
 				levelDuration = -1;
 				return;
 
-			case GAME_MODE_SANDBOX:
-				levelDuration = -1;
+			case GAME_MODE_XMAS:
+				levelDuration = Xmas.DURATION;
 				return;
 
 			default:
@@ -1854,7 +1939,7 @@ public class WormGameState extends GameState {
 	 * @return time in ticks to delay before starting enemy spawning
 	 */
 	private int getInitialLevelDelay(int w, int h) {
-		if (metaState.level < 4 && getGameMode() != GAME_MODE_SURVIVAL) {
+		if (metaState.level < 4 && getGameMode() != GAME_MODE_SURVIVAL && getGameMode() != GAME_MODE_XMAS) {
 			return 0;
 		}
 		return (int) (Math.sqrt(w * h) * config.getInitialLevelDelayFactor());
@@ -1936,7 +2021,9 @@ public class WormGameState extends GameState {
 		if (GameScreen.getInstance().isBlocked()) {
 			return;
 		}
-
+		if (GameScreen.isSomethingElseGrabbingMouse()) {
+			return;
+		}
 		// Ignore mouse on active areas, unless grabbed
 		int mouseX = GameScreen.getInstance().getMouseX();
 		int mouseY = GameScreen.getInstance().getMouseY();
@@ -1947,10 +2034,12 @@ public class WormGameState extends GameState {
 					if (buildEntity != null) {
 						buildEntity.setVisible(false);
 					}
+					Worm.setMouseAppearance(Res.getMousePointer());
 					return;
 				}
 			}
 		}
+
 		if (buildEntity != null && !buildEntity.isVisible()) {
 			buildEntity.setVisible(true);
 		}
@@ -2031,11 +2120,12 @@ public class WormGameState extends GameState {
 
 						// Hovering over something. Pick the first one and let that decide what mouse pointer to use.
 						Worm.setMouseAppearance(clicked.get(0).getMousePointer(true));
-						boolean fire = false;
+						boolean fire = false, maybeSelect = false;
 						for (Iterator<Entity> i = clicked.iterator(); i.hasNext(); ) {
 							Entity clickable = i.next();
 							switch (clickable.onClicked(mode)) {
 								case ClickAction.IGNORE:
+									maybeSelect = true;
 									continue;
 								case ClickAction.DRAG:
 									// Allow dragging over factories & turrets. Unless in build mode.
@@ -2069,15 +2159,22 @@ public class WormGameState extends GameState {
 						}
 
 						if (!fire && mode == Mode.MODE_NORMAL) {
+							if (maybeSelect) {
+								mode = Mode.MODE_SCROLL;
+								Worm.setMouseAppearance(Res.getMousePointerGrab());
+								scrollOriginX = mouseX;
+								scrollOriginY = mouseY;
+							}
 							return;
 						}
+
 					} else {
 						if (mode == Mode.MODE_DRAG) {
 							Worm.setMouseAppearance(Res.getMousePointer());
 						}
 					}
 
-					if (mode == Mode.MODE_DRAG || mode == Mode.MODE_SELL) {
+					if (mode == Mode.MODE_DRAG || mode == Mode.MODE_SELL || mode == Mode.MODE_SCROLL || mode == Mode.MODE_SELECT) {
 						return;
 					}
 
@@ -2090,6 +2187,14 @@ public class WormGameState extends GameState {
 					if (!capacitorRange) {
 						leftMouseWasDown = true;
 						Worm.setMouseAppearance(Res.getMousePointer());
+						if (mode == Mode.MODE_NORMAL) {
+							// Go into scroll mode
+							mode = Mode.MODE_SCROLL;
+							scrollOriginX = mouseX;
+							scrollOriginY = mouseY;
+							leftMouseWasDown = true;
+							Worm.setMouseAppearance(Res.getMousePointerGrab());
+						}
 						return;
 					} else {
 						leftMouseWasDown = true;
@@ -2133,6 +2238,19 @@ public class WormGameState extends GameState {
 					}
 					break;
 
+				case Mode.MODE_SCROLL:
+					// Scroll the screen around under the mouse
+					int dx = scrollOriginX - mouseX;
+					int dy = scrollOriginY - mouseY;
+					scrollOriginX = mouseX;
+					scrollOriginY = mouseY;
+					GameScreen.getInstance().scroll(dx * MOUSE_DRAG_SPEED, dy * MOUSE_DRAG_SPEED);
+					break;
+
+				case Mode.MODE_SELECT:
+					// Do nothing
+					return;
+
 				default:
 					assert false;
 			}
@@ -2151,45 +2269,74 @@ public class WormGameState extends GameState {
 			}
 		} else {
 			GameScreen.onMapGrabbedMouse(false);
-			boolean rmbToggled = Mouse.getButtonCount() > 1 && Mouse.isButtonDown(1) || Game.wasKeyPressed(Keyboard.KEY_ESCAPE);
-			if (rmbToggled) {
-				if (waitForMouse || rightMouseWasDown) {
+			boolean rmbDown = Mouse.getButtonCount() > 1 && Mouse.isButtonDown(1) || Game.wasKeyPressed(Keyboard.KEY_ESCAPE);
+			if (rmbDown) {
+				if (waitForMouse) {
 					return;
+				}
+				if (!rightMouseWasDown) {
+					scrollOriginX = mouseX;
+					scrollOriginY = mouseY;
+					rmbDragSensor = 0;
 				}
 				leftMouseWasDown = false;
 				rightMouseWasDown = true;
-				switch (mode) {
-					case Mode.MODE_BUILD:
-						setBuilding(null);
-						break;
-					case Mode.MODE_SELL:
-						setSellMode(false);
-						break;
-					case Mode.MODE_DRAG:
-					case Mode.MODE_NORMAL:
-					case Mode.MODE_ZAP:
-						for (Iterator<Entity> i = clicked.iterator(); i.hasNext(); ) {
-							Entity clickable = i.next();
-							if (clickable instanceof Building) {
-								BuildingFeature bf = ((Building) clickable).getFeature();
-								if (bf.isAvailable()) {
-									clickable.onLeave(mode);
-									lastHovered = null;
-									setBuilding(bf);
-									return;
-								}
-							}
-						}
-						break;
-					case Mode.MODE_SMARTBOMB:
-						// Cancel the smartbomb and return it to the stores
-						addPowerup(SmartbombPowerupFeature.getInstance(), false);
-						mode = Mode.MODE_NORMAL;
-						break;
-					default:
-						assert false;
+
+				int dx = scrollOriginX - mouseX;
+				int dy = scrollOriginY - mouseY;
+				scrollOriginX = mouseX;
+				scrollOriginY = mouseY;
+				if (dx != 0 || dy != 0) {
+					rmbDragSensor ++;
+					if (rmbDragSensor > RMB_DRAG_SENSITIVITY) {
+						GameScreen.getInstance().scroll(dx * MOUSE_DRAG_SPEED, dy * MOUSE_DRAG_SPEED);
+						rmbScroll = true;
+						Worm.setMouseAppearance(Res.getMousePointerGrab());
+					}
 				}
 			} else {
+				if (rightMouseWasDown && !rmbScroll) {
+					// It was a RMB click. Cancel building / selling / blowing stuff up. Or pick up whatever building is under the mouse to build.
+					switch (mode) {
+						case Mode.MODE_BUILD:
+							setBuilding(null);
+							rightMouseWasDown = false;
+							return;
+						case Mode.MODE_SELL:
+							setSellMode(false);
+							rightMouseWasDown = false;
+							return;
+						case Mode.MODE_DRAG:
+						case Mode.MODE_NORMAL:
+						case Mode.MODE_SELECT:
+						case Mode.MODE_ZAP:
+							for (Iterator<Entity> i = clicked.iterator(); i.hasNext(); ) {
+								Entity clickable = i.next();
+								if (clickable instanceof Building) {
+									BuildingFeature bf = ((Building) clickable).getFeature();
+									if (bf.isAvailable()) {
+										clickable.onLeave(mode);
+										lastHovered = null;
+										setBuilding(bf);
+										rightMouseWasDown = false;
+										return;
+									}
+								}
+							}
+							break;
+						case Mode.MODE_SMARTBOMB:
+							// Cancel the smartbomb and return it to the stores
+							addPowerup(SmartbombPowerupFeature.getInstance(), false);
+							mode = Mode.MODE_NORMAL;
+							rightMouseWasDown = false;
+							return;
+						case Mode.MODE_SCROLL:
+							break;
+						default:
+							assert false;
+					}
+				}
+				rmbScroll = false;
 				rightMouseWasDown = false;
 				leftMouseWasDown = false;
 				waitForMouse = false;
@@ -2228,7 +2375,7 @@ public class WormGameState extends GameState {
 					}
 				}
 
-				if (mode == Mode.MODE_ZAP || mode == Mode.MODE_DRAG) {
+				if (mode == Mode.MODE_ZAP || mode == Mode.MODE_DRAG || mode == Mode.MODE_SCROLL || mode == Mode.MODE_SELECT) {
 					mode = Mode.MODE_NORMAL;
 				}
 			}
@@ -2470,12 +2617,17 @@ public class WormGameState extends GameState {
 			setSellMode(false);
 		} else if (!saving && !GameScreen.getInstance().isBlocked()) {
 			// Open ingame menu
-			if (getGameMode() == GAME_MODE_SURVIVAL) {
-				SurvivalMenuScreen.show(SurvivalMenuScreen.MENU_GAME_MODE);
-			} else {
-				MenuScreen.show(MenuScreen.MENU_GAME_MODE);
+			switch (getGameMode()) {
+				case GAME_MODE_SURVIVAL:
+					SurvivalMenuScreen.show(SurvivalMenuScreen.MENU_GAME_MODE);
+					break;
+				case GAME_MODE_XMAS:
+					XmasMenuScreen.show(SurvivalMenuScreen.MENU_GAME_MODE);
+					break;
+				default:
+					MenuScreen.show(MenuScreen.MENU_GAME_MODE);
+					break;
 			}
-			return;
 		}
 	}
 
@@ -2483,9 +2635,9 @@ public class WormGameState extends GameState {
 	 * Tick, called every frame that the game is playing
 	 */
 	public void tick() {
-		// Check for escape to save the game and quit, or cancel building
-		if (Game.wasKeyPressed(Keyboard.KEY_ESCAPE)) {
-		}
+//		// Check for escape to save the game and quit, or cancel building
+//		if (Game.wasKeyPressed(Keyboard.KEY_ESCAPE)) {
+//		}
 
 		if (saving && isAlive()) {
 			saveTick ++;
@@ -2496,6 +2648,10 @@ public class WormGameState extends GameState {
 		}
 
 		// Do colours & animation syncs
+		LevelFeature lf = getLevelFeature();
+		if (lf == null) {
+			return;
+		}
 		getLevelFeature().getColors().tick();
 
 		// If the shops open do nothing else
@@ -2563,6 +2719,8 @@ public class WormGameState extends GameState {
 				//for (int i = 0; i < 5; i ++) {
 				//	addPowerup(PowerupFeature.getPowerup());
 				//}
+			}
+			if (Game.wasKeyPressed(Keyboard.KEY_PERIOD)) {
 				Saucer saucer = new Saucer();
 				saucer.spawn(GameScreen.getInstance());
 
@@ -2576,6 +2734,10 @@ public class WormGameState extends GameState {
 			}
 			if (Game.wasKeyPressed(Keyboard.KEY_C)) {
 				CompleteGameScreen.show();
+				return;
+			}
+			if (Game.wasKeyPressed(Keyboard.KEY_X)) {
+				CompleteXmasScreen.show();
 				return;
 			}
 		}
@@ -2686,9 +2848,10 @@ public class WormGameState extends GameState {
 			}
 		}
 
+		boolean xmas = getGameMode() == GAME_MODE_XMAS;
 		// Has the level ended?
 		if (getGameMode() == GAME_MODE_SURVIVAL) {
-			// No, it's endless mode, and goes on forever and starts right away
+			// No, it's survival mode, and goes on forever and starts right away
 			levelTick ++;
 			tickSurvivalBosses();
 			tickSpawnPoints();
@@ -2698,6 +2861,9 @@ public class WormGameState extends GameState {
 		} else if (levelTick < getLevelDuration()) {
 			if (beginLevel) {
 				levelTick ++;
+				if (xmas) {
+					doCrystals();
+				}
 				checkUnminedCrystals();
 				tickSpawnPoints();
 				doSaucers();
@@ -2705,7 +2871,9 @@ public class WormGameState extends GameState {
 				if (levelTick == getLevelDuration()) {
 					aliensSpawnedAtLevelEnd = aliensSpawnedValue;
 					rush = true;
-					removeSpawnPoints();
+					if (!xmas) {
+						removeSpawnPoints();
+					}
 				}
 
 				checkInterestingThingsHappening();
@@ -2786,6 +2954,13 @@ public class WormGameState extends GameState {
 		}
 
 		if (gidrahs.size() == 0) {
+			if (getGameMode() == GAME_MODE_XMAS) {
+				// Wait until spawnpoint is gone
+				if (spawnPoints.size() > 0) {
+					tickSpawnPoints();
+					return;
+				}
+			}
 			// Wait until (all crystals are mined / factory not available) and gidrahs and bosses are dead
 			int n = bosses.size();
 			for (int i = 0; i < n; i ++) {
@@ -2896,7 +3071,7 @@ public class WormGameState extends GameState {
 		saucerTick ++;
 		if (saucerTick > nextSaucer) {
 			saucerTick = 0;
-			if (getGameMode() != GAME_MODE_SURVIVAL) {
+			if (getGameMode() != GAME_MODE_SURVIVAL && getGameMode() != GAME_MODE_XMAS) {
 				nextSaucer += config.getNextSaucerInterval();
 			}
 			Saucer saucer = new Saucer();
@@ -2977,7 +3152,7 @@ public class WormGameState extends GameState {
 			EntitySpawningFeature esf = crystalDefinition.getCrystalFeature();
 			esf.spawn(tileX, tileY);
 			crystalTick = survivalNextCrystalTick * size.intValue();
-			survivalNextCrystalTick += config.getSurvivalCrystalIntervalAdjust();
+			survivalNextCrystalTick += getGameMode() == GAME_MODE_SURVIVAL ? config.getSurvivalCrystalIntervalAdjust() : config.getXmasCrystalIntervalAdjust();
 		}
 	}
 
@@ -3015,10 +3190,34 @@ public class WormGameState extends GameState {
 				SelectSandboxLevelScreen.show();
 				break;
 
+			case GAME_MODE_XMAS:
+				initXmas(true);
+				break;
+
 			default:
 				assert false : "Unknown game mode "+mode;
 		}
 	}
+
+	/**
+	 * Initialise a Christmas mode game (instead of calling {@link #doInit(int)})
+	 */
+	private void initXmas(boolean reset) {
+		System.out.println("Initialising Xmas Mode");
+		waitForMouse = true;
+		xmasReset = reset;
+		if (reset) {
+			metaState = null;
+			metaState = new MetaState(GAME_MODE_XMAS);
+		} else {
+			metaState.reset();
+		}
+		GameScreen.beginGame(this);
+		beginLevel();
+		initXmasResearch();
+		doInitMessages(Game.getMessage("ultraworm.wormgamestate.init_xmas1"), Game.getMessage("ultraworm.wormgamestate.init_xmas2"));
+	}
+
 
 	/**
 	 * Initialise a survival mode game (instead of calling {@link #doInit(int)})
@@ -3036,6 +3235,21 @@ public class WormGameState extends GameState {
 		beginLevel();
 		initSurvivalResearch();
 		doInitMessages(Game.getMessage("ultraworm.wormgamestate.init_survival1"), Game.getMessage("ultraworm.wormgamestate.init_survival2"));
+	}
+
+	/**
+	 * Initialise a sandbox mode game (instead of calling {@link #doInit(int)})
+	 */
+	private void initSandbox() {
+		System.out.println("Initialising Sandbox Mode");
+		waitForMouse = true;
+		metaState = null;
+		metaState = new MetaState(GAME_MODE_SANDBOX);
+		GameScreen.beginGame(this);
+		beginLevel();
+		//initSurvivalResearch();
+		//doInitMessages(Game.getMessage("ultraworm.wormgamestate.init_sandbox1"), Game.getMessage("ultraworm.wormgamestate.init_sandbox2"));
+		doInitMessages("SANDBOX TEST", "No really, just a test!");
 	}
 
 	/**
@@ -3083,7 +3297,7 @@ public class WormGameState extends GameState {
 	}
 
 	/**
-	 * @return the survivalParams
+	 * @return the survival parameters, if we're in survival mode
 	 */
 	public SurvivalParams getSurvivalParams() {
 		return survivalParams;
@@ -3111,12 +3325,31 @@ public class WormGameState extends GameState {
         }
 	}
 
+	private void initXmasResearch() {
+		for (String s : Xmas.RESEARCH) {
+			setResearched(s);
+		}
+	}
+
+	/**
+	 * Begin a Sandbox game with the specified characteristics
+	 */
+	public void doInit(SandboxParams sandboxParams) {
+		this.sandboxParams = sandboxParams;
+		System.out.println("DoInit: "+sandboxParams);
+		initSandbox();
+	}
+
 
 	/**
 	 * We've completed the game!
 	 */
 	private void completeGame() {
-		CompleteGameScreen.show();
+		if (getGameMode() == GAME_MODE_XMAS) {
+			CompleteXmasScreen.show();
+		} else {
+			CompleteGameScreen.show();
+		}
 	}
 
 	/**
@@ -3124,6 +3357,10 @@ public class WormGameState extends GameState {
 	 */
 	public void nextLevel() {
 		metaState.level ++;
+		if (getGameMode() == GAME_MODE_XMAS) {
+			completeGame();
+			return;
+		}
 		if (getGameMode() == GAME_MODE_ENDLESS || getLevel() < MAX_LEVELS) {
 			beginLevel();
 		} else {
@@ -3232,6 +3469,22 @@ public class WormGameState extends GameState {
 					setWorld(newWorld);
 				}
 
+				suppressMedals = true;
+				beginLevel2();
+				break;
+
+			case GAME_MODE_XMAS:
+				// Generate a random level
+				metaState.levelFeature = LevelFeature.generateXmas();
+				metaState.difficulty = 0.0f;
+				metaState.reset();
+
+				// We might have changed worlds
+				newWorld = getLevelFeature().getWorld();
+				if (newWorld != getWorld()) {
+					setWorld(newWorld);
+				}
+
 				currentStoryIndex = 0;
 				sf = getLevelFeature().getStories();
 				currentStories = new ArrayList<StoryFeature>(sf.length);
@@ -3245,7 +3498,6 @@ public class WormGameState extends GameState {
 				showStoryScreen();
 				break;
 
-
 			default:
 				assert false : "Unknown game mode "+metaState.gameMode;
 		}
@@ -3255,8 +3507,8 @@ public class WormGameState extends GameState {
 	private void nextStoryScreen() {
 		if (++currentStoryIndex >= currentStories.size()) {
 			StoryScreen.tidyUp("story.screen."+getWorld().getUntranslated());
-			// Open research screen, unless this is level 0 or survival mode, in which case jump straight into the action
-			if (getLevel() == 0 || getGameMode() == GAME_MODE_SURVIVAL) {
+			// Open research screen, unless this is level 0 or survival mode or sandbox mode, in which case jump straight into the action
+			if (getLevel() == 0 || getGameMode() == GAME_MODE_SURVIVAL || getGameMode() == GAME_MODE_SANDBOX) {
 				beginLevel2();
 			} else {
 				showResearchScreen();
@@ -3281,6 +3533,14 @@ public class WormGameState extends GameState {
 					showLevelSelectScreen();
 					break;
 
+				case GAME_MODE_SANDBOX:
+					showLevelSelectScreen();
+					break;
+
+				case GAME_MODE_XMAS:
+					net.puppygames.applet.screens.TitleScreen.show();
+					break;
+
 				default:
 					assert false : "Shouldn't be here: "+metaState.gameMode;
 			}
@@ -3301,6 +3561,12 @@ public class WormGameState extends GameState {
 				break;
 			case GAME_MODE_SURVIVAL:
 				SelectSurvivalLevelScreen.show();
+				break;
+			case GAME_MODE_SANDBOX:
+				SelectSandboxLevelScreen.show();
+				break;
+			case GAME_MODE_XMAS:
+				net.puppygames.applet.screens.TitleScreen.show();
 				break;
 			default:
 				assert false : "Shouldn't be here: "+metaState.gameMode;
@@ -3386,8 +3652,10 @@ public class WormGameState extends GameState {
 		rush = false;
 		levelTick = 0;
 		tick = 0;
-		beginLevel = !isResearched(ResearchFeature.FACTORY) || getMoney() < 250 || metaState.gameMode == GAME_MODE_SURVIVAL;
+		beginLevel = !isResearched(ResearchFeature.FACTORY) || getMoney() < 250 || metaState.gameMode == GAME_MODE_SURVIVAL || metaState.gameMode == GAME_MODE_XMAS;
 		nextSaucer = config.getSaucerInterval();
+
+		System.out.println("MODE: "+metaState.gameMode+"\nPHASE: "+phase);
 
 		// Reset buffs
 		scannerBoost = 0;
@@ -3463,7 +3731,7 @@ public class WormGameState extends GameState {
 		waitForMouse = true;
 
 		// Research medals
-		if (metaState.gameMode != GAME_MODE_SURVIVAL) {
+		if (metaState.gameMode != GAME_MODE_SURVIVAL && metaState.gameMode != GAME_MODE_XMAS) {
 			Map<String, List<String>> medalGroups = ResearchFeature.getMedalGroups();
 			for (Entry<String, List<String>> entry : medalGroups.entrySet()) {
 				String medal = entry.getKey();
@@ -3483,6 +3751,9 @@ public class WormGameState extends GameState {
 	public void calcBasicDifficulty() {
 		if (metaState.gameMode == GAME_MODE_SURVIVAL) {
 			metaState.difficulty = survivalParams.getDifficulty();
+			return;
+		} else if (metaState.gameMode == GAME_MODE_XMAS) {
+			metaState.difficulty = 0.0f;
 			return;
 		}
 
@@ -3560,11 +3831,12 @@ public class WormGameState extends GameState {
 	}
 
 	private ReadablePoint getEdgePoint() {
-		int edge = Util.random(0, 9); // Bias away from south
+		int edge = getGameMode() == GAME_MODE_XMAS ? 0 : Util.random(0, 9); // Bias away from south: only 1/10 edges are picked from south
 
 		boolean blocked;
-		int x, y, ox, oy;
+		int x, y, ox, oy, count = 0;
 		do {
+			count ++;
 			blocked = false;
 			switch (edge) {
 				case 0: // North
@@ -3608,7 +3880,7 @@ public class WormGameState extends GameState {
 					break;
 				}
 			}
-		} while (blocked);
+		} while (blocked && count < 50);
 		return new Point(x + ox, y + oy);
 	}
 
@@ -3617,11 +3889,14 @@ public class WormGameState extends GameState {
 	 */
 	private void createSurvivalSpawnPoint() {
 		ReadablePoint edgePoint = getEdgePoint();
+		if (edgePoint == null) {
+			return;
+		}
 		spawnPoints.add(new SpawnPoint(edgePoint.getX(), edgePoint.getY(), 0, true));
 	}
 
 	/**
-	 * Hack for Earth-only survival bosses
+	 * Hack for Earth-only survival / xmas bosses
 	 * @param n
 	 * @return
 	 */
@@ -4003,9 +4278,10 @@ public class WormGameState extends GameState {
 		float attenuate = 1.0f;
 		float irate = 0.0f;
 		boolean survival = getGameMode() == GAME_MODE_SURVIVAL;
+		boolean xmas = getGameMode() == GAME_MODE_XMAS;
 
 		// And then attenuate this difficulty by how badly the player is being kicked in:
-		if (!survival && valueOfDestroyedBuildings > 0 && valueOfBuiltBuildings > config.getBuiltBuildingsValueThreshold()) {
+		if (!survival && !xmas && valueOfDestroyedBuildings > 0 && valueOfBuiltBuildings > config.getBuiltBuildingsValueThreshold()) {
 			float slaughterAttenuation = 1.0f;
 			// Attenuate the attenuation by the aliens losses when level is ended
 			if (!isLevelActive() && aliensSpawnedAtLevelEnd > 0 && aliensVanquishedSinceEndOfLevel > 0) {
@@ -4020,17 +4296,24 @@ public class WormGameState extends GameState {
 			Building b = buildings.get(i);
 			if (b.isAlive()) {
 				total += b.getCost();
-				irate += b.getFeature().getAgitation();
+				irate += b.getAgitation();
 			}
 		}
 
 		// For every $DIFFICULTY_FACTOR in play add 1.0 difficulty
-		if (survival) {
-			total += valueOfDestroyedBuildings; // It never gets easier :)
-			ret += total / config.getSurvivalModeDifficultyFactors()[survivalParams.getWorld().getIndex()];
-		} else {
-			ret += total / (config.getDifficultyFactor() + config.getDifficultyFactorPerLevel() * getLevel());
-			ret *= attenuate;
+		switch (getGameMode()) {
+			case GAME_MODE_SURVIVAL:
+				total += valueOfDestroyedBuildings; // It never gets easier :)
+				ret += total / config.getSurvivalModeDifficultyFactors()[survivalParams.getWorld().getIndex()];
+				break;
+			case GAME_MODE_XMAS:
+				total += valueOfDestroyedBuildings;
+				ret += total / config.getXmasDifficultyFactor();
+				break;
+			default:
+				ret += total / (config.getDifficultyFactor() + config.getDifficultyFactorPerLevel() * getLevel());
+				ret *= attenuate;
+				break;
 		}
 
 		// Add difficulty for powerups...
@@ -4118,7 +4401,7 @@ public class WormGameState extends GameState {
 	 * Restart the level
 	 */
 	public void restart() {
-		if (metaState.gameMode != GAME_MODE_SURVIVAL) {
+		if (metaState.gameMode != GAME_MODE_SURVIVAL && metaState.gameMode != GAME_MODE_XMAS) {
 			int attempts = Worm.getExtraLevelData(Game.getPlayerSlot(), metaState.level, metaState.gameMode, "attempts", 0);
 			Worm.setExtraLevelData(metaState.level, metaState.gameMode, "attempts", attempts + 1);
 		}
@@ -4126,10 +4409,26 @@ public class WormGameState extends GameState {
 		doInit(metaState.level);
 	}
 
+	private void removeCrystals() {
+		// Remove crystals properly so the exclude tiles are removed
+		for (Building b : buildings) {
+			if (b instanceof CrystalResource) {
+				((CrystalResource) b).clearMap();
+			}
+		}
+	}
+
 	public void restartSurvival(boolean generateNew) {
+		removeCrystals();
 		reset();
 		survivalParams.setGenerateNew(generateNew);
 		doInit(survivalParams);
+	}
+
+	public void restartXmas(boolean generateNew) {
+		removeCrystals();
+		reset();
+		initXmas(generateNew);
 	}
 
 	/**
@@ -4138,7 +4437,7 @@ public class WormGameState extends GameState {
 	public void easier() {
 		int diff = getDifficultyAdjust(metaState.level, metaState.gameMode);
 		setDifficultyAdjust(metaState.level, metaState.gameMode, diff + 1);
-		if (metaState.gameMode != GAME_MODE_SURVIVAL) {
+		if (metaState.gameMode == GAME_MODE_CAMPAIGN || metaState.gameMode == GAME_MODE_ENDLESS) {
 			// Reset attempts count
 			Worm.setExtraLevelData(metaState.level, metaState.gameMode, "attempts", 0);
 		}
@@ -4395,7 +4694,7 @@ public class WormGameState extends GameState {
 			SFX.newRank();
 			if (Game.isUsingSteam() && Steam.isCreated() && Steam.isSteamRunning()) {
 				try {
-					Steam.getUserStats().setAchievement(newRank.getName());
+				Steam.getUserStats().setAchievement(newRank.getName());
 				} catch (SteamException e) {
 					System.err.println("Failed to set achievement "+newRank.getName()+" due to "+e);
 				}
@@ -4407,11 +4706,11 @@ public class WormGameState extends GameState {
 		System.out.println("Awarded "+medal+" ("+n+")");
 		if (mf.isSteam() && Game.isUsingSteam() && Steam.isCreated() && Steam.isSteamRunning()) {
 			try {
-				Steam.getUserStats().setAchievement(mf.getName());
-				storeSteamStats = true;
+			Steam.getUserStats().setAchievement(mf.getName());
+			storeSteamStats = true;
 			} catch (SteamException e) {
 				System.err.println("Failed to set achievement "+mf.getName()+" due to "+e);
-			}
+		}
 		}
 
 		// Update medals earned this level too
@@ -4439,7 +4738,7 @@ public class WormGameState extends GameState {
 		// Store steam stats
 		if (storeSteamStats) {
 			try {
-				Steam.getUserStats().storeStats();
+			Steam.getUserStats().storeStats();
 			} catch (SteamException e) {
 				System.err.println("Failed to store steam stats due to "+e);
 			}
@@ -4495,6 +4794,113 @@ public class WormGameState extends GameState {
 
 		if (getGameMode() == GAME_MODE_SURVIVAL) {
 			sb.append(Game.getMessage("ultraworm.wormgamestate.stats_survival"));
+		} else if (getGameMode() == GAME_MODE_XMAS) {
+			if (getLevel() == 0) {
+				// Goes in the ZX bot at the start...
+				sb.append(Game.getMessage("ultraworm.wormgamestate.stats_xmas"));
+			} else {
+				// Goes on the Xmas victory screen at the end
+				sb.append("{font:smallfont.glfont color:text-bold}");
+				sb.append(Game.getMessage("ultraworm.wormgamestate.xmas.battle_statistics"));
+				sb.append("{font:tinyfont.glfont}\n\n");
+
+				int angry = getStat(Stats.ANGRY_SPAWNED);
+				int bosses = getStat(Stats.BOSSES_SPAWNED);
+				int gidlets = getStat(Stats.GIDLETS_SPAWNED);
+
+				int spawned = getStat(Stats.ALIENS_SPAWNED);
+				sb.append("{color:text-bold}"+spawned+" "+Game.getMessage("ultraworm.wormgamestate.xmas.aliens_spawned"));
+
+				if (angry > 0 || bosses > 0 || gidlets > 0 || showAllStats) {
+					sb.append("\n\t\t {color:text}");
+					int normal = spawned - (angry + gidlets + bosses);
+					boolean addSpace = false;
+					if (normal > 0 || showAllStats) {
+						sb.append("{color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.normal_sized_aliens")+": "+normal);
+						addSpace = true;
+					}
+					if (angry > 0 || showAllStats) {
+						if (addSpace) {
+							sb.append(' ');
+						}
+						sb.append("{color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.large_sized_aliens")+": "+angry);
+						addSpace = true;
+					}
+					if (gidlets > 0 || showAllStats) {
+						if (addSpace) {
+							sb.append(' ');
+						}
+						sb.append("{color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.tiny_sized_aliens")+": "+gidlets);
+						addSpace = true;
+					}
+					if (bosses > 0 || showAllStats) {
+						if (addSpace) {
+							sb.append(' ');
+						}
+						sb.append("{color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.bosses")+": "+bosses);
+					}
+				}
+
+
+				int vanquished = getStat(Stats.ALIENS_VANQUISHED);
+				sb.append("\n{color:text-bold}"+vanquished+" "+Game.getMessage("ultraworm.wormgamestate.xmas.aliens_vanquished"));
+				int shot = getStat(Stats.ALIENS_SHOT);
+
+				if (vanquished != shot || showAllStats) {
+
+					int vanquishedCount = 1;
+					sb.append("\n\t\t {color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.aliens_shot")+": "+shot);
+
+					int crushed = getStat(Stats.ALIENS_CRUSHED);
+					if (crushed > 0 || showAllStats) {
+						sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.aliens_crushed")+": "+crushed);
+						vanquishedCount++;
+					}
+					int blownUp = getStat(Stats.ALIENS_BLOWN_UP);
+					if (blownUp > 0 || showAllStats) {
+						sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.aliens_blown_up")+": "+blownUp);
+						vanquishedCount++;
+					}
+					int fried = getStat(Stats.ALIENS_FRIED);
+					if (fried > 0 || showAllStats) {
+						vanquishedCount++;
+						if (vanquishedCount>3) {
+							vanquishedCount=0;
+							sb.append("\n\t\t");
+						}
+						sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.aliens_fried")+": "+fried);
+					}
+					int nuked = getStat(Stats.ALIENS_SMARTBOMBED);
+					if (nuked > 0 || showAllStats) {
+						vanquishedCount++;
+						if (vanquishedCount>3) {
+							vanquishedCount=0;
+							sb.append("\n\t\t");
+						}
+						sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.aliens_nuked")+": "+nuked);
+					}
+				}
+
+
+				int alienAttacksOnBuildings = getStat(Stats.ALIEN_ATTACKS_ON_BUILDINGS);
+				if (alienAttacksOnBuildings > 0 || showAllStats) {
+					String msg = Game.getMessage("ultraworm.wormgamestate.xmas.alien_attacks");
+					msg = msg.replace("[num]", String.valueOf(alienAttacksOnBuildings));
+					msg = msg.replace("[value]", String.valueOf(getStat(Stats.VALUE_OF_BUILDINGS_DESTROYED)));
+					sb.append(msg);
+				}
+
+				sb.append("\n{color:text-bold}"+getStat(Stats.BUILDINGS_BUILT)+" "+Game.getMessage("ultraworm.wormgamestate.xmas.buildings_built"));
+				sb.append("\n\t\t {color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.buildings_destroyed")+": "+getStat(Stats.BUILDINGS_DESTROYED));
+				int recycled = getStat(Stats.RECYCLED);
+				int sold = getStat(Stats.SOLD);
+				sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.buildings_sold")+": "+sold);
+				sb.append(" {color:text}"+Game.getMessage("ultraworm.wormgamestate.xmas.buildings_recycled")+": "+recycled);
+
+				int buildCosts = getStat(Stats.VALUE_OF_BUILDINGS_BUILT);
+				sb.append("\n {color:text-bold}\\$"+buildCosts+" "+Game.getMessage("ultraworm.wormgamestate.xmas.money_spent"));
+			}
+
 		} else if (getLevel() == 0) {
 			sb.append(Game.getMessage("ultraworm.wormgamestate.stats_level0"));
 		} else {
@@ -4760,5 +5166,18 @@ public class WormGameState extends GameState {
 		int rate = Worm.getGameState().isResearched(ResearchFeature.FINETUNING) ? 1 : 0;
 		rate += Worm.getGameState().isResearched(ResearchFeature.EXTRACTION) ? 1 : 0;
 		return config.getScavengeRate()[rate];
+    }
+
+//    public MapGeneratorParams getMapGeneratorParams() {
+//    	return new MapGeneratorParams( this.getBasicDifficulty(), this.getGameMode(), this.getLevel(), this.getLevelFeature(), this.getLevelInWorld(), this.getMoney(), this.getResearchHash(), this.getWorld() );
+//    }
+
+    /**
+     * Hax! This returns true if we want the level generator thread to generate a new level, or false if not.
+     * @return
+     * @see #initXmas(boolean)
+     */
+    public boolean isXmasReset() {
+	    return xmasReset;
     }
 }

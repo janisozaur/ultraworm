@@ -47,6 +47,7 @@ import worm.WormGameState;
 import worm.features.Setting;
 import worm.features.StoryFeature;
 import worm.generator.MapGenerator;
+import worm.generator.MapGeneratorParams;
 
 import com.shavenpuppy.jglib.Resources;
 import com.shavenpuppy.jglib.resources.Background;
@@ -57,8 +58,6 @@ import com.shavenpuppy.jglib.resources.Data;
  * Shows story stuff
  */
 public class StoryScreen extends Screen {
-
-	private static final long serialVersionUID = 1L;
 
 	private static final String ID_OK = "ok";
 	private static final String ID_BACK = "back";
@@ -125,20 +124,35 @@ public class StoryScreen extends Screen {
 		public void run() {
 			WormGameState gameState = Worm.getGameState();
 			gameState.calcBasicDifficulty();
+
+			MapGeneratorParams params = new MapGeneratorParams
+				(
+					gameState.getBasicDifficulty(),
+					gameState.getGameMode(),
+					gameState.getLevel(),
+					gameState.getLevelFeature(),
+					gameState.getLevelInWorld(),
+					gameState.getMoney(),
+					gameState.getResearchHash(),
+					gameState.getWorld()
+				);
+
 			if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
 				if (gameState.getSurvivalParams().getGenerateNew()) {
-					generator = gameState.getLevelFeature().getTemplate().createGenerator(-1, -1, gameState.getLevelFeature());
+					generator = gameState.getLevelFeature().getTemplate().createGenerator(params);
+				} else {
+					map = gameState.getMap();
+					return;
+				}
+			} else if (gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) {
+				if (gameState.isXmasReset()) {
+					generator = gameState.getLevelFeature().getTemplate().createGenerator(params);
 				} else {
 					map = gameState.getMap();
 					return;
 				}
 			} else {
-				generator = gameState.getLevelFeature().getTemplate().createGenerator
-					(
-						gameState.getLevel(),
-						gameState.getLevelInWorld(),
-						gameState.getLevelFeature()
-					);
+				generator = gameState.getLevelFeature().getTemplate().createGenerator(params);
 			}
 			map = generator.generate();
 			gameState.setMap(map);
@@ -200,10 +214,15 @@ public class StoryScreen extends Screen {
 			backAction.run();
 			map = null;
 		} else if (id.equals(ID_MENU)) {
-			if (Worm.getGameState().getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
-				SurvivalMenuScreen.show(SurvivalMenuScreen.MENU_STORY_MODE);
-			} else {
-				MenuScreen.show(MenuScreen.MENU_STORY_MODE);
+			switch (Worm.getGameState().getGameMode()) {
+				case WormGameState.GAME_MODE_SURVIVAL:
+					SurvivalMenuScreen.show(SurvivalMenuScreen.MENU_STORY_MODE);
+					break;
+				case WormGameState.GAME_MODE_XMAS:
+					net.puppygames.applet.screens.TitleScreen.show();
+					break;
+				default:
+					MenuScreen.show(MenuScreen.MENU_STORY_MODE);
 			}
 		}
 	}
@@ -273,12 +292,16 @@ public class StoryScreen extends Screen {
 
 
 		WormGameState gameState = Worm.getGameState();
-		if (gameState.getGameMode() == WormGameState.GAME_MODE_ENDLESS) {
-			// Always use earth color map
-			ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("earth.colormap"));
-		} else {
-			String world = gameState.getWorld().getUntranslated();
-			ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get(world+".colormap"));
+		switch (gameState.getGameMode()) {
+			case WormGameState.GAME_MODE_ENDLESS:
+				ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("earth.colormap"));
+				break;
+			case WormGameState.GAME_MODE_XMAS:
+				ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("xmas.colormap"));
+				break;
+			default:
+				String world = gameState.getWorld().getUntranslated();
+				ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get(world+".colormap"));
 		}
 
 		settingEffect = story.getSetting().spawn(this, story);

@@ -181,6 +181,9 @@ public class EmitterFeature extends Feature {
 	/** Don't move Y coordinate; just use sprite offset instead */
 	private boolean doYOffset;
 
+	/** Force emission even if offscreen */
+	private boolean forceEmit;
+
 	/*
 	 * Transient data
 	 */
@@ -415,7 +418,7 @@ public class EmitterFeature extends Feature {
 					offsetXpos = xx;
 					offsetYpos = yy + oyy;
 				}
-				if (offsetXpos < -MARGIN || offsetYpos < -MARGIN || offsetXpos > screen.getWidth() + MARGIN || offsetYpos > screen.getHeight() + MARGIN) {
+				if (!forceEmit && (offsetXpos < -MARGIN || offsetYpos < -MARGIN || offsetXpos > screen.getWidth() + MARGIN || offsetYpos > screen.getHeight() + MARGIN)) {
 					numParticles += n;
 				} else {
 					for (int i = 0; i < n && (maxParticles == 0 || numParticles < maxParticles); i ++) {

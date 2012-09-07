@@ -31,8 +31,6 @@
  */
 package worm.screens;
 
-import net.puppygames.applet.widgets.PowerDisplay;
-import net.puppygames.applet.widgets.PowerDisplayFeature;
 import worm.Worm;
 
 /**
@@ -41,8 +39,6 @@ import worm.Worm;
 public class OptionsScreen extends net.puppygames.applet.screens.OptionsScreen {
 
 	private static final long serialVersionUID = 1L;
-
-	private static final String MOUSESPEED = "mousespeed";
 
 	private static final String SHOW_TOOLTIPS_ON = "show_tooltips_on";
 	private static final String SHOW_TOOLTIPS_OFF = "show_tooltips_off";
@@ -53,19 +49,6 @@ public class OptionsScreen extends net.puppygames.applet.screens.OptionsScreen {
 	private static final String AUTO_DIFFICULTY_ON = "auto_difficulty_on";
 	private static final String AUTO_DIFFICULTY_OFF = "auto_difficulty_off";
 
-
-	/*
-	 * Resource data
-	 */
-
-	private PowerDisplayFeature mouseSpeedPowerDisplay;
-
-
-	/*
-	 * Transient data
-	 */
-
-	private transient PowerDisplay mouseSpeedPowerDisplayInstance;
 
 	/**
 	 * C'tor
@@ -78,13 +61,7 @@ public class OptionsScreen extends net.puppygames.applet.screens.OptionsScreen {
 	@Override
 	protected void onClicked(String id) {
 		super.onClicked(id);
-		if (MOUSESPEED.equals(id)) {
-			int speed = mouseSpeedPowerDisplayInstance.getBarAt(getMouseX(), getMouseY());
-			if (speed >= 0) {
-				mouseSpeedPowerDisplayInstance.setUsed(speed + 1);
-				Worm.setMouseSpeed(speed + 1);
-			}
-		} else if (SHOW_TOOLTIPS_ON.equals(id)) {
+		if (SHOW_TOOLTIPS_ON.equals(id)) {
 			Worm.setShowTooltips(false);
 			enableButtons();
 		} else if (SHOW_TOOLTIPS_OFF.equals(id)) {
@@ -139,25 +116,16 @@ public class OptionsScreen extends net.puppygames.applet.screens.OptionsScreen {
 	@Override
 	protected void onOpen() {
 		super.onOpen();
-		mouseSpeedPowerDisplayInstance = mouseSpeedPowerDisplay.spawn(this);
-		mouseSpeedPowerDisplayInstance.setUsed(Worm.getMouseSpeed());
 		onResized();
 		setEnabled("exit", false);
-	}
-
-	@Override
-	protected void doCleanup() {
-		super.doCleanup();
-		mouseSpeedPowerDisplayInstance.cleanup();
-		mouseSpeedPowerDisplayInstance = null;
+		
+		setGroupVisible("not-xmas", !Worm.isXmas());
+		setGroupVisible("xmas", Worm.isXmas());
 	}
 
 	@Override
 	protected void onResized() {
 		super.onResized();
-		if (mouseSpeedPowerDisplayInstance != null) {
-			mouseSpeedPowerDisplayInstance.onResized();
-		}
 		enableButtons();
 	}
 

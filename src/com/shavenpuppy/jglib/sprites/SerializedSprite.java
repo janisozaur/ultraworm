@@ -37,7 +37,7 @@ import java.io.Serializable;
 import java.util.Stack;
 
 import org.lwjgl.util.ReadableColor;
-import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector2f;
 
 /**
  * $Id: SerializedSprite.java,v 1.21 2011/10/04 00:05:22 cix_foo Exp $
@@ -74,10 +74,10 @@ public class SerializedSprite implements Serializable {
 	private int subLayer;
 
 	/** World coordinates */
-	private Vector3f location = new Vector3f();
+	private Vector2f location = new Vector2f();
 
 	/** Offset coordinates */
-	private Vector3f offset = new Vector3f();
+	private Vector2f offset = new Vector2f();
 
 	/** Flash mode: renders an additive mode version on top */
 	private boolean flash;
@@ -187,7 +187,7 @@ public class SerializedSprite implements Serializable {
 		dest.setSequence(sequence);
 		dest.setLayer(layer);
 		dest.setSubLayer(subLayer);
-		dest.setLocation(location.getX(), location.getY(), location.getZ());
+		dest.setLocation(location.getX(), location.getY());
 		dest.setOffset(offset);
 		dest.setFlash(flash);
 		dest.setColor(0, color[0]);

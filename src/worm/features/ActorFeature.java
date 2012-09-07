@@ -331,11 +331,11 @@ public class ActorFeature extends Feature {
 
 			if (layersSprite != null) {
 				for (int i = 0; i < layersSprite.getSprites().length; i ++) {
-					layersSprite.getSprite(i).setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY(), 0.0f);
+					layersSprite.getSprite(i).setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY());
 				}
 			}
 			if (foreground != null) {
-				foreground.setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY(), 0);
+				foreground.setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY());
 			}
 
 			int textHeight = textArea.getTextHeight();
@@ -509,14 +509,14 @@ public class ActorFeature extends Feature {
 			}
 			if (layersSprite != null) {
 				for (int i = 0; i < layersSprite.getSprites().length; i ++) {
-					layersSprite.getSprite(i).setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY(), 0);
+					layersSprite.getSprite(i).setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY());
 					if (fade) {
 						layersSprite.getSprite(i).setAlpha(0);
 					}
 				}
 			}
 			if (foreground != null) {
-				foreground.setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY(), 0);
+				foreground.setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY());
 				if (fade) {
 					foreground.setAlpha(0);
 				}
@@ -625,14 +625,14 @@ public class ActorFeature extends Feature {
 			int alpha = (int) LinearInterpolator.instance.interpolate(0.0f, 255.0f, (float) fadeInTick / FADE_IN_DURATION);
 			if (layersSprite != null) {
 				for (int i = 0; i < layersSprite.getSprites().length; i ++) {
-					layersSprite.getSprite(i).setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY(), 0);
+					layersSprite.getSprite(i).setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY());
 					if (fade) {
 						layersSprite.getSprite(i).setAlpha(alpha);
 					}
 				}
 			}
 			if (foreground != null) {
-				foreground.setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY(), 0);
+				foreground.setLocation(instanceBounds.getX() - bounds.getX() + position.getX(), instanceBounds.getY() - bounds.getY() + position.getY());
 				if (fade) {
 					foreground.setAlpha(alpha);
 				}
@@ -698,7 +698,7 @@ public class ActorFeature extends Feature {
 
 							for (int j = i+1; j < layersSprite.getSprites().length; j ++) {
 								if (layersSprite.getSprite(j).isDoChildOffset()) {
-									layersSprite.getSprite(j).setLocation(instanceBounds.getX() - bounds.getX() + position.getX() + xOffsetTotal, instanceBounds.getY() - bounds.getY() + position.getY() + yOffsetTotal, 0);
+									layersSprite.getSprite(j).setLocation(instanceBounds.getX() - bounds.getX() + position.getX() + xOffsetTotal, instanceBounds.getY() - bounds.getY() + position.getY() + yOffsetTotal);
 								}
 							}
 						}
@@ -727,7 +727,7 @@ public class ActorFeature extends Feature {
 					if (mirrored) {
 						xOffset = -xOffset;
 					}
-					foreground.setLocation(instanceBounds.getX() - bounds.getX() + position.getX() + xOffset, instanceBounds.getY() - bounds.getY() + position.getY() + yOffset, 0);
+					foreground.setLocation(instanceBounds.getX() - bounds.getX() + position.getX() + xOffset, instanceBounds.getY() - bounds.getY() + position.getY() + yOffset);
 				}
 			}
 

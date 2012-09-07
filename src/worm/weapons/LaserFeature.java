@@ -513,7 +513,7 @@ public class LaserFeature extends WeaponFeature {
 				beamEmitterOverlaySprite.setLayer(layer + 1);
 				beamEmitterOverlaySprite.setColors(color);
 			}
-			beamEmitterOverlaySprite.setLocation((int) sx + ox, (int) sy + oy, 0);
+			beamEmitterOverlaySprite.setLocation((int) sx + ox, (int) sy + oy);
 			beamEmitterOverlaySprite.setScale(Util.random(FPMath.HALF + FPMath.EIGHTH, FPMath.HALF - FPMath.EIGHTH));
 		}
 

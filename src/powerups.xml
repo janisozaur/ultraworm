@@ -61,587 +61,351 @@
 		<offset x="0" y="+-4" d="0" />
 		<scale xscale="+-0.04" yscale="+0.04" d="0" />
 
-		<frame i="spriteimage.powerup.box.01" childYOffset="-10" d="1" />
-		<offset x="0" y="+-1" d="2" />
-		<frame i="spriteimage.powerup.box.01" childYOffset="-12" d="1" />
-		<offset x="0" y="+-1" d="1" />
-		<frame i="spriteimage.powerup.box.01" childYOffset="-14" d="1" />
-		<offset x="0" y="+-1" d="0" />
-		<frame i="spriteimage.powerup.box.01" childYOffset="-16" d="1" />
-		<offset x="0" y="+-1" d="1" />
+		<label id="loop"/>
 
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="10" />
-
-		<frame i="spriteimage.powerup.box.01" childYOffset="-12" d="1" />
-		<offset x="0" y="+2" d="0" />
-
-		<frame i="spriteimage.powerup.box.01" childYOffset="-10" d="1" />
-		<scale xscale="+-0.02" yscale="+0.02" d="0" />
-		<offset x="0" y="+1" d="0" />
-
-		<frame i="spriteimage.powerup.box.01" childYOffset="-8" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="0" />
-		<offset x="0" y="+1" d="0" />
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-
-		<frame i="spriteimage.powerup.box.01" childYOffset="-6" d="1" />
-		<offset x="0" y="+1" d="1" />
-
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-
-		<frame i="spriteimage.powerup.box.01" childYOffset="-4" d="1" />
-		<offset x="0" y="+1" d="14" />
-
-		<frame i="spriteimage.powerup.box.01" childYOffset="-6" d="1" />
-		<offset x="0" y="+-1" d="4" />
-
-		<frame i="spriteimage.powerup.box.01" childYOffset="-8" d="1" />
-		<offset x="0" y="+-1" d="3" />
+			<!--  falling - 8 -->
+			
+			<frame i="spriteimage.powerup.box.01" childYOffset="-10" d="1" />
+			<offset x="0" y="+-1" d="2" />
+			<frame i="spriteimage.powerup.box.01" childYOffset="-12" d="1" />
+			<offset x="0" y="+-1" d="1" />
+			<frame i="spriteimage.powerup.box.01" childYOffset="-14" d="1" />
+			<offset x="0" y="+-1" d="0" />
+			<frame i="spriteimage.powerup.box.01" childYOffset="-16" d="1" />
+			<offset x="0" y="+-1" d="1" />
+	
+			<!--  squash y - 16 -->
+	
+			<scale xscale="+0.06" yscale="+-0.06" d="1" />
+			<scale xscale="+0.02" yscale="+-0.02" d="2" />
+			<scale xscale="+0.02" yscale="+-0.02" d="3" />
+			<scale xscale="+0.02" yscale="+-0.02" d="10" />
+	
+			<!--  bounce and squash x - 9 -->
+	
+			<frame i="spriteimage.powerup.box.01" childYOffset="-12" d="1" />
+			<offset x="0" y="+2" d="0" />
+	
+			<frame i="spriteimage.powerup.box.01" childYOffset="-10" d="1" />
+			<scale xscale="+-0.02" yscale="+0.02" d="0" />
+			<offset x="0" y="+1" d="0" />
+	
+			<frame i="spriteimage.powerup.box.01" childYOffset="-8" d="1" />
+			<scale xscale="+-0.04" yscale="+0.04" d="0" />
+			<offset x="0" y="+1" d="0" />
+	
+			<scale xscale="+-0.04" yscale="+0.04" d="1" />
+	
+			<frame i="spriteimage.powerup.box.01" childYOffset="-6" d="1" />
+			<offset x="0" y="+1" d="1" />
+	
+			<scale xscale="+-0.02" yscale="+0.02" d="3" />
+	
+			<!--  pause - 15 -->
+	
+			<frame i="spriteimage.powerup.box.01" childYOffset="-4" d="1" />
+			<offset x="0" y="+1" d="14" />
+	
+			<!--  fall - 9 -->
+	
+			<frame i="spriteimage.powerup.box.01" childYOffset="-6" d="1" />
+			<offset x="0" y="+-1" d="4" />
+	
+			<frame i="spriteimage.powerup.box.01" childYOffset="-8" d="1" />
+			<offset x="0" y="+-1" d="3" />
 		
-		<goto seq="2" />
+		<goto id="loop" />
 	
 	</animation>
+	
+		
+	<animation name="powerup.icon.anim">
+	
+		<frame idx="3" d="0" />
+		<scale xscale="+-0.04" yscale="+0.04" d="0" />
+	
+		<label id="loop"/>
+			
+			<frame idx="3" d="8" />
+			
+			<scale xscale="+0.06" yscale="+-0.06" d="1" />
+			<scale xscale="+0.02" yscale="+-0.02" d="2" />
+			<scale xscale="+0.02" yscale="+-0.02" d="3" />
+			<scale xscale="+0.02" yscale="+-0.02" d="1" />
+			
+			<frame idx="2" d="4" />
+			<frame idx="1" d="4" />
+			<frame idx="0" d="2" />
+			
+			<scale xscale="+-0.02" yscale="+0.02" d="1" />
+			<scale xscale="+-0.04" yscale="+0.04" d="1" />
+			<scale xscale="+-0.04" yscale="+0.04" d="3" />
+			<scale xscale="+-0.02" yscale="+0.02" d="3" />
+			
+			<frame idx="1" d="5" />
+			<frame idx="2" d="7" />
+			<frame idx="3" d="12" />
+		
+		<goto id="loop" />
+	
+	</animation>
+	
+	
+	
 		
 	<animation name="powerup.ground.animation">
 
-		<frame i="spriteimage.powerup.box.ground.01" d="1" />
+		<frame i="spriteimage.powerup.box.ground.01" d="0" />
 
-		<alpha alpha="120" d="8"/>
+		<label id="loop"/>
+
+			<alpha alpha="120" d="8"/>
+			
+			<scale xscale="+0.02" yscale="+0.02" d="1" />
+			<alpha alpha="140" d="0"/>
+			<scale xscale="+0.02" yscale="+0.02" d="2" />
+			<alpha alpha="160" d="0"/>
+			<scale xscale="+0.02" yscale="+0.02" d="3" />
+			<alpha alpha="180" d="0"/>
+			<scale xscale="+0.02" yscale="+0.02" d="1" />
+			
+			<alpha alpha="200" d="8"/>
+			
+			<!-- bounce up -->
+			
+			<alpha alpha="200" d="2"/>
+			
+			<scale xscale="+-0.02" yscale="+-0.02" d="1" />
+			<alpha alpha="180" d="0"/>
+			<scale xscale="+-0.02" yscale="+-0.02" d="1" />
+			<alpha alpha="160" d="0"/>
+			<scale xscale="+-0.02" yscale="+-0.02" d="3" />
+			<alpha alpha="140" d="0"/>
+			<scale xscale="+-0.02" yscale="+-0.02" d="1" />
+			
+			<alpha alpha="120" d="2"/>
+			
+			<!-- fall down -->
+			
+			<alpha alpha="120" d="24"/>
 		
-		<scale xscale="+0.02" yscale="+0.02" d="1" />
-		<alpha alpha="140" d="0"/>
-		<scale xscale="+0.02" yscale="+0.02" d="2" />
-		<alpha alpha="160" d="0"/>
-		<scale xscale="+0.02" yscale="+0.02" d="3" />
-		<alpha alpha="180" d="0"/>
-		<scale xscale="+0.02" yscale="+0.02" d="1" />
-		
-		<alpha alpha="200" d="8"/>
-		
-		<!-- bounce up -->
-		
-		<alpha alpha="200" d="2"/>
-		
-		<scale xscale="+-0.02" yscale="+-0.02" d="1" />
-		<alpha alpha="180" d="0"/>
-		<scale xscale="+-0.02" yscale="+-0.02" d="1" />
-		<alpha alpha="160" d="0"/>
-		<scale xscale="+-0.02" yscale="+-0.02" d="3" />
-		<alpha alpha="140" d="0"/>
-		<scale xscale="+-0.02" yscale="+-0.02" d="1" />
-		
-		<alpha alpha="120" d="2"/>
-		
-		<!-- fall down -->
-		
-		<alpha alpha="120" d="24"/>
-		
-		<goto seq="1" />
+		<goto id="loop" />
 	
 	</animation>
 
-	
-	<animation name="bezerk.powerup.animation">
 
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.bezerk.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.bezerk.03" d="4" />
-		<frame i="spriteimage.powerup.bezerk.02" d="4" />
-		<frame i="spriteimage.powerup.bezerk.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.bezerk.02" d="5" />
-		<frame i="spriteimage.powerup.bezerk.03" d="7" />
-		<frame i="spriteimage.powerup.bezerk.04" d="12" />
-		<goto seq="1" />
-	
-	</animation>
-	
-	<animation name="smartbomb.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.smartbomb.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.smartbomb.03" d="4" />
-		<frame i="spriteimage.powerup.smartbomb.02" d="4" />
-		<frame i="spriteimage.powerup.smartbomb.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.smartbomb.02" d="5" />
-		<frame i="spriteimage.powerup.smartbomb.03" d="7" />
-		<frame i="spriteimage.powerup.smartbomb.04" d="12" />
-		<goto seq="1" />
-	</animation>
-	<animation name="repair.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.repair.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.repair.03" d="4" />
-		<frame i="spriteimage.powerup.repair.02" d="4" />
-		<frame i="spriteimage.powerup.repair.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.repair.02" d="5" />
-		<frame i="spriteimage.powerup.repair.03" d="7" />
-		<frame i="spriteimage.powerup.repair.04" d="12" />
-		<goto seq="1" />
-	</animation>
-	<animation name="shield.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.shield.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.shield.03" d="4" />
-		<frame i="spriteimage.powerup.shield.02" d="4" />
-		<frame i="spriteimage.powerup.shield.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.shield.02" d="5" />
-		<frame i="spriteimage.powerup.shield.03" d="7" />
-		<frame i="spriteimage.powerup.shield.04" d="12" />
-		<goto seq="1" />
-	</animation>
-	<animation name="freeze.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.freeze.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.freeze.03" d="4" />
-		<frame i="spriteimage.powerup.freeze.02" d="4" />
-		<frame i="spriteimage.powerup.freeze.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.freeze.02" d="5" />
-		<frame i="spriteimage.powerup.freeze.03" d="7" />
-		<frame i="spriteimage.powerup.freeze.04" d="12" />
-		<goto seq="1" />
-	</animation>
+	<array name="money.powerup.array">
+		<item>spriteimage.powerup.money.01</item>
+		<item>spriteimage.powerup.money.02</item>
+		<item>spriteimage.powerup.money.03</item>
+		<item>spriteimage.powerup.money.04</item>
+	</array>	
 	<animation name="money.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.money.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.money.03" d="4" />
-		<frame i="spriteimage.powerup.money.02" d="4" />
-		<frame i="spriteimage.powerup.money.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.money.02" d="5" />
-		<frame i="spriteimage.powerup.money.03" d="7" />
-		<frame i="spriteimage.powerup.money.04" d="12" />
-		<goto seq="1" />
+		<frameset id="money.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 
+	<array name="bezerk.powerup.array">
+		<item>spriteimage.powerup.bezerk.01</item>
+		<item>spriteimage.powerup.bezerk.02</item>
+		<item>spriteimage.powerup.bezerk.03</item>
+		<item>spriteimage.powerup.bezerk.04</item>
+	</array>	
+	<animation name="bezerk.powerup.animation">
+		<frameset id="bezerk.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>
+	
+	<array name="smartbomb.powerup.array">
+		<item>spriteimage.powerup.smartbomb.01</item>
+		<item>spriteimage.powerup.smartbomb.02</item>
+		<item>spriteimage.powerup.smartbomb.03</item>
+		<item>spriteimage.powerup.smartbomb.04</item>
+	</array>	
+	<animation name="smartbomb.powerup.animation">
+		<frameset id="smartbomb.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>
+	
+	<array name="repair.powerup.array">
+		<item>spriteimage.powerup.repair.01</item>
+		<item>spriteimage.powerup.repair.02</item>
+		<item>spriteimage.powerup.repair.03</item>
+		<item>spriteimage.powerup.repair.04</item>
+	</array>	
+	<animation name="repair.powerup.animation">
+		<frameset id="repair.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>	
+	
+	<array name="shield.powerup.array">
+		<item>spriteimage.powerup.shield.01</item>
+		<item>spriteimage.powerup.shield.02</item>
+		<item>spriteimage.powerup.shield.03</item>
+		<item>spriteimage.powerup.shield.04</item>
+	</array>	
+	<animation name="shield.powerup.animation">
+		<frameset id="shield.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>	
 
+	<array name="freeze.powerup.array">
+		<item>spriteimage.powerup.freeze.01</item>
+		<item>spriteimage.powerup.freeze.02</item>
+		<item>spriteimage.powerup.freeze.03</item>
+		<item>spriteimage.powerup.freeze.04</item>
+	</array>	
+	<animation name="freeze.powerup.animation">
+		<frameset id="freeze.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>	
+	
+	<array name="flux.powerup.array">
+		<item>spriteimage.powerup.flux.01</item>
+		<item>spriteimage.powerup.flux.02</item>
+		<item>spriteimage.powerup.flux.03</item>
+		<item>spriteimage.powerup.flux.04</item>
+	</array>	
 	<animation name="flux.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.flux.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.flux.03" d="4" />
-		<frame i="spriteimage.powerup.flux.02" d="4" />
-		<frame i="spriteimage.powerup.flux.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.flux.02" d="5" />
-		<frame i="spriteimage.powerup.flux.03" d="7" />
-		<frame i="spriteimage.powerup.flux.04" d="12" />
-		<goto seq="1" />
+		<frameset id="flux.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 
+	<array name="plutonium.powerup.array">
+		<item>spriteimage.powerup.plutonium.01</item>
+		<item>spriteimage.powerup.plutonium.02</item>
+		<item>spriteimage.powerup.plutonium.03</item>
+		<item>spriteimage.powerup.plutonium.04</item>
+	</array>	
 	<animation name="plutonium.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.plutonium.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.plutonium.03" d="4" />
-		<frame i="spriteimage.powerup.plutonium.02" d="4" />
-		<frame i="spriteimage.powerup.plutonium.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.plutonium.02" d="5" />
-		<frame i="spriteimage.powerup.plutonium.03" d="7" />
-		<frame i="spriteimage.powerup.plutonium.04" d="12" />
-		<goto seq="1" />
+		<frameset id="plutonium.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 
+	<array name="strengthen.powerup.array">
+		<item>spriteimage.powerup.strengthen.01</item>
+		<item>spriteimage.powerup.strengthen.02</item>
+		<item>spriteimage.powerup.strengthen.03</item>
+		<item>spriteimage.powerup.strengthen.04</item>
+	</array>	
 	<animation name="strengthen.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.strengthen.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.strengthen.03" d="4" />
-		<frame i="spriteimage.powerup.strengthen.02" d="4" />
-		<frame i="spriteimage.powerup.strengthen.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.strengthen.02" d="5" />
-		<frame i="spriteimage.powerup.strengthen.03" d="7" />
-		<frame i="spriteimage.powerup.strengthen.04" d="12" />
-		<goto seq="1" />
+		<frameset id="strengthen.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 
+	<array name="radar.powerup.array">
+		<item>spriteimage.powerup.radar.01</item>
+		<item>spriteimage.powerup.radar.02</item>
+		<item>spriteimage.powerup.radar.03</item>
+		<item>spriteimage.powerup.radar.04</item>
+	</array>	
 	<animation name="radar.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.radar.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.radar.03" d="4" />
-		<frame i="spriteimage.powerup.radar.02" d="4" />
-		<frame i="spriteimage.powerup.radar.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.radar.02" d="5" />
-		<frame i="spriteimage.powerup.radar.03" d="7" />
-		<frame i="spriteimage.powerup.radar.04" d="12" />
-		<goto seq="1" />
+		<frameset id="radar.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 
+	<array name="nitrogen.powerup.array">
+		<item>spriteimage.powerup.nitrogen.01</item>
+		<item>spriteimage.powerup.nitrogen.02</item>
+		<item>spriteimage.powerup.nitrogen.03</item>
+		<item>spriteimage.powerup.nitrogen.04</item>
+	</array>	
 	<animation name="nitrogen.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.nitrogen.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.nitrogen.03" d="4" />
-		<frame i="spriteimage.powerup.nitrogen.02" d="4" />
-		<frame i="spriteimage.powerup.nitrogen.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.nitrogen.02" d="5" />
-		<frame i="spriteimage.powerup.nitrogen.03" d="7" />
-		<frame i="spriteimage.powerup.nitrogen.04" d="12" />
-		<goto seq="1" />
+		<frameset id="nitrogen.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 
+	<array name="lithium.powerup.array">
+		<item>spriteimage.powerup.lithium.01</item>
+		<item>spriteimage.powerup.lithium.02</item>
+		<item>spriteimage.powerup.lithium.03</item>
+		<item>spriteimage.powerup.lithium.04</item>
+	</array>	
 	<animation name="lithium.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.lithium.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.lithium.03" d="4" />
-		<frame i="spriteimage.powerup.lithium.02" d="4" />
-		<frame i="spriteimage.powerup.lithium.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.lithium.02" d="5" />
-		<frame i="spriteimage.powerup.lithium.03" d="7" />
-		<frame i="spriteimage.powerup.lithium.04" d="12" />
-		<goto seq="1" />
+		<frameset id="lithium.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
-
-
 
 	<!--  survival mode powerups -->
 
-
+	<array name="concrete.powerup.array">
+		<item>spriteimage.powerup.survival.concrete.01</item>
+		<item>spriteimage.powerup.survival.concrete.02</item>
+		<item>spriteimage.powerup.survival.concrete.03</item>
+		<item>spriteimage.powerup.survival.concrete.04</item>
+	</array>	
 	<animation name="concrete.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.concrete.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.concrete.03" d="4" />
-		<frame i="spriteimage.powerup.survival.concrete.02" d="4" />
-		<frame i="spriteimage.powerup.survival.concrete.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.survival.concrete.02" d="5" />
-		<frame i="spriteimage.powerup.survival.concrete.03" d="7" />
-		<frame i="spriteimage.powerup.survival.concrete.04" d="12" />
-		<goto seq="1" />
+		<frameset id="concrete.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 
+	<array name="steel.powerup.array">
+		<item>spriteimage.powerup.survival.steel.01</item>
+		<item>spriteimage.powerup.survival.steel.02</item>
+		<item>spriteimage.powerup.survival.steel.03</item>
+		<item>spriteimage.powerup.survival.steel.04</item>
+	</array>	
 	<animation name="steel.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.steel.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.steel.03" d="4" />
-		<frame i="spriteimage.powerup.survival.steel.02" d="4" />
-		<frame i="spriteimage.powerup.survival.steel.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.survival.steel.02" d="5" />
-		<frame i="spriteimage.powerup.survival.steel.03" d="7" />
-		<frame i="spriteimage.powerup.survival.steel.04" d="12" />
-		<goto seq="1" />
+		<frameset id="steel.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 
+	<array name="titanium.powerup.array">
+		<item>spriteimage.powerup.survival.titanium.01</item>
+		<item>spriteimage.powerup.survival.titanium.02</item>
+		<item>spriteimage.powerup.survival.titanium.03</item>
+		<item>spriteimage.powerup.survival.titanium.04</item>
+	</array>	
 	<animation name="titanium.powerup.animation">
+		<frameset id="titanium.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>
 
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.titanium.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.titanium.03" d="4" />
-		<frame i="spriteimage.powerup.survival.titanium.02" d="4" />
-		<frame i="spriteimage.powerup.survival.titanium.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.survival.titanium.02" d="5" />
-		<frame i="spriteimage.powerup.survival.titanium.03" d="7" />
-		<frame i="spriteimage.powerup.survival.titanium.04" d="12" />
-		<goto seq="1" />
+	<array name="nanomesh.powerup.array">
+		<item>spriteimage.powerup.survival.nanomesh.01</item>
+		<item>spriteimage.powerup.survival.nanomesh.02</item>
+		<item>spriteimage.powerup.survival.nanomesh.03</item>
+		<item>spriteimage.powerup.survival.nanomesh.04</item>
+	</array>	
+	<animation name="nanomesh.powerup.animation">
+		<frameset id="nanomesh.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
 	</animation>
 	
-	<animation name="nanomesh.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.nanomesh.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.nanomesh.03" d="4" />
-		<frame i="spriteimage.powerup.survival.nanomesh.02" d="4" />
-		<frame i="spriteimage.powerup.survival.nanomesh.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.survival.nanomesh.02" d="5" />
-		<frame i="spriteimage.powerup.survival.nanomesh.03" d="7" />
-		<frame i="spriteimage.powerup.survival.nanomesh.04" d="12" />
-		<goto seq="1" />
-	</animation>	
-	
-	
+	<array name="mines.powerup.array">
+		<item>spriteimage.powerup.survival.mines.01</item>
+		<item>spriteimage.powerup.survival.mines.02</item>
+		<item>spriteimage.powerup.survival.mines.03</item>
+		<item>spriteimage.powerup.survival.mines.04</item>
+	</array>	
 	<animation name="mines.powerup.animation">
+		<frameset id="mines.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>
 
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.mines.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.mines.03" d="4" />
-		<frame i="spriteimage.powerup.survival.mines.02" d="4" />
-		<frame i="spriteimage.powerup.survival.mines.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.survival.mines.02" d="5" />
-		<frame i="spriteimage.powerup.survival.mines.03" d="7" />
-		<frame i="spriteimage.powerup.survival.mines.04" d="12" />
-		<goto seq="1" />
-	</animation>		
-	
+	<array name="clustermines.powerup.array">
+		<item>spriteimage.powerup.survival.clustermines.01</item>
+		<item>spriteimage.powerup.survival.clustermines.02</item>
+		<item>spriteimage.powerup.survival.clustermines.03</item>
+		<item>spriteimage.powerup.survival.clustermines.04</item>
+	</array>	
 	<animation name="clustermines.powerup.animation">
-
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.clustermines.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.clustermines.03" d="4" />
-		<frame i="spriteimage.powerup.survival.clustermines.02" d="4" />
-		<frame i="spriteimage.powerup.survival.clustermines.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.survival.clustermines.02" d="5" />
-		<frame i="spriteimage.powerup.survival.clustermines.03" d="7" />
-		<frame i="spriteimage.powerup.survival.clustermines.04" d="12" />
-		<goto seq="1" />
-	</animation>	
+		<frameset id="clustermines.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>
 	
+	<array name="blastmines.powerup.array">
+		<item>spriteimage.powerup.survival.blastmines.01</item>
+		<item>spriteimage.powerup.survival.blastmines.02</item>
+		<item>spriteimage.powerup.survival.blastmines.03</item>
+		<item>spriteimage.powerup.survival.blastmines.04</item>
+	</array>	
 	<animation name="blastmines.powerup.animation">
+		<frameset id="blastmines.powerup.array" />
+		<frame i="powerup.icon.anim" d="0" />
+	</animation>
+	
 
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.blastmines.04" d="8" />
-		
-		<scale xscale="+0.06" yscale="+-0.06" d="1" />
-		<scale xscale="+0.02" yscale="+-0.02" d="2" />
-		<scale xscale="+0.02" yscale="+-0.02" d="3" />
-		<scale xscale="+0.02" yscale="+-0.02" d="1" />
-		
-		<frame i="spriteimage.powerup.survival.blastmines.03" d="4" />
-		<frame i="spriteimage.powerup.survival.blastmines.02" d="4" />
-		<frame i="spriteimage.powerup.survival.blastmines.01" d="2" />
-		
-		<scale xscale="+-0.02" yscale="+0.02" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="1" />
-		<scale xscale="+-0.04" yscale="+0.04" d="3" />
-		<scale xscale="+-0.02" yscale="+0.02" d="3" />
-		
-		<frame i="spriteimage.powerup.survival.blastmines.02" d="5" />
-		<frame i="spriteimage.powerup.survival.blastmines.03" d="7" />
-		<frame i="spriteimage.powerup.survival.blastmines.04" d="12" />
-		<goto seq="1" />
-	</animation>	
 	
 	
 	<!-- Basic unit of difficulty for powerups -->

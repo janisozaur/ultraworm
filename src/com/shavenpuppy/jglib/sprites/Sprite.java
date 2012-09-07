@@ -37,10 +37,9 @@ import java.util.Stack;
 
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
-import org.lwjgl.util.vector.ReadableVector3f;
-import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.ReadableVector2f;
+import org.lwjgl.util.vector.Vector2f;
 
-import com.shavenpuppy.jglib.opengl.GLBaseTexture;
 import com.shavenpuppy.jglib.resources.ResourceArray;
 import com.shavenpuppy.jglib.util.FPMath;
 import com.shavenpuppy.jglib.util.Util;
@@ -104,9 +103,6 @@ public class Sprite implements Serializable {
 	/** Current style */
 	private Style style;
 
-	/** Special effects texture */
-	private GLBaseTexture texture;
-
 	/** Layer */
 	private int layer;
 
@@ -114,19 +110,16 @@ public class Sprite implements Serializable {
 	private int subLayer;
 
 	/** World coordinates */
-	private float x, y, z;
+	private float x, y;
 
 	/** Offset coordinates */
-	private float ox, oy, oz;
+	private float ox, oy;
 
 	/** Y Sort offset */
 	private float ySortOffset;
 
 	/** Flash mode: renders an additive mode version on top */
 	private boolean flash;
-
-	/** Extra texture coordinates for special effects */
-	private float tx00, ty00, tx01, ty01, tx10, ty10, tx11, ty11;
 
 	/** Colours of the four corners (bottom left, bottom right, top right, top left) */
 	private final ReadableColor[] color = new ReadableColor[]
@@ -211,25 +204,14 @@ public class Sprite implements Serializable {
 	void copy(Sprite src) {
 		image = src.image;
 		style = src.style;
-		texture = src.texture;
 		layer = src.layer;
 		subLayer = src.subLayer;
 		x = src.x;
 		y = src.y;
-		z = src.z;
 		ox = src.ox;
 		oy = src.oy;
-		oz = src.oz;
 		ySortOffset = src.ySortOffset;
 		flash = src.flash;
-		tx00 = src.tx00;
-		ty00 = src.ty00;
-		tx01 = src.tx01;
-		ty01 = src.ty01;
-		tx10 = src.tx10;
-		ty10 = src.ty10;
-		tx11 = src.tx11;
-		ty11 = src.ty11;
 		for (int i = 0; i < 4; i ++) {
 			color[i] = src.color[i];
 		}
@@ -261,10 +243,8 @@ public class Sprite implements Serializable {
 		flash = false;
 		ox = 0;
 		oy = 0;
-		oz = 0;
 		x = 0;
 		y = 0;
-		z = 0;
 		color[0] = ReadableColor.WHITE;
 		color[1] = ReadableColor.WHITE;
 		color[2] = ReadableColor.WHITE;
@@ -324,32 +304,13 @@ public class Sprite implements Serializable {
 	}
 
 	/**
-	 * Gets the z coordinate
-	 * @return the z coordinate
-	 */
-
-	public float getZ() {
-		return z;
-	}
-
-	/**
-	 * Sets the z.
-	 * @param z The z to set
-	 */
-
-	public void setZ(float z) {
-		this.z = z;
-	}
-
-	/**
 	 * Convenience accessor
 	 */
-
-	public Vector3f getLocation(Vector3f ret) {
+	public Vector2f getLocation(Vector2f ret) {
 		if (ret == null) {
-			ret = new Vector3f(x, y, z);
+			ret = new Vector2f(x, y);
 		} else {
-			ret.set(x, y, z);
+			ret.set(x, y);
 		}
 		return ret;
 	}
@@ -358,31 +319,25 @@ public class Sprite implements Serializable {
 	 * Convenience accessor
 	 */
 
-	public void setLocation(float x, float y, float z) {
+	public void setLocation(float x, float y) {
 		this.x = x;
 		this.y = y;
-		this.z = z;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.shavenpuppy.jglib.sprites.Positioned#setLocation(com.shavenpuppy.jglib.vector.ReadableVector3i)
-	 */
-
-	public void setLocation(ReadableVector3f newLocation) {
+	public void setLocation(ReadableVector2f newLocation) {
 		this.x = newLocation.getX();
 		this.y = newLocation.getY();
-		this.z = newLocation.getZ();
 	}
 
 	/**
 	 * Convenience accessor
 	 */
 
-	public Vector3f getOffset(Vector3f ret) {
+	public Vector2f getOffset(Vector2f ret) {
 		if (ret == null) {
-			ret = new Vector3f(ox, oy, oz);
+			ret = new Vector2f(ox, oy);
 		} else {
-			ret.set(ox, oy, oz);
+			ret.set(ox, oy);
 		}
 		return ret;
 	}
@@ -391,20 +346,18 @@ public class Sprite implements Serializable {
 	 * Convenience accessor
 	 */
 
-	public void setOffset(float ox, float oy, float oz) {
+	public void setOffset(float ox, float oy) {
 		this.ox = ox;
 		this.oy = oy;
-		this.oz = oz;
 	}
 
 	/**
 	 * Convenience accessor
 	 */
 
-	public void setOffset(ReadableVector3f location) {
+	public void setOffset(ReadableVector2f location) {
 		this.ox = location.getX();
 		this.oy = location.getY();
-		this.oz = location.getZ();
 	}
 
 	/**
@@ -412,17 +365,14 @@ public class Sprite implements Serializable {
 	 */
 
 	public void tick() {
-
-		// If the sprite is not active, don't do anything
+		// If the sprite is not active, don't do anything.
 		// If there's no animation, we don't need to do anything.
-		if (!active || getAnimation() == null) {
+		// If we're paused we don't need to do anything.
+		if (!active || animation == null || isPaused()) {
 			return;
 		}
 
-		// Get the animation to animate us if we're not paused
-		if (!isPaused()) {
-			getAnimation().animate(this);
-		}
+		animation.animate(this);
 	}
 
 	/**
@@ -655,19 +605,17 @@ public class Sprite implements Serializable {
 	/**
 	 * @see com.shavenpuppy.jglib.sprites.Animated#moveLocation(int, int)
 	 */
-	public void moveLocation(int dx, int dy, int dz) {
+	public void moveLocation(int dx, int dy) {
 		x += dx;
 		y += dy;
-		z += dz;
 	}
 
 	/**
 	 * @see com.shavenpuppy.jglib.sprites.Animated#moveOffset(int, int)
 	 */
-	public void moveOffset(int dx, int dy, int dz) {
+	public void moveOffset(int dx, int dy) {
 		ox += dx;
 		oy += dy;
-		oz += dz;
 	}
 
 	/**
@@ -712,13 +660,10 @@ public class Sprite implements Serializable {
 		visible = false;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 
 	@Override
     public String toString() {
-		return "Sprite[idx="+index+", owner="+owner+", image="+image+", active="+active+", visible="+visible+", position="+x+","+y+","+z+", "+getAnimation()+", "+getStyle()+"]";
+		return "Sprite[idx="+index+", owner="+owner+", image="+image+", active="+active+", visible="+visible+", position="+x+","+y+", "+getAnimation()+", "+getStyle()+"]";
 	}
 
 	/**
@@ -827,67 +772,6 @@ public class Sprite implements Serializable {
 		return missingImage;
 	}
 
-	public float getTx00() {
-		return tx00;
-	}
-	public float getTy00() {
-		return ty00;
-	}
-	public float getTx01() {
-		return tx01;
-	}
-	public float getTy01() {
-		return ty01;
-	}
-	public float getTx10() {
-		return tx10;
-	}
-	public float getTy10() {
-		return ty10;
-	}
-	public float getTx11() {
-		return tx11;
-	}
-	public float getTy11() {
-		return ty11;
-	}
-	public void setTextureCoords
-		(
-				float tx00,
-				float ty00,
-				float tx10,
-				float ty10,
-				float tx11,
-				float ty11,
-				float tx01,
-				float ty01
-		)
-	{
-		this.tx00 = tx00;
-		this.ty00 = ty00;
-		this.tx10 = tx10;
-		this.ty10 = ty10;
-		this.tx11 = tx11;
-		this.ty11 = ty11;
-		this.tx01 = tx01;
-		this.ty01 = ty01;
-	}
-
-	/**
-	 * Sets the texture to use for special effects
-	 * @param texture
-	 */
-	public void setTexture(GLBaseTexture texture) {
-		this.texture = texture;
-	}
-
-	/**
-	 * @return the texture to be used for special effects
-	 */
-	public GLBaseTexture getTexture() {
-		return texture;
-	}
-
 	float getOffsetY() {
 		return oy;
 	}
@@ -988,7 +872,6 @@ public class Sprite implements Serializable {
 	 * Gets the animation.
 	 * @return Returns a Animation
 	 */
-
 	public Animation getAnimation() {
 		return animation;
 	}
@@ -997,7 +880,6 @@ public class Sprite implements Serializable {
 	 * Sets the animation.
 	 * @param animation The animation to set
 	 */
-
 	public void setAnimation(Animation animation) {
 		if (animation != null) {
 			assert animation.isCreated();
@@ -1012,30 +894,27 @@ public class Sprite implements Serializable {
 	 */
 	void setAnimationNoRewind(Animation animation) {
 		this.animation = animation;
-		tick = -1;
+		tick = 0;
 	}
 
 	/**
-	 * Rewind the animation
+	 * Rewind the animation, if any. The first sequence of the animation, if any, is executed immediately.
 	 */
-
 	public void rewind() {
 		sequence = 0;
-		tick = -1;
+		tick = 0;
 		tick();
 	}
 
 	/**
 	 * @see com.shavenpuppy.jglib.sprites.Animation.Animated#getCurrentSequence()
 	 */
-
 	public int getSequence() {
 		return sequence;
 	}
 	/**
 	 * @see com.shavenpuppy.jglib.sprites.Animation.Animated#getCurrentTick()
 	 */
-
 	public int getTick() {
 		return tick;
 	}

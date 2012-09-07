@@ -74,9 +74,9 @@ public class TitleScreen extends Screen {
 	private static final int FADE_DELAY = 300;
 	private static final int FADE_DURATION = 120;
 
-	private static final String ID_SLOT = "slot";
-	private static final String ID_VERSION = "version";
-	private static final String ID_REGISTRATION = "registration";
+	protected static final String ID_SLOT = "slot";
+	protected static final String ID_VERSION = "version";
+	protected static final String ID_REGISTRATION = "registration";
 
 	/** Title screen instance */
 	private static TitleScreen instance;
@@ -349,11 +349,11 @@ public class TitleScreen extends Screen {
 
 		PlayerSlot slot = Game.getPlayerSlot();
 		if (slot == null) {
-			getArea(ID_SLOT).setText(Game.getMessage("lwjglapplets.titlescreen.entername"));
+			getArea(getSlotID()).setText(Game.getMessage("lwjglapplets.titlescreen.entername"));
 		} else {
 			String msg = Game.getMessage("lwjglapplets.titlescreen.welcome");
 			msg = msg.replace("[name]", slot.getName().toUpperCase());
-			getArea(ID_SLOT).setText(msg);
+			getArea(getSlotID()).setText(msg);
 		}
 	}
 
@@ -369,28 +369,28 @@ public class TitleScreen extends Screen {
 		fadeEffect = new FadeEffect(FADE_DELAY, FADE_DURATION) {
 			@Override
             protected void onTicked() {
-				getArea(ID_REGISTRATION).setTextAlpha(getAlpha());
+				getArea(getRegistrationID()).setTextAlpha(getAlpha());
 			}
 		};
 		fadeEffect.spawn(this);
 
 		if (Game.DEBUG && TEST_REGISTRATION_DETAILS) {
-			getArea(ID_REGISTRATION).setText("Registered to Wing Commander Testy 'McTesticles' McTestington (someone.with.a.long.email.address@puppygames.net)");
+			getArea(getRegistrationID()).setText("Registered to Wing Commander Testy 'McTesticles' McTestington (someone.with.a.long.email.address@puppygames.net)");
 		} else {
 			RegistrationDetails regDetails = Game.getRegistrationDetails();
 			if (regDetails == null) {
-				getArea(ID_REGISTRATION).setText("");
+				getArea(getRegistrationID()).setText("");
 			} else {
 				boolean nameOnly = Game.getLocalPreferences().getBoolean("nameOnly", false);
-				getArea(ID_REGISTRATION).setText(regDetails.toTitleScreen(nameOnly).toUpperCase());
+				getArea(getRegistrationID()).setText(regDetails.toTitleScreen(nameOnly).toUpperCase());
 				Game.getLocalPreferences().putBoolean("nameOnly", true);
 			}
 		}
 
 		if (Game.isRegistered()) {
-			getArea(ID_VERSION).setText("v" + Game.getVersion());
+			getArea(getVersionID()).setText("v" + Game.getVersion());
 		} else {
-			getArea(ID_VERSION).setText("v" + Game.getVersion() + " DEMO");
+			getArea(getVersionID()).setText("v" + Game.getVersion() + " DEMO");
 		}
 
 		updateControls();
@@ -408,4 +408,24 @@ public class TitleScreen extends Screen {
 		//}
 	}
 
+	/**
+	 * @return the ID of the current slot area
+	 */
+	public String getSlotID() {
+		return ID_SLOT;
+	}
+
+	/**
+	 * @return the ID of the version area
+	 */
+	public String getVersionID() {
+		return ID_VERSION;
+	}
+
+	/**
+	 * @return the ID of the registration area
+	 */
+	public String getRegistrationID() {
+		return ID_REGISTRATION;
+	}
 }

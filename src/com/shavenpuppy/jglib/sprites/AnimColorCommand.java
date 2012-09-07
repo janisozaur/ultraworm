@@ -65,21 +65,21 @@ public class AnimColorCommand extends Command {
 	@Override
 	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
-		int currentTick = target.getTick();
+		int currentTick = target.getTick() + 1;
 
-		if (currentTick == 0) {
+		if (currentTick == 1) {
 			adjust(target, 0);
 			adjust(target, 1);
 			adjust(target, 2);
 			adjust(target, 3);
 		}
-		if (currentTick >= duration) {
+		if (currentTick > duration) {
 			target.setSequence(++currentSequence);
 			target.setTick(0);
 			return true; // Execute the next command
 		}
 
-		target.setTick(++currentTick);
+		target.setTick(currentTick);
 		return false; // Don't execute the next command
 	}
 

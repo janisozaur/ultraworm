@@ -45,7 +45,6 @@ import net.puppygames.applet.Game;
 import net.puppygames.applet.Screen;
 import net.puppygames.applet.screens.TitleScreen;
 import worm.TimeUtil;
-import worm.Worm;
 
 import com.shavenpuppy.jglib.Resources;
 import com.shavenpuppy.jglib.resources.ColorMapFeature;
@@ -55,13 +54,12 @@ import com.shavenpuppy.jglib.resources.ColorMapFeature;
  */
 public class SelectSandboxLevelScreen extends Screen {
 
-	private static final long serialVersionUID = 1L;
-
 	private static SelectSandboxLevelScreen instance;
 	private static final Object LOCK = new Object();
 
 	private static final String ID_CLOSE = "close";
 	private static final String ID_PLAY = "play";
+	private static final String ID_EDIT = "edit";
 	private static final String ID_CREATE = "create";
 
 	private transient int world = 0;
@@ -127,9 +125,28 @@ public class SelectSandboxLevelScreen extends Screen {
         }
 	}
 
-	private static class CloudMap {
+	/*
+	 * Level map and metadata for exchange with server
+	 */
+	private class CloudMap {
 		String name;
+		String author;
+		int hiscore;
+		String hiscoreName;
+		int mapWidth;
+		int mapHeight;
 		String mapData;
+		
+		CloudMap() {
+			// DEVELOPMENT DEFAULTS
+			name = "Foo";
+			author = "Benny";
+			hiscore = 1000;
+			hiscoreName = "Rigby";
+			mapWidth = 34;
+			mapHeight = 22;
+			mapData = "$$$$$#######$$$$$$$$#X............$$$$##XXXXX###$######X............$$$##XX.H.XXX###XXXXXX............$$$#XX......XXXXX.........%.......$$$#X.............................$$$#X............%.......%.......+$$$#X...%.............%...........$$$#X.....H^.....................+$$$#X.%..........................+$$$#X............%....%.%.........$$$#X......................%......$$$#X......@@@@.......%...........$$$#X......@@@@...................$$$#XX.....@@@@..............%....$$$##X...%.........^..............$$$$#X...........%.....%..........$$$$#XX........H..................$$$$##XXH$%................%......$$$$$##XX.........................$$$$$$##XXXXXXXXX.................$$$$$$$#########XXXX.............+$$$$$$$$$$$$$$$####X..............";
+		}
 	}
 	private transient Map<Params,CloudMap> cache;
 
@@ -165,7 +182,6 @@ public class SelectSandboxLevelScreen extends Screen {
 	public SelectSandboxLevelScreen(String name) {
 		super(name);
 		setAutoCreated();
-		System.out.println("*** Sandbox level screen");
 	}
 
 	public static void show() {
@@ -212,7 +228,7 @@ public class SelectSandboxLevelScreen extends Screen {
 		ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("earth.colormap"));
 
 		// Max world available:
-		int maxWorld = Worm.getMaxWorld();
+		//int maxWorld = Worm.getMaxWorld();
 	}
 
 	@Override
@@ -233,10 +249,13 @@ public class SelectSandboxLevelScreen extends Screen {
 	protected void onClicked(String id) {
 		if (ID_CLOSE.equals(id)) {
 			TitleScreen.show();
+		} else if (ID_EDIT.equals(id)) {
+			//SandboxEditScreen ses  = Resources.get("edit.sandbox.screen");
+			SandboxEditScreen.show();
 		} else if (ID_PLAY.equals(id)) {
 			// Construct a completely new gamestate at this point
-			Worm.resetGameState();
-			//Worm.getGameState().doInit(new SandboxParams(template, WorldFeature.getWorld(world), Res.getSandboxMapTemplate(world, template), DIFFICULTY[world], SIZE[mapsize], true));
+			//Worm.resetGameState();
+			//Worm.getGameState().doInit(new SandboxParams(WorldFeature.getWorld(world), Res.getSandboxMapTemplate(world, template), 0f, 74, true));
 		}
 	}
 

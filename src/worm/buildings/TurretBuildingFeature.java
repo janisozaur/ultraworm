@@ -275,7 +275,7 @@ public class TurretBuildingFeature extends BuildingFeature {
 
 		private void updateLight() {
 			if (beamSprite != null) {
-				beamSprite.setLocation(getScreenX() + getBeamOffsetX(), getScreenY() + getBeamOffsetY(), 0.0f);
+				beamSprite.setLocation(getScreenX() + getBeamOffsetX(), getScreenY() + getBeamOffsetY());
 			}
 		}
 
@@ -640,7 +640,7 @@ public class TurretBuildingFeature extends BuildingFeature {
 		@Override
 		protected void doBuildingUpdate() {
 			if (weaponInstance != null && reloadSprite != null) {
-				reloadSprite.setLocation(getScreenX(), getScreenY(), 0);
+				reloadSprite.setLocation(getScreenX(), getScreenY());
 			}
 
 			updateLight();
@@ -896,11 +896,17 @@ public class TurretBuildingFeature extends BuildingFeature {
 			checkAwesome();
 		}
 
+		@Override
+		public void addAutoLoaders(int n) {
+		    super.addAutoLoaders(n);
+			checkAwesome();
+		}
+
 		private void checkAwesome() {
 			if (isDecoy() || isGhost()) {
 				return;
 			}
-			if (!Worm.getGameState().isAwesome() && getReactors() >= 4 && getScanners() >= 4 && getBatteries() >= 4 && getCoolingTowers() >= 4 && !Worm.getGameState().isBuilding()) {
+			if (!Worm.getGameState().isAwesome() && getReactors() >= 4 && getScanners() >= 4 && getBatteries() >= 4 && getCoolingTowers() >= 4 && getAutoLoaders() >= 4) {
 				Worm.getGameState().awardMedal(Medals.AWESOME);
 				Worm.getGameState().setAwesome();
 			}

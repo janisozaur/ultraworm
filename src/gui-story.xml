@@ -1166,6 +1166,20 @@
 
 	</instance>
 
+	<!--  Xmas -->
+	<instance class="worm.screens.StoryScreen"
+		name="story.screen.xmas"
+		inherit="story.screen.spec"
+	>
+		<hotkey key="ESCAPE" command="menu"/>
+		<hotkey key="RETURN" area="ok"/>
+		<hotkey key="BACKSPACE" area="back"/>
+
+		<area id="progress" inherit="storyscreen.progress.spec" />
+		<area id="ok" inherit="earth.button.continue.spec"/>
+		<area id="back" inherit="earth.button.back.spec"/>
+
+	</instance>
 
 
 	<!-- NEW WORLD SCREEN -->
@@ -1284,12 +1298,6 @@
 
 
 
-
-
-
-
-
-
 	<!-- Ended game screen -->
 
 
@@ -1331,6 +1339,9 @@
 			</animation>
 		</mouseOff>
 	</area>
+
+
+
 
 
 
@@ -1444,7 +1455,7 @@
 			text="=$survivalendgame.gameover_text_1" color="titles.colormap:button-red" >
 		</area>
 
-		<area id="gameover-text-2" inherit="dialog.message.spec" position="0,270" size="320,15" halign="centered" text="=$survivalendgame.gameover_text_1" color="titles.colormap:button-red-text"
+		<area id="gameover-text-2" inherit="dialog.message.spec" position="0,270" size="320,15" halign="centered" text="=$survivalendgame.gameover_text_2" color="titles.colormap:button-red-text"
 			font="bigfont.glfont"  >
 		</area>
 
@@ -1460,7 +1471,69 @@
 	</instance>
 
 
+	<area name="xmas.gameover-left.spec" inherit="titlescreen-middle.spec" scale="0.5" mouseoff="spriteimage.gameover.xmas.01">
+		<anchor x="mid" d="-256" /><anchor y="mid" d="-90" />
+	</area>
+	<area name="xmas.gameover-right.spec" inherit="titlescreen-middle.spec" scale="0.5" mouseoff="spriteimage.gameover.xmas.02">
+		<anchor x="mid" d="0" /><anchor y="mid" d="-90" />
+	</area>
+	<area name="xmas.gameover-snow-front.spec" emitter="a.snow.gameover.front.emitter" group="xmas" noclick="true" layer="0" position="0,320">
+			<anchor x="mid" d="-160" /><anchor y="top" d="0" />
+		</area>
+	<area name="xmas.gameover-snow-back.spec" inherit="xmas.gameover-snow-front.spec" emitter="a.snow.gameover.back.emitter"/>
 
+
+	<instance class="worm.screens.XmasEndGameScreen"
+		name="xmasendgame.screen"
+		keyboardnavigation="false"
+		stream="xmas.stream"
+		transition="instant.transition"
+		centre="both"
+	>
+
+		<hotkey key="=$key.achievements" area="gameover_medals"/>
+		<hotkey key="=$key.restart" 	area="gameover_restart"/>
+		<hotkey key="=$key.newlevel" 		area="gameover_newmap"/>
+		<hotkey key="=$key.quit" 		area="gameover_quit"/>
+
+		<area id="gameover-right" 		inherit="xmas.gameover-right.spec"/>
+		<area id="gameover-left" 		inherit="xmas.gameover-left.spec"/>
+		<area id="gameover-snow-front" 	inherit="xmas.gameover-snow-front.spec"/>
+		<area id="gameover-snow-back" 	inherit="xmas.gameover-snow-back.spec"/>
+
+		<area id="gameover_medals" inherit="gameover.menu.button.spec" position="=$xmas_gameover_button_1_x,$gameover_buttons_y"
+				mouseoff="menu.medals.off.animation" mouseon="menu.medals.on.animation" disabled="menu.medals.disabled.animation"/>
+		<area id="gameover_medals_title" text="=$endgame.gameover_medals_title" mouseoff="=$key.achievements.icon" inherit="gameover.menu.button.title.spec" />
+		<area id="gameover_medals_desc" text="=$endgame.gameover_medals_desc" inherit="gameover.menu.button.desc.spec" />
+
+		<area id="gameover_restart" inherit="gameover.menu.button.spec" position="=$xmas_gameover_button_2_x,$gameover_buttons_y"
+				mouseoff="menu.restart.off.animation" mouseon="menu.restart.on.animation" disabled="menu.restart.disabled.animation"/>
+		<area id="gameover_restart_title" text="=$endgame.gameover_restart_title" mouseoff="=$key.restart.icon" inherit="gameover.menu.button.title.spec"  />
+		<area id="gameover_restart_desc" text="=$endgame.gameover_restart_desc" inherit="gameover.menu.button.desc.spec" />
+
+		<area id="gameover_newmap" inherit="gameover.menu.button.spec" position="=$xmas_gameover_button_3_x,$gameover_buttons_y"
+				mouseoff="menu.newlevel.off.animation" mouseon="menu.newlevel.on.animation" disabled="menu.newlevel.disabled.animation"/>
+		<area id="gameover_newmap_title" text="=$survivalendgame.gameover_newmap_title" mouseoff="=$key.newlevel.icon" inherit="gameover.menu.button.title.spec" />
+		<area id="gameover_newmap_desc" text="=$survivalendgame.gameover_newmap_desc" inherit="gameover.menu.button.desc.spec" />
+
+		<area id="gameover_quit" inherit="gameover.menu.button.spec" position="=$xmas_gameover_button_4_x,$gameover_buttons_y"
+				mouseoff="menu.quit.off.animation" mouseon="menu.quit.on.animation" disabled="menu.quit.disabled.animation"/>
+		<area id="gameover_quit_title" text="=$endgame.gameover_quit_title" mouseoff="=$key.quit.icon" inherit="gameover.menu.button.title.spec" />
+		<area id="gameover_quit_desc" text="=$endgame.gameover_quit_desc" inherit="gameover.menu.button.desc.spec" />
+
+
+		<area id="default_msg" text="=$endgame.default_msg" group="default_msg" color="button-red-text" textAlpha="64" font="bigfont.glfont"
+			inherit="gameover.menu.button.title.spec" textOffset="0,0" size="=($gameover_button_w*5)+($gameover_button_gap*2),$esc_button_text_h" halign="centered" />
+
+		<area id="gameover-text-1" inherit="dialog.message.spec" position="0,290" size="320,15" halign="centered"
+			text="=$xmasendgame.gameover_text_1" color="titles.colormap:button-red" >
+		</area>
+
+		<area id="gameover-text-2" inherit="dialog.message.spec" position="0,270" size="320,15" halign="centered" text="=$xmasendgame.gameover_text_2" color="titles.colormap:button-red-text"
+			font="bigfont.glfont"  >
+		</area>
+
+	</instance>
 
 
 

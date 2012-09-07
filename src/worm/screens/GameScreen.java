@@ -80,6 +80,7 @@ import com.shavenpuppy.jglib.Resources;
 import com.shavenpuppy.jglib.interpolators.ColorInterpolator;
 import com.shavenpuppy.jglib.interpolators.LinearInterpolator;
 import com.shavenpuppy.jglib.openal.ALBuffer;
+import com.shavenpuppy.jglib.openal.ALStream;
 import com.shavenpuppy.jglib.opengl.ColorUtil;
 import com.shavenpuppy.jglib.opengl.GLRenderable;
 import com.shavenpuppy.jglib.opengl.GLTextArea;
@@ -122,7 +123,7 @@ public class GameScreen extends Screen {
 	private static final int SAVE_DURATION = 45;
 	private static final int ZOOM_SPEED = 32;
 	private static final int SCROLL_SPEED = 8;
-	private static final int MAX_MOUSE_SCROLL_SPEED = 32;
+//	private static final int MAX_MOUSE_SCROLL_SPEED = 32;
 
 	/** How long the shop lurks around for after it's not needed */
 	private static final int SHOP_LURK = 60;
@@ -664,6 +665,36 @@ public class GameScreen extends Screen {
 		dryRumble.setGain(Game.getSFXVolume() * dryBuffer.getGain() * rumbleGain * totalDry, Game.class);
 	}
 
+	public void scroll(float dx, float dy) {
+		if (zoomTick > 0) {
+			// Ignore
+			return;
+		}
+
+		int adjustWidth = Game.getWidth() % MapRenderer.TILE_SIZE;
+		int adjWTile = adjustWidth == 0 ? 6 : 7;
+		int adjustHeight = Game.getHeight() % MapRenderer.TILE_SIZE;
+		int adjHTile = adjustHeight == 0 ? 6 : 7;
+		if (dx < 0) {
+			mapX = Math.max(mapX + dx, -MapRenderer.TILE_SIZE * (MapRenderer.OPAQUE_SIZE - 1));
+		} else if (dx > 0) {
+			mapX = Math.min(mapX + dx, (gameState.getMap().getWidth() - renderer.getWidth()) * MapRenderer.TILE_SIZE + MapRenderer.TILE_SIZE * adjWTile - adjustWidth + MapRenderer.TILE_SIZE * (MapRenderer.OPAQUE_SIZE - 1));
+			gameState.suppressHint(Hints.SCROLL);
+		}
+		if (dy < 0) {
+			mapY = Math.max(mapY + dy, -MapRenderer.TILE_SIZE * (MapRenderer.OPAQUE_SIZE - 1));
+			gameState.suppressHint(Hints.SCROLL);
+		} else if (dy > 0) {
+			mapY = Math.min(mapY + dy, (gameState.getMap().getHeight() - renderer.getHeight()) * MapRenderer.TILE_SIZE + MapRenderer.TILE_SIZE * adjHTile - adjustHeight + MapRenderer.TILE_SIZE * (MapRenderer.OPAQUE_SIZE - 1));
+			gameState.suppressHint(Hints.SCROLL);
+		}
+
+		OFFSET.setLocation((int) -mapX, (int) -mapY);
+
+		setHover(null);
+		stopInfoTimer();
+	}
+
 	/**
 	 * Handle scrolling using the cursor keys and check for mouse movement at the edges
 	 * of the screen
@@ -673,13 +704,15 @@ public class GameScreen extends Screen {
 			return;
 		}
 
-		float dx = Worm.getMouseDX();
-		float dy = Worm.getMouseDY();
-		double length = Math.sqrt(dx * dx + dy * dy);
-		if (length > MAX_MOUSE_SCROLL_SPEED) {
-			dx = (float) (MAX_MOUSE_SCROLL_SPEED * dx / length);
-			dy = (float) (MAX_MOUSE_SCROLL_SPEED * dy / length);
-		}
+//		float dx = Worm.getMouseDX();
+//		float dy = Worm.getMouseDY();
+//		double length = Math.sqrt(dx * dx + dy * dy);
+//		if (length > MAX_MOUSE_SCROLL_SPEED) {
+//			dx = (float) (MAX_MOUSE_SCROLL_SPEED * dx / length);
+//			dy = (float) (MAX_MOUSE_SCROLL_SPEED * dy / length);
+//		}
+
+		float dx = 0.0f, dy = 0.0f;
 
 		float oldMapX = mapX;
 		float oldMapY = mapY;
@@ -978,6 +1011,11 @@ public class GameScreen extends Screen {
 			tickableObject.remove();
 			tickableObject = null;
 		}
+		// Weather
+		LevelFeature levelFeature = gameState.getLevelFeature();
+		if (levelFeature.getWeather() != null) {
+			levelFeature.getWeather().remove();
+		}
 	}
 
 	/**
@@ -1070,12 +1108,17 @@ public class GameScreen extends Screen {
 		int levelNumber = gameState.getLevel();
 		LevelFeature levelFeature = gameState.getLevelFeature();
 		String levelName = levelFeature.getTitle().toUpperCase();
-		if (gameState.getGameMode() == WormGameState.GAME_MODE_ENDLESS) {
-			// Always use earth color map
-			ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("earth.colormap"));
-		} else {
-			String world = gameState.getWorld().getUntranslated();
-			ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get(world+".colormap"));
+		switch (gameState.getGameMode()) {
+			case WormGameState.GAME_MODE_ENDLESS:
+				ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("earth.colormap"));
+				break;
+			case WormGameState.GAME_MODE_XMAS:
+				ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get("xmas.colormap"));
+				break;
+			default:
+				String world = gameState.getWorld().getUntranslated();
+				ColorMapFeature.getDefaultColorMap().copy((ColorMapFeature) Resources.get(world+".colormap"));
+				break;
 		}
 		LevelColorsFeature colors = levelFeature.getColors();
 
@@ -1098,6 +1141,8 @@ public class GameScreen extends Screen {
 
 		if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
 			levelArea.setText("00:00:00:00");
+		} else if (gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) {
+			levelArea.setText(levelName);
 		} else if (levelNumber < 9) {
 			levelArea.setText("0"+String.valueOf(levelNumber + 1)+" "+levelName);
 		} else {
@@ -1105,7 +1150,9 @@ public class GameScreen extends Screen {
 		}
 
 		// Ambient music
-		if (levelNumber == -1) {
+		if (gameState.getGameMode() == WormGameState.GAME_MODE_XMAS) {
+			Game.playMusic((ALStream) Resources.get("december.stream"), 180);
+		} else if (levelNumber == -1) {
 			// Survival mode. Music will change periodically.
 		} else {
 			Game.playMusic(Res.getAmbient(levelNumber), 180);
@@ -1114,6 +1161,11 @@ public class GameScreen extends Screen {
 		// And the map scrolly display
 		mapX = (gameState.getMap().getWidth() * MapRenderer.TILE_SIZE - Game.getWidth()) / 2;
 		mapY = (gameState.getMap().getHeight() * MapRenderer.TILE_SIZE - Game.getHeight()) / 2;
+
+		// Weather
+		if (levelFeature.getWeather() != null) {
+			levelFeature.getWeather().spawn(this);
+		}
 	}
 
 	public static void onBaseAttacked() {
@@ -1300,7 +1352,7 @@ public class GameScreen extends Screen {
 			}
 		}
 
-		if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
+		if (gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL || gameState.getGameMode() == WormGameState.GAME_MODE_SURVIVAL) {
 			levelArea.setText(TimeUtil.format(gameState.getLevelTick()).toString());
 		} else {
 			if (gameState.isRushActive()) {
@@ -1785,6 +1837,10 @@ public class GameScreen extends Screen {
 		instance.setGrabbed(grabbed? instance.mapArea : null);
 	}
 
+	public static boolean isSomethingElseGrabbingMouse() {
+		return instance.getGrabbed() != null && instance.getGrabbed() != instance.mapArea;
+	}
+
 	public boolean isFastForward() {
 		return fastForward;
 	}
@@ -1948,7 +2004,7 @@ public class GameScreen extends Screen {
 		infoLayers = new SimpleThingWithLayers(instance);
 		shopAppearance.createSprites(instance, infoLayers);
 		for (int i = 0; i < infoLayers.getSprites().length; i ++) {
-			infoLayers.getSprite(i).setLocation(infoSpriteLocationArea.getBounds().getX() + ox, infoSpriteLocationArea.getBounds().getY() + oy, 0);
+			infoLayers.getSprite(i).setLocation(infoSpriteLocationArea.getBounds().getX() + ox, infoSpriteLocationArea.getBounds().getY() + oy);
 		}
 		shopSpritesVisible = true;
 	}
@@ -2061,12 +2117,12 @@ public class GameScreen extends Screen {
 
 	private void showHintSprites() {
 		removeHintSprites();
-		if (currentHint.getIcon() != null) {
+		if (currentHint != null && currentHint.getIcon() != null) {
 			hintLayers = new SimpleThingWithLayers(instance);
 			currentHint.getIcon().createSprites(instance, hintLayers);
 			ReadableRectangle hsb = hintSpriteLocationArea.getBounds();
 			for (int i = 0; i < hintLayers.getSprites().length; i++) {
-				hintLayers.getSprite(i).setLocation(hsb.getX() + hsb.getWidth() / 2, hsb.getY() + hsb.getHeight() / 2, 0);
+				hintLayers.getSprite(i).setLocation(hsb.getX() + hsb.getWidth() / 2, hsb.getY() + hsb.getHeight() / 2);
 				hintLayers.getSprite(i).setAlpha(topHudAlpha);
 				if (!currentHint.getIcon().getName().contentEquals("hint.info.layers")) {
 					hintLayers.getSprite(i).setScale(HINT_SCALE);

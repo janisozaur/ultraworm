@@ -43,7 +43,9 @@ import java.util.Map;
 
 import net.puppygames.applet.effects.SFX;
 
-import org.lwjgl.input.Controllers;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.LWJGLException;
+import org.lwjgl.input.Cursor;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.ReadablePoint;
@@ -76,20 +78,24 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 
 	public static final long serialVersionUID = 1L;
 
+	private static final int MINIMUM_MUSIC_FADE_DURATION = 30;
+
 	/*
 	 * Static data
 	 */
 
 	/** All the open screens, in the order they should be rendered */
-	private static final List<Screen> screens = new ArrayList<Screen>(4);
+	private static final List<Screen> SCREENS = new ArrayList<Screen>(4);
+
+	/** Extra ticking to do as a result of trying to tick within tick */
+	private static final List<Screen> EXTRA_TICKING = new ArrayList<Screen>(1);
 
 	/** Monkeying: slow tick speed */
 	private static final int SLOW_TICK_SPEED = 4;
 
-	/** Mouse grab hack */
-	private static int mouseGrabAttempts = 0;
-	private static Screen screenGrabbingMouse = null;
-	private static final int MAX_MOUSE_GRAB_ATTEMPTS = 4;
+	/** Lazily created empty cursor */
+	private static Cursor emptyCursor = null;
+	private static boolean emptyCursorCreated;
 
 	/*
 	 * Resource data
@@ -143,6 +149,9 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 
 	/** A timer */
 	private transient int timer;
+
+	/** Already ticking */
+	private transient boolean alreadyTicking;
 
 	/** Phase */
 	private transient int phase;
@@ -207,8 +216,8 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	/** Transition handling */
 	private transient Transition transitionFeature;
 
-	/** Constrain mouse */
-	private transient ReadableRectangle constrainMouse;
+//	/** Constrain mouse */
+//	private transient ReadableRectangle constrainMouse;
 
 	/** Monkeying */
 	private transient MonkeyRenderable monkeyRenderable;
@@ -259,8 +268,13 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 			boolean stippled = dragging != null && dragging.getID() != null && dragging.getID().equals(id);
 			if (stippled) {
 				selectTick = (selectTick + 1) % 64;
-				glLineStipple(1, (short)(0xF0F0F >> (selectTick >> 3)));
-				glEnable(GL_LINE_STIPPLE);
+				glRender(new GLRenderable() {
+					@Override
+					public void render() {
+						glLineStipple(1, (short)(0xF0F0F >> (selectTick >> 3)));
+						glEnable(GL_LINE_STIPPLE);
+					}
+				});
 			}
 
 			short idx = glVertex2f(r.getX(), r.getY());
@@ -631,34 +645,43 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		if (!isCreated()) {
 			throw new RuntimeException("Screen "+this+"["+System.identityHashCode(this)+"]"+" is not created but is being ticked!");
 		}
+
+		if (alreadyTicking) {
+			if (!EXTRA_TICKING.contains(this)) {
+				EXTRA_TICKING.add(this);
+			}
+			return;
+		}
+		alreadyTicking = true;
+
 		oldMouseX = mouseX;
 		oldMouseY = mouseY;
 		mouseX = (int) Game.physicalXtoLogicalX(Game.getMouseX());
 		mouseY = (int) Game.physicalYtoLogicalY(Game.getMouseY());
-		if (!isMouseVisible()) {
-			boolean setMousePosition = false;
-			int minX = constrainMouse == null ? 0 : constrainMouse.getX();
-			int minY = constrainMouse == null ? 0 : constrainMouse.getY();
-			int maxW = constrainMouse == null ? getWidth() : constrainMouse.getWidth();
-			int maxH = constrainMouse == null ? getHeight() : constrainMouse.getHeight();
-			if (mouseX < minX) {
-				mouseX = minX;
-				setMousePosition = true;
-			} else if (mouseX >= maxW) {
-				mouseX = maxW - 1;
-				setMousePosition = true;
-			}
-			if (mouseY < minY) {
-				mouseY = minY;
-				setMousePosition = true;
-			} else if (mouseY >= maxH) {
-				mouseY = maxH - 1;
-				setMousePosition = true;
-			}
-			if (setMousePosition) {
-				Mouse.setCursorPosition((int) Game.logicalXtoPhysicalX(mouseX), (int) Game.logicalYtoPhysicalY(mouseY));
-			}
-		}
+//		if (!isMouseVisible()) {
+//			boolean setMousePosition = false;
+//			int minX = constrainMouse == null ? 0 : constrainMouse.getX();
+//			int minY = constrainMouse == null ? 0 : constrainMouse.getY();
+//			int maxW = constrainMouse == null ? getWidth() : constrainMouse.getWidth();
+//			int maxH = constrainMouse == null ? getHeight() : constrainMouse.getHeight();
+//			if (mouseX < minX) {
+//				mouseX = minX;
+//				setMousePosition = true;
+//			} else if (mouseX >= maxW) {
+//				mouseX = maxW - 1;
+//				setMousePosition = true;
+//			}
+//			if (mouseY < minY) {
+//				mouseY = minY;
+//				setMousePosition = true;
+//			} else if (mouseY >= maxH) {
+//				mouseY = maxH - 1;
+//				setMousePosition = true;
+//			}
+//			if (setMousePosition) {
+//				Mouse.setCursorPosition((int) Game.logicalXtoPhysicalX(mouseX), (int) Game.logicalYtoPhysicalY(mouseY));
+//			}
+//		}
 		switch (phase) {
 			case OPENING:
 				if (++timer >= transitionFeature.getOpeningDuration()) {
@@ -723,18 +746,18 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 						postTick();
 					}
 
-					// Clear unused keyboard events
-					while (Keyboard.next()) {
-						// Do nothing
-					}
-					// Clear unused mouse events
-					while (Mouse.next()) {
-						// Do nothing
-					}
-					// Clear unused controller events
-					while (Controllers.next()) {
-						// Do nothing
-					}
+//					// Clear unused keyboard events
+//					while (Keyboard.next()) {
+//						// Do nothing
+//					}
+//					// Clear unused mouse events
+//					while (Mouse.next()) {
+//						// Do nothing
+//					}
+//					// Clear unused controller events
+//					while (Controllers.next()) {
+//						// Do nothing
+//					}
 				}
 				break;
 			case CLOSING:
@@ -761,6 +784,8 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 			default:
 				assert false;
 		}
+
+		alreadyTicking = false;
 	}
 
 	public final void update() {
@@ -899,6 +924,7 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		int oldPhase = phase;
 		phase = newPhase;
 		if (newPhase != BLOCKED && oldPhase == BLOCKED) {
+			clearKeyboardEvents();
 			initHotkeys();
 			for (Area area : areas) {
 				area.waitForMouse();
@@ -906,10 +932,18 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 			onUnblocked();
 		} else if (newPhase == BLOCKED && oldPhase != BLOCKED) {
 			onBlocked();
+		} else if (newPhase == OPENING) {
+			clearKeyboardEvents();
 		}
 	}
 	protected void onUnblocked() {}
 	protected void onBlocked() {}
+
+	private static void clearKeyboardEvents() {
+		while (Keyboard.next()) {
+			// Do nothing
+		}
+	}
 
 	/**
 	 * Force this screen into "open" state instantly.
@@ -937,6 +971,7 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 			setPhase(CLOSED);
 		} else {
 			setPhase(CLOSING);
+			tick();
 		}
 	}
 
@@ -967,8 +1002,8 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		if (isOpen() || isOpening()) {
 			return;
 		}
-		for (int i = 0; i < screens.size(); i ++) {
-			Screen screen = screens.get(i);
+		for (int i = 0; i < SCREENS.size(); i ++) {
+			Screen screen = SCREENS.get(i);
 			if (screen == this) {
 				screen.removeAllTickables();
 				screen.doCleanup();
@@ -978,20 +1013,20 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 				screen.close();
 			}
 		}
-		if (screens.contains(this)) {
+		if (SCREENS.contains(this)) {
 			// Bring screen to the top
-			screens.remove(this);
+			SCREENS.remove(this);
 		}
-		screens.add(this);
+		SCREENS.add(this);
 		setPhase(OPENING);
 		enabled = true;
 		timer = 0;
 		focus = null;
 		if (musicResource != null) {
-			Game.playMusic(musicResource, transitionFeature.getOpeningDuration());
+			Game.playMusic(musicResource, Math.max(MINIMUM_MUSIC_FADE_DURATION, transitionFeature.getOpeningDuration()));
 		}
 		if (streamResource != null) {
-			Game.playMusic(streamResource, transitionFeature.getOpeningDuration());
+			Game.playMusic(streamResource, Math.max(MINIMUM_MUSIC_FADE_DURATION, transitionFeature.getOpeningDuration()));
 		}
 		for (Area area : areas) {
 			area.init();
@@ -999,6 +1034,7 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		initHotkeys();
 		resized();
 		onOpen();
+		tick();
 	}
 
 	private void initHotkeys() {
@@ -1132,46 +1168,70 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		return ret;
 	}
 
+	private static boolean mouseCurrentlyVisible = true;
+
 	/**
 	 * Tick all screens
 	 */
 	public static void tickAllScreens() {
+		// Constrain mouse to window
+		if (!mouseCurrentlyVisible) {
+			int x = Mouse.getX();
+			int y = Mouse.getY();
+			boolean set = false;
+			if (x < 0) {
+				x = 0;
+				set = true;
+			}
+			if (y < 0) {
+				y = 0;
+				set = true;
+			}
+			if (set) {
+				Mouse.setCursorPosition(x, y);
+			}
+		}
+
 		// Unblock the topmost screen
 		Screen top = getTopScreen();
 		if (top != null && top.isBlocked()) {
 			top.setPhase(OPEN);
 			top.onReopen();
 		}
-		for (int i = 0; i < screens.size(); ) {
-			Screen screen = screens.get(i);
+		for (int i = 0; i < SCREENS.size(); ) {
+			Screen screen = SCREENS.get(i);
 			screen.tick();
 			if (screen.isActive() && screen.isCreated()) {
 				i ++;
 			} else {
-				screens.remove(i);
+				SCREENS.remove(i);
 			}
 		}
+		for (int i = 0; i < EXTRA_TICKING.size(); i ++) {
+			EXTRA_TICKING.get(i).tick();
+		}
+		EXTRA_TICKING.clear();
 
-		boolean grabbed = Mouse.isGrabbed();
-		if (top != null && !top.monkeying) {
-			if (!isMouseVisible()) {
-				if (!grabbed) {
-					mouseGrabAttempts = MAX_MOUSE_GRAB_ATTEMPTS;
-					screenGrabbingMouse = top;
+		try {
+			if (!isMouseVisible() && mouseCurrentlyVisible) {
+				mouseCurrentlyVisible = false;
+				if (!emptyCursorCreated) {
+					emptyCursorCreated = true;
+					try {
+				        emptyCursor = new Cursor(1, 1, 0, 0, 1, BufferUtils.createIntBuffer(1), null);
+			        } catch (LWJGLException e) {
+				        e.printStackTrace(System.err);
+			        }
 				}
-				if (mouseGrabAttempts -- > 0) {
-					if (screenGrabbingMouse != top) {
-						// Screen has changed. Reset
-						mouseGrabAttempts = MAX_MOUSE_GRAB_ATTEMPTS;
-						screenGrabbingMouse = top;
-					}
-					Mouse.setGrabbed(true);
-				}
-			} else if (grabbed) {
+				Mouse.setNativeCursor(emptyCursor);
+				Mouse.setGrabbed(true);
+			} else if (isMouseVisible() && !mouseCurrentlyVisible) {
+				mouseCurrentlyVisible = true;
+				Mouse.setNativeCursor(null);
 				Mouse.setGrabbed(false);
-				mouseGrabAttempts = 0;
-				screenGrabbingMouse = null;
 			}
+		} catch (LWJGLException e) {
+			e.printStackTrace(System.err);
 		}
 	}
 
@@ -1179,8 +1239,8 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	 * Update all screens
 	 */
 	public static void updateAllScreens() {
-		for (int i = 0; i < screens.size(); i ++) {
-			Screen screen = screens.get(i);
+		for (int i = 0; i < SCREENS.size(); i ++) {
+			Screen screen = SCREENS.get(i);
 			screen.update();
 		}
 	}
@@ -1190,8 +1250,8 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	 */
 	public static void renderAllScreens() {
 		// Render all the screens from bottom to top
-		for (int i = 0; i < screens.size(); i ++) {
-			Screen screen = screens.get(i);
+		for (int i = 0; i < SCREENS.size(); i ++) {
+			Screen screen = SCREENS.get(i);
 			screen.render();
 		}
 	}
@@ -1201,8 +1261,11 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	 * @return boolean
 	 */
 	public static final boolean isMouseVisible() {
-		if (screens.size() > 0) {
-			Screen topmost = screens.get(screens.size() - 1);
+		if (Game.isPaused()) {
+			return true;
+		}
+		if (SCREENS.size() > 0) {
+			Screen topmost = SCREENS.get(SCREENS.size() - 1);
 			return topmost.mouseVisible;
 		}
 		// Show the mouse if there's no screens
@@ -1394,15 +1457,15 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 	 * @return a Screen or null if no screens are open
 	 */
 	public static Screen getTopScreen() {
-		if (screens.size() == 0) {
+		if (SCREENS.size() == 0) {
 			return null;
 		}
-		return screens.get(screens.size() - 1);
+		return SCREENS.get(SCREENS.size() - 1);
 	}
 
 	public static void onGameResized() {
-		for (int i = 0; i < screens.size(); i ++) {
-			Screen s = screens.get(i);
+		for (int i = 0; i < SCREENS.size(); i ++) {
+			Screen s = SCREENS.get(i);
 			s.resized();
 		}
 	}
@@ -1682,11 +1745,11 @@ public abstract class Screen extends Feature implements SpriteAllocator {
 		return Game.getHeight();
 	}
 
-	/**
-	 * Constrain the mouse
-	 * @param constrainMouse Mouse constraints (logical coordinates); or null to clear
-	 */
-	public void setConstrainMouse(ReadableRectangle constrainMouse) {
-	    this.constrainMouse = constrainMouse;
-    }
+//	/**
+//	 * Constrain the mouse
+//	 * @param constrainMouse Mouse constraints (logical coordinates); or null to clear
+//	 */
+//	public void setConstrainMouse(ReadableRectangle constrainMouse) {
+//	    this.constrainMouse = constrainMouse;
+//    }
 }

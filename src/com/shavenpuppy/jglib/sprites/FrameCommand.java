@@ -83,31 +83,12 @@ public class FrameCommand extends Command {
 	@Override
 	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
-		int currentTick = target.getTick();
+		int currentTick = target.getTick() + 1;
 
-		if (currentTick >= duration) {
-			if (duration == 0) {
-				if (appearanceName == null) {
-					// Using frameindex
-					target.setFrame(idx);
-				} else if (spriteAppearance == null) {
-					if (DEBUG) {
-						System.err.println("frame "+appearanceName+" not found");
-					}
-				} else if (spriteAppearance.toSprite(target)) {
-					// This is a new animation; we should return right away instead of advancing the sequence number, and not
-					// execute the next instruction as this will already have occurred
-					return false;
-				}
-			}
-			target.setSequence(++currentSequence);
-			target.setTick(0);
+		if (currentTick == 1) {
+			boolean twiddle;
 			target.setChildXOffset(childXOffset);
 			target.setChildYOffset(childYOffset);
-			return true; // Execute the next command
-		} else {
-			target.setTick(++currentTick);
-			boolean twiddle;
 			if (appearanceName == null) {
 				// Using frameindex
 				twiddle = target.setFrame(idx);
@@ -120,19 +101,68 @@ public class FrameCommand extends Command {
 				twiddle = spriteAppearance.toSprite(target);
 			}
 			if (twiddle) {
-				if (duration == 0 && target.getTick() == 0) {
-					return true;
-				}
-				return false;
-			} else {
-				if (duration == 0 && target.getTick() == 0) {
-					return true;
-				}
-				target.setChildXOffset(childXOffset);
-				target.setChildYOffset(childYOffset);
-				return false; // Don't execute the next command
+				return false; // Don't execute the next command - already been done when we set an animation
 			}
 		}
+
+		if (currentTick > duration) {
+			target.setSequence(currentSequence + 1);
+			target.setTick(0);
+			return true; // Next command
+		} else {
+			target.setTick(currentTick);
+			return false; // Don't execute the next command
+		}
+//
+//
+//		if (currentTick > duration) {
+//			if (duration == 0) {
+//				if (appearanceName == null) {
+//					// Using frameindex
+//					target.setFrame(idx);
+//				} else if (spriteAppearance == null) {
+//					if (DEBUG) {
+//						System.err.println("frame "+appearanceName+" not found");
+//					}
+//				} else if (spriteAppearance.toSprite(target)) {
+//					// This is a new animation; we should return right away instead of advancing the sequence number, and not
+//					// execute the next instruction as this will already have occurred
+//					return false;
+//				}
+//			}
+//			target.setSequence(++currentSequence);
+//			target.setTick(0);
+//			target.setChildXOffset(childXOffset);
+//			target.setChildYOffset(childYOffset);
+//			return true; // Execute the next command
+//		} else {
+//			target.setTick(currentTick);
+//			boolean twiddle;
+//			if (appearanceName == null) {
+//				// Using frameindex
+//				twiddle = target.setFrame(idx);
+//			} else if (spriteAppearance == null) {
+//				if (DEBUG) {
+//					System.err.println("frame "+appearanceName+" not found");
+//				}
+//				return false;
+//			} else {
+//				twiddle = spriteAppearance.toSprite(target);
+//			}
+//			if (twiddle) {
+//				if (duration == 0 && target.getTick() == 0) {
+//					return true;
+//				}
+//				return false;
+//			} else {
+//				if (duration == 0 && target.getTick() == 0) {
+//					return true;
+//				}
+//				target.setChildXOffset(childXOffset);
+//				target.setChildYOffset(childYOffset);
+//				return false; // Don't execute the next command
+//			}
+//		}
 
 	}
 

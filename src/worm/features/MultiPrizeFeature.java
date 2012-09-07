@@ -55,7 +55,8 @@ public class MultiPrizeFeature extends PrizeFeature {
 
 	@Override
 	public boolean isValid() {
-		return Worm.getMaxLevel(WormGameState.GAME_MODE_CAMPAIGN) < WormGameState.MAX_LEVELS;
+		int maxLevel = Worm.getMaxLevel(WormGameState.GAME_MODE_CAMPAIGN);
+		return maxLevel >= 5 && maxLevel < WormGameState.MAX_LEVELS;
 	}
 
 	@Override

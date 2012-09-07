@@ -141,7 +141,7 @@ public class MedalsScreen extends Screen {
 			layers.createSprites(this, rankLayers);
 			Sprite[] rankSprite = rankLayers.getSprites();
 			for (Sprite element : rankSprite) {
-				element.setLocation(pos.getX()+pos.getWidth()/2, pos.getY()+pos.getHeight()/2, 0.0f);
+				element.setLocation(pos.getX()+pos.getWidth()/2, pos.getY()+pos.getHeight()/2);
 			}
 		}
 
@@ -151,7 +151,7 @@ public class MedalsScreen extends Screen {
 		// Add all missing medals
 		for (Iterator<MedalFeature> i = MedalFeature.getMedals().values().iterator(); i.hasNext(); ) {
 			MedalFeature mf = i.next();
-			if (!medals.containsKey(mf)) {
+			if (!medals.containsKey(mf) && (!mf.isXmas() || (mf.isXmas() && gameState.getGameMode() == WormGameState.GAME_MODE_XMAS))) {
 				medals.put(mf, Integer.valueOf(0));
 			}
 		}
@@ -238,7 +238,7 @@ public class MedalsScreen extends Screen {
 						Sprite[] s = sl.getSprites();
 						for (Sprite element : s) {
 							if (element != null) {
-								element.setLocation(pos.getX() + pos.getWidth() / 2, pos.getY() + pos.getHeight() / 2, 0.0f);
+								element.setLocation(pos.getX() + pos.getWidth() / 2, pos.getY() + pos.getHeight() / 2);
 							}
 						}
 						medalLayers.add(sl);

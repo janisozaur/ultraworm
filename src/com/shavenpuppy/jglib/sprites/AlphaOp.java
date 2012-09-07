@@ -1,6 +1,6 @@
 package com.shavenpuppy.jglib.sprites;
 
-import java.nio.IntBuffer;
+import java.nio.FloatBuffer;
 
 import org.lwjgl.util.ReadableColor;
 
@@ -34,8 +34,8 @@ public enum AlphaOp {
 
 	private static final float PREMULT_ALPHA = 1.0f / 255.0f;
 
-	public final void op(ReadableColor c, int alpha, IntBuffer dest) {
-		dest.put(calc(c, alpha));
+	public final void op(ReadableColor c, int alpha, FloatBuffer dest) {
+		dest.put(Float.intBitsToFloat(calc(c, alpha)));
 	}
 	public final void op(ReadableColor c, int alpha, SimpleRenderer renderer) {
 		renderer.glColori(calc(c, alpha));

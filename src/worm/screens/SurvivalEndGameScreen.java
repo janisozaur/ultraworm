@@ -183,7 +183,7 @@ public class SurvivalEndGameScreen extends Screen {
 				public void run() {
 					GenericServerRemote server;
 					try {
-						setMessage("{font:tinyfont.glfont color:titles.colormap:button-red}"+Game.getMessage("ultraworm.survivalendgame.sumitting")+"...");
+						setMessage("{font:tinyfont.glfont color:titles.colormap:button-red}"+Game.getMessage("ultraworm.survivalendgame.submitting")+"...");
 						server = (GenericServerRemote) Naming.lookup(GenericServerRemote.RMI_URL);
 					} catch (Exception e) {
 						e.printStackTrace(System.err);

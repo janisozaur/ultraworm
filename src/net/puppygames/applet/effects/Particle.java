@@ -288,8 +288,8 @@ public class Particle implements Tickable {
 			screen.addTickable(this);
 			sprite.setLayer(layer);
 			sprite.setSubLayer(subLayer);
-			sprite.setLocation(x, y, 0.0f);
-			sprite.setOffset(0.0f, yOffset, 0.0f);
+			sprite.setLocation(x, y);
+			sprite.setOffset(0.0f, yOffset);
 			numParticles ++;
 //			if (parent.getTag() != null) {
 //				Int i = (Int) countMap.get(parent.getTag());
@@ -457,10 +457,10 @@ public class Particle implements Tickable {
 			yy += offset.getY();
 		}
 		if (doYOffset) {
-			sprite.setLocation(xx, yy, 0);
-			sprite.setOffset(0.0f, yOffset, 0.0f);
+			sprite.setLocation(xx, yy);
+			sprite.setOffset(0.0f, yOffset);
 		} else {
-			sprite.setLocation(xx, yy, 0);
+			sprite.setLocation(xx, yy);
 		}
 		sprite.setVisible(parent.isVisible());
 	}

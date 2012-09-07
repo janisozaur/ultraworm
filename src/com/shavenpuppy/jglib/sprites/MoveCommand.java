@@ -33,7 +33,7 @@ package com.shavenpuppy.jglib.sprites;
 
 import java.io.IOException;
 
-import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector2f;
 import org.w3c.dom.Element;
 
 import com.shavenpuppy.jglib.Resource;
@@ -48,7 +48,7 @@ public class MoveCommand extends Command {
 	private static final long serialVersionUID = 1L;
 
 	/** Temp holder */
-	private static final Vector3f temp = new Vector3f();
+	private static final Vector2f temp = new Vector2f();
 
 	/** The adjustment */
 	private float deltax, deltay;
@@ -72,9 +72,9 @@ public class MoveCommand extends Command {
 	@Override
 	public boolean execute(Sprite target) {
 		int currentSequence = target.getSequence();
-		int currentTick = target.getTick();
+		int currentTick = target.getTick() + 1;
 
-		if (currentTick == 0) {
+		if (currentTick == 1) {
 			if (relativex) {
 				target.getLocation(temp);
 				if (relativey) {
@@ -84,23 +84,23 @@ public class MoveCommand extends Command {
 					temp.setX(temp.getX() + deltax);
 					temp.setY(deltay);
 				}
-				target.setLocation(temp.getX(), temp.getY(), 0);
+				target.setLocation(temp.getX(), temp.getY());
 			} else if (relativey) {
 				target.getLocation(temp);
 				temp.setX(deltax);
 				temp.setY(temp.getY() + deltay);
-				target.setLocation(temp.getX(), temp.getY(), 0);
+				target.setLocation(temp.getX(), temp.getY());
 			} else {
-				target.setLocation(deltax, deltay, 0);
+				target.setLocation(deltax, deltay);
 			}
 		}
-		if (currentTick >= duration) {
+		if (currentTick > duration) {
 			target.setSequence(++currentSequence);
 			target.setTick(0);
 			return true; // Execute the next command
 		}
 
-		target.setTick(++currentTick);
+		target.setTick(currentTick);
 		return false; // Don't execute the next command
 	}
 

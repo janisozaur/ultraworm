@@ -308,8 +308,10 @@
 	<stream name="mars.stream" url="resource:mars.ogg" gain="1.0" priority="1000" looped="true"/>
 	<stream name="saturn.stream" url="resource:saturn.ogg" gain="1.0" priority="1000" looped="true"/>
 	<stream name="titan.stream" url="resource:titan.ogg" gain="1.0" priority="1000" looped="true"/>
+	<stream name="xmas.stream" url="resource:xmas.ogg" gain="1.0" priority="1000" looped="true"/>
 
 	<!-- Level ambience -->
+	<stream name="december.stream" url="resource:december.ogg" gain="0.5" priority="1000" looped="true"/>
 	<stream name="level00.stream" url="resource:earth01.ogg" gain="0.5" priority="1000" looped="true"/>
 	<stream name="level01.stream" url="resource:earth02.ogg" gain="0.5" priority="1000" looped="true"/>
 	<stream name="level02.stream" url="resource:earth03.ogg" gain="0.5" priority="1000" looped="true"/>
